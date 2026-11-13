@@ -122,3 +122,6 @@ The resolver rejects a non-iterable observation collection, non-object source/as
 ### Non-empty identifier validation — policy 1.3.2
 
 Observation IDs, source provider/endpoint/record identifiers, duplicate references, movement IDs, source-observation references and attribution-claim references must contain at least one non-whitespace character. JSON Schema and the runtime validators enforce this boundary. Malformed identifiers fail closed and cannot be used to create arbitrary source-record links, event identities or ledger references.
+
+
+The Movement Integrity runtime validator also enforces uniqueness of `source_observation_ids`, matching the Movement Ledger JSON Schema's `uniqueItems` constraint. Repeated references are rejected instead of counting the same source observation more than once.
