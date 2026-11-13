@@ -98,6 +98,11 @@ class MovementLedgerContractTests(unittest.TestCase):
         item["transfer"].pop("event_locator")
         self.assertFalse(self.validator.is_valid(item))
 
+    def test_schema_rejects_malformed_network_transaction_hash(self):
+        item = copy.deepcopy(self.fixtures[0])
+        item["transfer"]["transaction_id"] = "not-a-hash"
+        self.assertFalse(self.validator.is_valid(item))
+
     def test_schema_rejects_contract_log_index_for_native_eth(self):
         item = copy.deepcopy(next(x for x in self.fixtures if x["asset"]["network_id"] == "eip155:1"))
         item["transfer"]["event_locator"] = {"kind": "EVM_LOG_INDEX", "value": "5"}
