@@ -1,0 +1,154 @@
+[
+  {
+    "scenario_id": "btc_tx_mempool_only",
+    "network_id": "bitcoin-mainnet",
+    "observations": [
+      {
+        "observation_kind": "MEMPOOL_SEEN",
+        "transaction_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "inclusion": null,
+        "source_asserted_chain_status": "UNKNOWN"
+      }
+    ],
+    "expected_assessment": "OBSERVED",
+    "expected_inclusion_count": 0
+  },
+  {
+    "scenario_id": "btc_block_inclusion_positive",
+    "network_id": "bitcoin-mainnet",
+    "observations": [
+      {
+        "observation_kind": "BLOCK_INCLUDED",
+        "transaction_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "inclusion": {
+          "block_height": 900000,
+          "block_hash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "transaction_index": 4
+        },
+        "source_asserted_chain_status": "UNKNOWN"
+      }
+    ],
+    "expected_assessment": "INCLUDED",
+    "expected_inclusion_count": 1
+  },
+  {
+    "scenario_id": "btc_old_block_reported_not_active",
+    "network_id": "bitcoin-mainnet",
+    "observations": [
+      {
+        "observation_kind": "BLOCK_INCLUDED",
+        "transaction_id": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "inclusion": {
+          "block_height": 900001,
+          "block_hash": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "transaction_index": 2
+        },
+        "source_asserted_chain_status": "NOT_ACTIVE"
+      }
+    ],
+    "expected_assessment": "NOT_CANONICAL",
+    "expected_inclusion_count": 1
+  },
+  {
+    "scenario_id": "btc_reincluded_new_block",
+    "network_id": "bitcoin-mainnet",
+    "observations": [
+      {
+        "observation_kind": "BLOCK_INCLUDED",
+        "transaction_id": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "inclusion": {
+          "block_height": 900002,
+          "block_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+          "transaction_index": 3
+        },
+        "source_asserted_chain_status": "NOT_ACTIVE"
+      },
+      {
+        "observation_kind": "BLOCK_INCLUDED",
+        "transaction_id": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "inclusion": {
+          "block_height": 900002,
+          "block_hash": "2222222222222222222222222222222222222222222222222222222222222222",
+          "transaction_index": 1
+        },
+        "source_asserted_chain_status": "ACTIVE"
+      }
+    ],
+    "expected_assessment": "REOBSERVED",
+    "expected_inclusion_count": 2
+  },
+  {
+    "scenario_id": "eth_included_without_finality",
+    "network_id": "eip155:1",
+    "observations": [
+      {
+        "observation_kind": "BLOCK_INCLUDED",
+        "transaction_id": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "inclusion": {
+          "block_height": 21000000,
+          "block_hash": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "transaction_index": 9
+        },
+        "source_asserted_chain_status": "ACTIVE"
+      }
+    ],
+    "expected_assessment": "INCLUDED",
+    "expected_inclusion_count": 1
+  },
+  {
+    "scenario_id": "eth_inclusion_covered_by_finalized_checkpoint",
+    "network_id": "eip155:1",
+    "observations": [
+      {
+        "observation_kind": "BLOCK_INCLUDED",
+        "transaction_id": "0xcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "inclusion": {
+          "block_height": 21000000,
+          "block_hash": "0xdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+          "transaction_index": 1
+        },
+        "source_asserted_chain_status": "ACTIVE"
+      },
+      {
+        "observation_kind": "FINALITY_CHECKPOINT",
+        "transaction_id": "0xcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "inclusion": {
+          "block_height": 21000010,
+          "block_hash": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "transaction_index": null
+        },
+        "source_asserted_head_tag": "finalized"
+      }
+    ],
+    "expected_assessment": "FINALIZED",
+    "expected_inclusion_count": 1
+  },
+  {
+    "scenario_id": "eth_provider_conflict",
+    "network_id": "eip155:1",
+    "observations": [
+      {
+        "observation_kind": "BLOCK_INCLUDED",
+        "transaction_id": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "inclusion": {
+          "block_height": 21000000,
+          "block_hash": "0x1111111111111111111111111111111111111111111111111111111111111111",
+          "transaction_index": 0
+        },
+        "source_asserted_chain_status": "ACTIVE"
+      },
+      {
+        "observation_kind": "BLOCK_STATUS",
+        "transaction_id": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "inclusion": {
+          "block_height": 21000000,
+          "block_hash": "0x2222222222222222222222222222222222222222222222222222222222222222",
+          "transaction_index": 0
+        },
+        "source_asserted_chain_status": "ACTIVE"
+      }
+    ],
+    "expected_assessment": "CANONICALITY_UNRESOLVED",
+    "expected_inclusion_count": 2
+  }
+]
