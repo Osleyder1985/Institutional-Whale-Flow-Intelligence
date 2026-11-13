@@ -1,4 +1,4 @@
-# Observation Resolution Policy v1.3.0
+# Observation Resolution Policy v1.3.1
 
 Status: proposed, deterministic policy implemented as a pure in-memory resolver; no persistence or provider integration.
 
@@ -112,3 +112,8 @@ This implementation is an in-memory policy engine and test suite only. Pairwise 
 ## 12. Cross-contract normalization
 
 The movement integrity validator compares transaction IDs case-insensitively, normalizes EVM addresses case-insensitively, and canonicalizes numeric protocol locator components. This allows equivalent provider encodings (for example, vout `00` versus `0`) to be validated without weakening network or event identity. Invalid or network-incompatible locators do not compare as equal.
+
+
+## Fail-closed validation of malformed input — policy 1.3.1
+
+The resolver rejects a non-iterable observation collection, non-object source/asset/movement/quality fields, and malformed event-locator kinds before indexing or grouping. These inputs return deterministic validation errors instead of raising runtime type errors. Valid observation behavior and strong event identity rules are unchanged.
