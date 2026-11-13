@@ -5,6 +5,7 @@ from itertools import combinations
 import hashlib
 import json
 import re
+from datetime import datetime
 
 
 POLICY_VERSION = "1.1.0"
@@ -98,14 +99,14 @@ def _normalized_field(field, value, network_id):
         if not isinstance(kind, str) or not isinstance(raw, str) or not raw:
             return ("INVALID_LOCATOR", _canonical_json(value))
         if kind == "UTXO_VOUT":
-            if not raw.isdigit():
+            if re.fullmatch(r"[0-9]+", raw) is None:
                 return ("INVALID_LOCATOR", _canonical_json(value))
-            raw = str(int(raw))
+            raw = raw.lstrip("0") or "0"
         elif kind == "EVM_TRACE_PATH":
             parts = raw.split("/")
-            if not parts or any(not part.isdigit() for part in parts):
+            if not parts or any(re.fullmatch(r"[0-9]+", part) is None for part in parts):
                 return ("INVALID_LOCATOR", _canonical_json(value))
-            raw = "/".join(str(int(part)) for part in parts)
+            raw = "/".join(part.lstrip("0") or "0" for part in parts)
         elif kind == "EVM_TX_VALUE":
             if raw != "transaction-value":
                 return ("INVALID_LOCATOR", _canonical_json(value))
@@ -396,6 +397,15 @@ def resolve_observations(observations, supersedes_decision_id=None):
                 errors.append(f"duplicate observation missing duplicate_of: {identifier}")
             elif duplicate_of == identifier:
                 errors.append(f"observation cannot be duplicate of itself: {identifier}")
+        event_time = item.get("event_time_utc")
+        if event_time is not None:
+            if not isinstance(event_time, str) or re.fullmatch(r"\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z", event_time) is None:
+                errors.append(f"invalid event_time_utc: {identifier}")
+            else:
+                try:
+                    datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%SZ")
+                except ValueError:
+                    errors.append(f"invalid event_time_utc: {identifier}")
         transaction_id = movement.get("transaction_id") if isinstance(movement, dict) else None
         if transaction_id is not None and _normalized_transaction_id(network_id, transaction_id) is None:
             errors.append(f"invalid transaction_id for network: {identifier}")
