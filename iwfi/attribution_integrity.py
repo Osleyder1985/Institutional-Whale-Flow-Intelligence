@@ -1,9 +1,10 @@
 """Validation helpers for temporal attribution-claim invariants."""
 from datetime import datetime
+import re
 
 
 def _parse_utc_timestamp(value):
-    if not isinstance(value, str) or not value.endswith("Z"):
+    if not isinstance(value, str) or re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z", value) is None:
         return None
     try:
         parsed = datetime.fromisoformat(value[:-1] + "+00:00")
