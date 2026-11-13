@@ -11,6 +11,7 @@ Each record links back to one or more canonical source observation IDs. Source o
 ## Transfer semantics
 
 - `movement_type` is fixed to `TRANSFER`.
+- Every transfer carries a network-specific `event_locator`: Bitcoin `UTXO_VOUT`; Ethereum native ETH `EVM_TRACE_PATH` or `EVM_TX_VALUE`. A transaction hash alone is not a transfer-event identity; distinct outputs or internal transfers in one transaction remain distinct ledger records.
 - Amounts are decimal strings to avoid binary floating-point loss. A missing amount is `null`, never zero.
 - From/to addresses and transaction ID may be null when the source does not provide them.
 - Asset, symbol, network and unit must agree for the supported BTC and Ethereum mainnet records.
@@ -20,7 +21,7 @@ A transfer alone does not prove a trade, exchange deposit/withdrawal, common con
 
 ## Source observations
 
-`source_observation_ids` is a non-empty, unique list of canonical observation IDs. Ingestion must verify that every referenced observation exists, has type `ON_CHAIN_TRANSACTION`, describes a transfer, and agrees on asset/network, transaction identity and event time where those values are available. `VALID`, `PARTIAL` and `DELAYED` observations may support historical reconstruction. The original quality state is preserved: `DELAYED` is not promoted to `VALID` and does not imply real-time availability. This ledger integrity contract does not assess source freshness or real-time eligibility. `INVALID`, `QUARANTINED`, `DUPLICATE` and unknown quality states are inadmissible as direct evidence.
+`source_observation_ids` is a non-empty, unique list of canonical observation IDs. Ingestion must verify that every referenced observation exists, has type `ON_CHAIN_TRANSACTION`, describes a transfer, and agrees on asset/network, transaction identity, event locator and event time where those values are available. Locator normalization is deterministic and network-specific; it never derives a missing locator from a transaction hash. `VALID`, `PARTIAL` and `DELAYED` observations may support historical reconstruction. The original quality state is preserved: `DELAYED` is not promoted to `VALID` and does not imply real-time availability. This ledger integrity contract does not assess source freshness or real-time eligibility. `INVALID`, `QUARANTINED`, `DUPLICATE` and unknown quality states are inadmissible as direct evidence.
 
 `EXCHANGE_FLOW_METRIC` and `ETF_FLOW_METRIC` observations are aggregate measurements. They must remain in a separate measurement series and must never be materialized as individual ledger transfers.
 

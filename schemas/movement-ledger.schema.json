@@ -77,7 +77,8 @@
         "from_address",
         "to_address",
         "transaction_id",
-        "confirmation_status"
+        "confirmation_status",
+        "event_locator"
       ],
       "properties": {
         "movement_type": {
@@ -120,6 +121,27 @@
             "PENDING",
             "UNKNOWN"
           ]
+        },
+        "event_locator": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "value"
+          ],
+          "properties": {
+            "kind": {
+              "enum": [
+                "UTXO_VOUT",
+                "EVM_TRACE_PATH",
+                "EVM_TX_VALUE"
+              ]
+            },
+            "value": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
         }
       }
     },
@@ -245,6 +267,22 @@
             "properties": {
               "unit": {
                 "const": "BTC"
+              },
+              "event_locator": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "const": "UTXO_VOUT"
+                  },
+                  "value": {
+                    "type": "string",
+                    "pattern": "^(0|[1-9][0-9]*)$"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "value"
+                ]
               }
             }
           }
@@ -285,6 +323,41 @@
             "properties": {
               "unit": {
                 "const": "ETH"
+              },
+              "event_locator": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "const": "EVM_TRACE_PATH"
+                      },
+                      "value": {
+                        "type": "string",
+                        "pattern": "^(0|[1-9][0-9]*)(/(0|[1-9][0-9]*))*$"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "value"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "const": "EVM_TX_VALUE"
+                      },
+                      "value": {
+                        "const": "transaction-value"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "value"
+                    ]
+                  }
+                ]
               }
             }
           }

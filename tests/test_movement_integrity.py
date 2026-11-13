@@ -146,6 +146,26 @@ class MovementIntegrityTests(unittest.TestCase):
         movement["event_time_utc"] = None
         self.assertTrue(any("known source event_time omitted" in error for error in validate_movement_integrity(movement, self.observations, self.claims)))
 
+    def test_event_locator_mismatch_is_rejected(self):
+        movement = copy.deepcopy(self.movements[0])
+        movement["transfer"]["event_locator"] = {"kind": "UTXO_VOUT", "value": "1"}
+        errors = validate_movement_integrity(movement, self.observations, self.claims)
+        self.assertTrue(any("event_locator mismatch" in error for error in errors))
+
+    def test_known_source_event_locator_cannot_be_dropped(self):
+        movement = copy.deepcopy(self.movements[0])
+        movement["transfer"]["event_locator"] = None
+        errors = validate_movement_integrity(movement, self.observations, self.claims)
+        self.assertTrue(any("known source event_locator omitted" in error for error in errors))
+
+    def test_equivalent_canonicalized_bitcoin_vout_is_accepted(self):
+        movement = copy.deepcopy(self.movements[0])
+        observations = copy.deepcopy(self.observations)
+        source_id = movement["source_observation_ids"][0]
+        source = next(item for item in observations if item["observation_id"] == source_id)
+        source["movement"]["event_locator"]["value"] = "00"
+        self.assertEqual(validate_movement_integrity(movement, observations, self.claims), [])
+
     def test_source_confirmation_status_mismatch_is_rejected(self):
         movement = copy.deepcopy(self.movements[0])
         movement["transfer"]["confirmation_status"] = "PENDING"

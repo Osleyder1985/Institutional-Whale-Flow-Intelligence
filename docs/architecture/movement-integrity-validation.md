@@ -18,8 +18,8 @@ For every referenced `source_observation_id`, the validator requires:
 - Its quality is not `INVALID`, `QUARANTINED`, or `DUPLICATE`. A duplicate must be resolved to its canonical observation before ledger construction.
 - Asset ID, symbol and network match the movement.
 - It contains a `TRANSFER` movement.
-- Any source facts that are present (amount, unit, addresses, transaction ID, confirmation status and event time) do not conflict with the normalized movement.
-- A known source fact cannot be dropped, and a movement fact cannot be populated when all referenced sources lack that fact.
+- Any source facts that are present (amount, unit, addresses, transaction ID, event locator, confirmation status and event time) do not conflict with the normalized movement.
+- A known source fact cannot be dropped, and a movement fact cannot be populated when all referenced sources lack that fact. Event locators are compared with network-specific canonicalization (`UTXO_VOUT`, `EVM_TRACE_PATH`, `EVM_TX_VALUE`).
 - Source quality states `VALID`, `PARTIAL` and `DELAYED` are admissible for historical integrity/reconstruction; `INVALID`, `QUARANTINED`, `DUPLICATE` and unrecognized states fail closed. `DELAYED` remains `DELAYED` and is not evidence of real-time availability. This validator does not evaluate freshness or real-time eligibility.
 - A non-null movement event time must be supported by at least one referenced observation with a matching event time.
 
