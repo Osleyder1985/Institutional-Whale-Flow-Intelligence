@@ -1,0 +1,51 @@
+{
+  "_example_notice": "SYNTHETIC FIXTURE ONLY — not a live forecast, market observation, model output, or evidence.",
+  "schema_version": "1.0.0",
+  "forecast_id": "synthetic-forecast-0001",
+  "supersedes_forecast_id": null,
+  "status": "ISSUED",
+  "abstention": null,
+  "asset": {"symbol":"BTC","asset_id":"bitcoin:mainnet:native","network":"bitcoin-mainnet"},
+  "market": {"market_type":"SPOT","instrument":"BTC/USD","venue":"SYNTHETIC-REFERENCE","quote_currency":"USD"},
+  "time": {
+    "issued_at":"2026-01-01T00:00:05Z",
+    "as_of_time":"2026-01-01T00:00:00Z",
+    "data_cutoff_time":"2026-01-01T00:00:00Z",
+    "horizon_start":"2026-01-01T00:00:00Z",
+    "horizon_end":"2026-01-02T00:00:00Z",
+    "timezone":"UTC"
+  },
+  "target_definition": {
+    "target_id":"synthetic-direction-target",
+    "version":"0.1.0",
+    "reference_price":{"value":100000,"currency":"USD","observed_at":"2026-01-01T00:00:00Z","source_ref":"synthetic-price-observation"},
+    "direction_method":"SYNTHETIC-ONLY: direction labels are illustrative",
+    "magnitude_method":"SYNTHETIC-ONLY: percentage return from reference price",
+    "sideways_band":{"lower_return_pct":-0.5,"upper_return_pct":0.5}
+  },
+  "prediction": {
+    "direction":"BULLISH",
+    "magnitude":{"status":"NOT_QUANTIFIED","unit":"RETURN_PCT","reference":"synthetic reference price","estimate":null,"interval":null},
+    "price_targets":[{
+      "target_id":"synthetic-target-1","kind":"PRIMARY","lower_price":100500,"upper_price":101000,"currency":"USD","method":"synthetic interval","valid_from":"2026-01-01T00:00:00Z","valid_until":"2026-01-02T00:00:00Z","status":"ESTIMATED","evidence_refs":["synthetic-evidence-1"]
+    }],
+    "price_zones":[{
+      "zone_id":"synthetic-zone-1","kind":"RESISTANCE","lower_price":101000,"upper_price":102000,"currency":"USD","method":"synthetic interval","valid_from":"2026-01-01T00:00:00Z","valid_until":"2026-01-02T00:00:00Z","probability_status":"NOT_QUANTIFIED","probability":null,"evidence_refs":["synthetic-evidence-1"]
+    }],
+    "time_to_target":[{
+      "target_ref":"synthetic-target-1","event_definition":"FIRST_TOUCH","status":"NOT_ESTIMABLE","lower_seconds":null,"upper_seconds":null,"distribution_ref":null,"notes":"Synthetic fixture; no time estimate is asserted."
+    }],
+    "scenario_probabilities":{"status":"NOT_CALIBRATED","bullish":null,"bearish":null,"sideways":null,"calibration_ref":null},
+    "uncertainty":{"status":"NOT_QUANTIFIED","summary":"Synthetic example; no uncertainty has been measured.","limitations":["Fixture only","No trained model","No live data"]}
+  },
+  "data_quality":{"status":"DEGRADED","coverage_ratio":null,"freshness_status":"UNKNOWN","missing_inputs":["All live market inputs"]},
+  "evidence":{
+    "supporting":[{"evidence_ref":"synthetic-evidence-1","role":"SUPPORTS","observed_at":"2026-01-01T00:00:00Z","known_at":"2026-01-01T00:00:00Z"}],
+    "contrary":[],
+    "alternatives":[{"hypothesis":"Synthetic alternative scenario","evidence_refs":[]}],
+    "invalidation_conditions":["Synthetic invalidation condition"]
+  },
+  "provenance":{
+    "model_id":"synthetic-placeholder","model_version":"0.0.0-fixture","calibration_version":null,"feature_set_version":"synthetic-0","code_version":"fixture-only","config_version":"fixture-only","dataset_snapshot_ref":"synthetic-dataset","evaluation_protocol_version":"synthetic-0","source_refs":["synthetic-price-observation"]
+  }
+}
