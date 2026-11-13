@@ -97,6 +97,24 @@ class MovementIntegrityTests(unittest.TestCase):
         self.assertEqual(errors_forward, errors_reverse)
         self.assertIn(f"duplicate claim_id: {duplicate['claim_id']}", errors_forward)
 
+    def test_duplicate_claim_ids_never_resolve_to_an_arbitrary_claim(self):
+        movement = copy.deepcopy(self.movements[0])
+        claim_id = movement["attribution_resolutions"][0]["claim_id"]
+        original = copy.deepcopy(next(item for item in self.claims if item["claim_id"] == claim_id))
+        duplicate = copy.deepcopy(original)
+        duplicate["epistemic_status"] = (
+            "PROVIDER_LABELLED"
+            if original["epistemic_status"] != "PROVIDER_LABELLED"
+            else "INFERRED"
+        )
+        claims_forward = [item for item in self.claims if item["claim_id"] != claim_id] + [original, duplicate]
+        claims_reverse = [item for item in self.claims if item["claim_id"] != claim_id] + [duplicate, original]
+        errors_forward = validate_movement_integrity(movement, self.observations, claims_forward)
+        errors_reverse = validate_movement_integrity(movement, self.observations, claims_reverse)
+        self.assertEqual(errors_forward, errors_reverse)
+        self.assertIn(f"duplicate claim_id: {claim_id}", errors_forward)
+        self.assertIn(f"missing claim must use CLAIM_NOT_FOUND: {claim_id}", errors_forward)
+
     def test_missing_source_observation_is_rejected(self):
         movement = copy.deepcopy(self.movements[0])
         movement["source_observation_ids"] = ["not-present"]
