@@ -62,7 +62,11 @@ class ObservationResolutionTests(unittest.TestCase):
         second["movement"]["event_locator"] = {"kind": "EVM_LOG_INDEX", "value": "6"}
         result = resolve_observations([first, second])
         self.assertEqual(len(result["events"]), 2)
-        self.assertEqual(result["links"][0]["match_class"], "NO_MATCH")
+        self.assertEqual(result["links"], [])
+        self.assertEqual(
+            classify_observation_pair(first, second)["match_class"],
+            "NO_MATCH",
+        )
         self.assertIn("DIFFERENT_EVENT_LOCATOR", result["links"][0]["reasons"])
 
     def test_same_transaction_hash_on_different_networks_is_not_a_match(self):
@@ -250,6 +254,24 @@ class ObservationResolutionTests(unittest.TestCase):
         second["movement"]["to_address"] = "bc1qother-destination"
         result = resolve_observations([first, second])
         self.assertEqual(len(result["events"]), 2)
+
+    def test_unrelated_observations_do_not_create_exhaustive_no_match_links(self):
+        observations = []
+        for index in range(25):
+            item = self.by_id("btc-vout-provider-a")
+            item["observation_id"] = f"independent-{index:02d}"
+            item["source"]["record_id"] = f"record-{index:02d}"
+            item["source"]["payload_sha256"] = f"{index + 1:064x}"
+            item["event_time_utc"] = f"2026-11-10T10:{index:02d}:00Z"
+            item["movement"]["transaction_id"] = f"{index + 1:064x}"
+            item["movement"]["amount"] = str(index + 1)
+            item["movement"]["from_address"] = f"bc1qsource{index:02d}"
+            item["movement"]["to_address"] = f"bc1qdestination{index:02d}"
+            item["movement"]["event_locator"] = {"kind": "UTXO_VOUT", "value": "0"}
+            observations.append(item)
+        result = resolve_observations(observations)
+        self.assertEqual(len(result["events"]), 25)
+        self.assertEqual(result["links"], [])
 
     def test_order_independence_and_idempotence(self):
         observations = [self.by_id("btc-vout-provider-a"), self.by_id("btc-vout-provider-b"), self.by_id("btc-second-vout")]
