@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "schemas/**"
+      - "iwfi/**"
       - "tests/**"
       - "requirements-test.txt"
       - ".github/workflows/contract-tests.yml"
