@@ -29,7 +29,7 @@
       "target_id":"synthetic-target-1","kind":"PRIMARY","lower_price":100500,"upper_price":101000,"currency":"USD","method":"synthetic interval","valid_from":"2026-01-01T00:00:00Z","valid_until":"2026-01-02T00:00:00Z","status":"ESTIMATED","evidence_refs":["synthetic-evidence-1"]
     }],
     "price_zones":[{
-      "zone_id":"synthetic-zone-1","kind":"RESISTANCE","lower_price":101000,"upper_price":102000,"currency":"USD","method":"synthetic interval","valid_from":"2026-01-01T00:00:00Z","valid_until":"2026-01-02T00:00:00Z","probability_status":"NOT_QUANTIFIED","probability":null,"evidence_refs":["synthetic-evidence-1"]
+      "zone_id":"synthetic-zone-1","kind":"RESISTANCE","lower_price":101000,"upper_price":102000,"currency":"USD","method":"synthetic interval","valid_from":"2026-01-01T00:00:00Z","valid_until":"2026-01-02T00:00:00Z","probability_status":"NOT_QUANTIFIED","probability":null,"calibration_ref":null,"evidence_refs":["synthetic-evidence-1"]
     }],
     "time_to_target":[{
       "target_ref":"synthetic-target-1","event_definition":"FIRST_TOUCH","status":"NOT_ESTIMABLE","lower_seconds":null,"upper_seconds":null,"distribution_ref":null,"notes":"Synthetic fixture; no time estimate is asserted."
