@@ -58,8 +58,31 @@ def validate_movement_integrity(movement, observations, claims):
     This function validates references and consistency only; it does not mutate data.
     """
     errors = []
-    observation_index = {item.get("observation_id"): item for item in observations}
-    claim_index = {item.get("claim_id"): item for item in claims}
+
+    def _unique_index(items, id_field):
+        counts = {}
+        for item in items:
+            identifier = item.get(id_field)
+            if not isinstance(identifier, str) or not identifier:
+                errors.append(f"invalid {id_field} in evidence collection")
+                continue
+            counts[identifier] = counts.get(identifier, 0) + 1
+        duplicates = sorted(identifier for identifier, count in counts.items() if count > 1)
+        for identifier in duplicates:
+            errors.append(f"duplicate {id_field}: {identifier}")
+        duplicate_set = set(duplicates)
+        return {
+            item[id_field]: item
+            for item in items
+            if isinstance(item.get(id_field), str)
+            and item[id_field]
+            and item[id_field] not in duplicate_set
+        }
+
+    observations = list(observations)
+    claims = list(claims)
+    observation_index = _unique_index(observations, "observation_id")
+    claim_index = _unique_index(claims, "claim_id")
     referenced = movement.get("source_observation_ids", [])
     if not referenced:
         errors.append("source_observation_ids must not be empty")
