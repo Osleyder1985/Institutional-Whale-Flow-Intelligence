@@ -8,7 +8,7 @@ TRANSFER_FIELDS = ("amount", "unit", "from_address", "to_address", "transaction_
 
 
 def _utc_datetime(value):
-    if not isinstance(value, str) or not value.endswith("Z"):
+    if not isinstance(value, str) or re.fullmatch(r"\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z", value) is None:
         return None
     try:
         parsed = datetime.fromisoformat(value[:-1] + "+00:00")
@@ -75,14 +75,14 @@ def _normalized_event_locator(value, network_id):
     if kind not in allowed.get(network_id, set()) or not isinstance(raw, str):
         return None
     if kind == "UTXO_VOUT":
-        if not raw.isdigit():
+        if re.fullmatch(r"[0-9]+", raw) is None:
             return None
-        raw = str(int(raw))
+        raw = raw.lstrip("0") or "0"
     elif kind == "EVM_TRACE_PATH":
         parts = raw.split("/")
-        if not parts or any(not part.isdigit() for part in parts):
+        if not parts or any(re.fullmatch(r"[0-9]+", part) is None for part in parts):
             return None
-        raw = "/".join(str(int(part)) for part in parts)
+        raw = "/".join(part.lstrip("0") or "0" for part in parts)
     elif kind == "EVM_TX_VALUE" and raw != "transaction-value":
         return None
     return kind, raw
@@ -174,6 +174,10 @@ def validate_movement_integrity(movement, observations, claims):
             continue
         source_time = observation.get("event_time_utc")
         movement_time = movement.get("event_time_utc")
+        if source_time is not None and _utc_datetime(source_time) is None:
+            errors.append(f"invalid source event_time_utc: {observation_id}")
+        if movement_time is not None and _utc_datetime(movement_time) is None:
+            errors.append("movement event_time_utc is invalid")
         if source_time is not None and movement_time is None:
             errors.append(f"known source event_time omitted from movement: {observation_id}")
         elif source_time is not None and movement_time is not None and source_time != movement_time:
