@@ -4,6 +4,7 @@ from decimal import Decimal, InvalidOperation
 from itertools import combinations
 import hashlib
 import json
+import re
 
 
 POLICY_VERSION = "1.1.0"
@@ -85,7 +86,8 @@ def _normalized_field(field, value, network_id):
     if field == "amount":
         return _decimal_key(value)
     if field == "transaction_id":
-        return value.casefold() if isinstance(value, str) else value
+        normalized = _normalized_transaction_id(network_id, value)
+        return normalized if normalized is not None else ("INVALID_TRANSACTION_ID", str(value))
     if field in {"from_address", "to_address"} and network_id == "eip155:1":
         return value.lower() if isinstance(value, str) else value
     if field == "event_locator":
@@ -113,6 +115,18 @@ def _normalized_field(field, value, network_id):
     return value
 
 
+def _normalized_transaction_id(network_id, value):
+    """Validate and canonicalize a native transaction hash for supported networks."""
+    if not isinstance(value, str):
+        return None
+    if network_id == "bitcoin-mainnet":
+        return value.lower() if re.fullmatch(r"[0-9a-fA-F]{64}", value) else None
+    if network_id == "eip155:1":
+        raw = value[2:] if value[:2].lower() == "0x" else value
+        return raw.lower() if re.fullmatch(r"[0-9a-fA-F]{64}", raw) else None
+    return None
+
+
 def _transaction_key(observation):
     asset = observation.get("asset") or {}
     movement = observation.get("movement") or {}
@@ -120,9 +134,10 @@ def _transaction_key(observation):
     txid = movement.get("transaction_id")
     if not isinstance(network_id, str) or not network_id:
         return None
-    if not isinstance(txid, str) or not txid.strip():
+    normalized_txid = _normalized_transaction_id(network_id, txid)
+    if normalized_txid is None:
         return None
-    return (network_id, txid.casefold())
+    return (network_id, normalized_txid)
 
 
 def _event_key(observation):
@@ -381,6 +396,9 @@ def resolve_observations(observations, supersedes_decision_id=None):
                 errors.append(f"duplicate observation missing duplicate_of: {identifier}")
             elif duplicate_of == identifier:
                 errors.append(f"observation cannot be duplicate of itself: {identifier}")
+        transaction_id = movement.get("transaction_id") if isinstance(movement, dict) else None
+        if transaction_id is not None and _normalized_transaction_id(network_id, transaction_id) is None:
+            errors.append(f"invalid transaction_id for network: {identifier}")
         if not isinstance(movement, dict) or movement.get("movement_type") != "TRANSFER":
             errors.append(f"observation has no TRANSFER movement: {identifier}")
         locator = movement.get("event_locator") if isinstance(movement, dict) else None
