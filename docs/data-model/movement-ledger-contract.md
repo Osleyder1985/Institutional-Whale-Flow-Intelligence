@@ -29,13 +29,13 @@ A transfer alone does not prove a trade, exchange deposit/withdrawal, common con
 Attribution entries are references to existing append-only claims, not new claims. They identify the address and predicate being evaluated and preserve the claim's epistemic status.
 
 Temporal status is resolved against the transfer's `event_time_utc` and the claim's `valid_from_utc` / `valid_to_utc`:
-- `VALID_AT_EVENT_TIME`: event time is known and falls within the claim's validity interval. Null interval bounds are open-ended only when the claim contract's evidence supports that interpretation.
+- `VALID_AT_EVENT_TIME`: event time and both interval boundaries are known, and the event falls within the inclusive interval.
 - `NOT_YET_VALID`: event time precedes a known valid-from time.
 - `EXPIRED_AT_EVENT_TIME`: event time is after a known valid-to time.
 - `TIME_UNRESOLVED`: event time or required validity boundary cannot be resolved safely.
 - `CLAIM_NOT_FOUND`: referenced claim is absent from the available claim set.
 
-Interval boundaries are inclusive. This is a conservative resolution status, not a claim that the attribution is true. A `VALID_AT_EVENT_TIME` result does not upgrade `PROVIDER_LABELLED` or `INFERRED` to `VERIFIED`. Conflicting claims remain separate.
+Interval boundaries are inclusive. A null validity boundary is treated as unresolved by this first implementation; it is not silently interpreted as an infinite/open interval. This is a conservative resolution status, not a claim that the attribution is true. A `VALID_AT_EVENT_TIME` result does not upgrade `PROVIDER_LABELLED` or `INFERRED` to `VERIFIED`. Conflicting claims remain separate.
 
 ## Quality and limitations
 
