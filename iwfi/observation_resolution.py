@@ -6,7 +6,7 @@ import hashlib
 import json
 
 
-POLICY_VERSION = "1.0.0"
+POLICY_VERSION = "1.1.0"
 TRANSFER_FIELDS = (
     "asset_id",
     "network_id",
@@ -37,6 +37,9 @@ LOCATOR_KINDS = {
     "eip155:1": {"EVM_TRACE_PATH", "EVM_TX_VALUE"},
 }
 INVALID_QUALITY = {"INVALID", "QUARANTINED"}
+# Delayed observations remain valid historical evidence; duplicate observations
+# are retained as relations but never independently contribute event facts.
+EXCLUDED_FROM_EVENT_EVIDENCE = {"DUPLICATE"}
 ALLOWED_QUALITY = {"VALID", "PARTIAL", "DELAYED", "DUPLICATE", "INVALID", "QUARANTINED"}
 ASSET_NETWORKS = {"bitcoin:btc": "bitcoin-mainnet", "ethereum:eth": "eip155:1"}
 
@@ -318,6 +321,7 @@ def _field_evidence(observations, field):
         values[key]["evidence"].append({
             "observation_id": observation["observation_id"],
             "provider": source.get("provider"),
+            "quality_status": (observation.get("quality") or {}).get("status"),
             "value": value,
         })
     result = []
@@ -486,13 +490,20 @@ def resolve_observations(observations, supersedes_decision_id=None):
     grouped = defaultdict(list)
     for item in canonical_items:
         key = _event_key(item)
-        if key is not None:
+        quality_status = (item.get("quality") or {}).get("status")
+        if key is not None and quality_status not in EXCLUDED_FROM_EVENT_EVIDENCE:
             grouped[key].append(item)
 
     events = []
     for key in sorted(grouped):
         group = grouped[key]
         group.sort(key=lambda item: item["observation_id"])
+        excluded_observation_ids = sorted(
+            item["observation_id"]
+            for item in canonical_items
+            if _event_key(item) == key
+            and (item.get("quality") or {}).get("status") in EXCLUDED_FROM_EVENT_EVIDENCE
+        )
         field_evidence = {field: _field_evidence(group, field) for field in TRANSFER_FIELDS}
         conflicts = sorted(field for field, evidence in field_evidence.items() if len(evidence) > 1)
         invalid_fields = sorted(
@@ -558,6 +569,7 @@ def resolve_observations(observations, supersedes_decision_id=None):
             "transaction_identity": {"network_id": key[0], "transaction_id": key[1]},
             "event_locator": {"kind": key[2], "value": key[3]},
             "observation_ids": [item["observation_id"] for item in group],
+            "excluded_observation_ids": excluded_observation_ids,
             "resolved_fields": resolved_fields,
             "field_evidence": field_evidence,
             "field_conflicts": conflicts,
