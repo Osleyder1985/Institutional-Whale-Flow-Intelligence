@@ -47,6 +47,34 @@ class MovementIntegrityTests(unittest.TestCase):
         self.assertTrue(any("observations[0] must be an object" in error for error in errors))
         self.assertTrue(any("source observation not found" in error for error in errors))
 
+    def test_duplicate_source_observation_references_are_rejected(self):
+        movement = copy.deepcopy(self.movements[0])
+        movement["source_observation_ids"] = [
+            movement["source_observation_ids"][0],
+            movement["source_observation_ids"][0],
+        ]
+        errors = validate_movement_integrity(movement, self.observations, self.claims)
+        self.assertIn("source_observation_ids must be unique", errors)
+
+    def test_whitespace_only_source_observation_id_is_rejected(self):
+        movement = copy.deepcopy(self.movements[0])
+        movement["source_observation_ids"] = ["   "]
+        errors = validate_movement_integrity(movement, self.observations, self.claims)
+        self.assertIn("source_observation_ids must be a list of non-empty strings", errors)
+
+    def test_whitespace_only_observation_id_in_source_collection_is_rejected(self):
+        movement = copy.deepcopy(self.movements[0])
+        observations = copy.deepcopy(self.observations)
+        observations[0]["observation_id"] = "   "
+        errors = validate_movement_integrity(movement, observations, self.claims)
+        self.assertIn("invalid observation_id in evidence collection", errors)
+
+    def test_whitespace_only_attribution_claim_id_is_rejected(self):
+        movement = copy.deepcopy(self.movements[0])
+        movement["attribution_resolutions"][0]["claim_id"] = "   "
+        errors = validate_movement_integrity(movement, self.observations, self.claims)
+        self.assertIn("attribution resolution has an invalid claim_id", errors)
+
     def test_non_object_claim_returns_validation_error(self):
         movement = copy.deepcopy(self.movements[0])
         movement["attribution_resolutions"] = []
@@ -125,6 +153,49 @@ class MovementIntegrityTests(unittest.TestCase):
         movement["source_observation_ids"] = ["fixture-exchange-inflow"]
         errors = validate_movement_integrity(movement, self.observations, self.claims)
         self.assertTrue(any("not ON_CHAIN_TRANSACTION" in error for error in errors))
+
+    def test_source_event_locator_mismatch_is_rejected(self):
+        movement = copy.deepcopy(self.movements[0])
+        movement["transfer"]["event_locator"]["value"] = "1"
+        errors = validate_movement_integrity(movement, self.observations, self.claims)
+        source_id = movement["source_observation_ids"][0]
+        self.assertIn(f"event_locator mismatch for source observation: {source_id}", errors)
+
+    def test_equivalent_numeric_event_locators_are_compared_canonically(self):
+        movement = copy.deepcopy(self.movements[0])
+        observations = copy.deepcopy(self.observations)
+        for source_id in movement["source_observation_ids"]:
+            source = next(item for item in observations if item["observation_id"] == source_id)
+            source["movement"]["event_locator"]["value"] = "00"
+        movement["transfer"]["event_locator"]["value"] = "0"
+        self.assertEqual(validate_movement_integrity(movement, observations, self.claims), [])
+
+    def test_event_locator_cannot_be_invented_without_source_support(self):
+        movement = copy.deepcopy(self.movements[0])
+        observations = copy.deepcopy(self.observations)
+        for source_id in movement["source_observation_ids"]:
+            source = next(item for item in observations if item["observation_id"] == source_id)
+            source["movement"]["event_locator"] = None
+        errors = validate_movement_integrity(movement, observations, self.claims)
+        self.assertIn("movement event_locator has no supporting source value", errors)
+
+    def test_event_locator_cannot_be_dropped_from_movement(self):
+        movement = copy.deepcopy(self.movements[0])
+        movement["transfer"]["event_locator"] = None
+        errors = validate_movement_integrity(movement, self.observations, self.claims)
+        self.assertIn("movement event_locator is required", errors)
+        self.assertTrue(any("known source event_locator omitted" in error for error in errors))
+
+    def test_invalid_event_locator_format_is_rejected(self):
+        movement = copy.deepcopy(self.movements[0])
+        observations = copy.deepcopy(self.observations)
+        source_id = movement["source_observation_ids"][0]
+        source = next(item for item in observations if item["observation_id"] == source_id)
+        source["movement"]["event_locator"]["value"] = "vout-zero"
+        movement["transfer"]["event_locator"]["value"] = "vout-zero"
+        errors = validate_movement_integrity(movement, observations, self.claims)
+        self.assertIn(f"invalid source event_locator format: {source_id}", errors)
+        self.assertIn("invalid movement event_locator format", errors)
 
     def test_source_transaction_mismatch_is_rejected(self):
         movement = copy.deepcopy(self.movements[0])

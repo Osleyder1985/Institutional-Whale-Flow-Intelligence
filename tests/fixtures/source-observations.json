@@ -1,6 +1,6 @@
 [
   {
-    "contract_version": "1.0.0",
+    "contract_version": "1.1.0",
     "observation_id": "fixture-btc-confirmed",
     "source": {
       "provider": "fixture-chain-indexer",
@@ -23,8 +23,12 @@
       "unit": "BTC",
       "from_address": "bc1qsource",
       "to_address": "bc1qdestination",
-      "transaction_id": "btc-tx-001",
-      "confirmation_status": "CONFIRMED"
+      "transaction_id": "0000000000000000000000000000000000000000000000000000000000000002",
+      "confirmation_status": "CONFIRMED",
+      "event_locator": {
+        "kind": "UTXO_VOUT",
+        "value": "0"
+      }
     },
     "attributions": [],
     "quality": {
@@ -38,7 +42,7 @@
     }
   },
   {
-    "contract_version": "1.0.0",
+    "contract_version": "1.1.0",
     "observation_id": "fixture-eth-confirmed",
     "source": {
       "provider": "fixture-chain-indexer",
@@ -61,8 +65,12 @@
       "unit": "ETH",
       "from_address": "0xfrom",
       "to_address": "0xto",
-      "transaction_id": "0xeth001",
-      "confirmation_status": "CONFIRMED"
+      "transaction_id": "0x0000000000000000000000000000000000000000000000000000000000000005",
+      "confirmation_status": "CONFIRMED",
+      "event_locator": {
+        "kind": "EVM_TX_VALUE",
+        "value": "transaction-value"
+      }
     },
     "attributions": [],
     "quality": {
@@ -76,7 +84,7 @@
     }
   },
   {
-    "contract_version": "1.0.0",
+    "contract_version": "1.1.0",
     "observation_id": "fixture-exchange-label",
     "source": {
       "provider": "vendor-a",
@@ -115,7 +123,7 @@
     }
   },
   {
-    "contract_version": "1.0.0",
+    "contract_version": "1.1.0",
     "observation_id": "fixture-missing-amount",
     "source": {
       "provider": "fixture-chain-indexer",
@@ -138,8 +146,12 @@
       "unit": "BTC",
       "from_address": "bc1qa",
       "to_address": "bc1qb",
-      "transaction_id": "btc-tx-002",
-      "confirmation_status": "CONFIRMED"
+      "transaction_id": "0000000000000000000000000000000000000000000000000000000000000003",
+      "confirmation_status": "CONFIRMED",
+      "event_locator": {
+        "kind": "UTXO_VOUT",
+        "value": "1"
+      }
     },
     "attributions": [],
     "quality": {
@@ -155,7 +167,7 @@
     }
   },
   {
-    "contract_version": "1.0.0",
+    "contract_version": "1.1.0",
     "observation_id": "fixture-duplicate",
     "source": {
       "provider": "fixture-chain-indexer",
@@ -178,8 +190,12 @@
       "unit": "BTC",
       "from_address": "bc1qsource",
       "to_address": "bc1qdestination",
-      "transaction_id": "btc-tx-001",
-      "confirmation_status": "CONFIRMED"
+      "transaction_id": "0000000000000000000000000000000000000000000000000000000000000002",
+      "confirmation_status": "CONFIRMED",
+      "event_locator": {
+        "kind": "UTXO_VOUT",
+        "value": "0"
+      }
     },
     "attributions": [],
     "quality": {
@@ -195,7 +211,7 @@
     }
   },
   {
-    "contract_version": "1.0.0",
+    "contract_version": "1.1.0",
     "observation_id": "fixture-delayed",
     "source": {
       "provider": "fixture-chain-indexer",
@@ -218,8 +234,12 @@
       "unit": "ETH",
       "from_address": "0xaaa",
       "to_address": "0xbbb",
-      "transaction_id": "0xdelayed",
-      "confirmation_status": "CONFIRMED"
+      "transaction_id": "0x0000000000000000000000000000000000000000000000000000000000000006",
+      "confirmation_status": "CONFIRMED",
+      "event_locator": {
+        "kind": "EVM_TRACE_PATH",
+        "value": "0"
+      }
     },
     "attributions": [],
     "quality": {
@@ -235,7 +255,7 @@
     }
   },
   {
-    "contract_version": "1.0.0",
+    "contract_version": "1.1.0",
     "observation_id": "fixture-conflicting-attribution",
     "source": {
       "provider": "aggregator",
@@ -284,7 +304,7 @@
     }
   },
   {
-    "contract_version": "1.0.0",
+    "contract_version": "1.1.0",
     "observation_id": "fixture-exchange-inflow",
     "source": {
       "provider": "vendor-flow",
