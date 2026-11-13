@@ -21,7 +21,7 @@ A transfer alone does not prove a trade, exchange deposit/withdrawal, common con
 
 ## Source observations
 
-`source_observation_ids` is a non-empty, unique list of canonical observation IDs. Ingestion must verify that every referenced observation exists, has type `ON_CHAIN_TRANSACTION`, describes a transfer, and agrees on asset/network, transaction identity, protocol event locator and event time where those values are available.
+`source_observation_ids` is a non-empty, unique list of canonical observation IDs. Ingestion must verify that every referenced observation exists, has type `ON_CHAIN_TRANSACTION`, describes a transfer, and agrees on asset/network, transaction identity, protocol event locator and event time where those values are available. `VALID`, `PARTIAL` and `DELAYED` observations may support historical reconstruction. Their original quality is preserved: `DELAYED` is not promoted to `VALID` and does not imply real-time availability. This ledger integrity contract does not assess source freshness or real-time eligibility. `INVALID`, `QUARANTINED`, `DUPLICATE` and unknown quality states are inadmissible as direct evidence.
 
 `EXCHANGE_FLOW_METRIC` and `ETF_FLOW_METRIC` observations are aggregate measurements. They must remain in a separate measurement series and must never be materialized as individual ledger transfers.
 
