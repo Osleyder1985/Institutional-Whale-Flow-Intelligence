@@ -81,6 +81,17 @@ class ObservationResolutionTests(unittest.TestCase):
         self.assertEqual(link["match_class"], "CANDIDATE")
         self.assertEqual(resolve_observations([first, second])["events"][0]["observation_ids"], ["btc-vout-provider-a"])
 
+    def test_distinct_transactions_without_event_groups_are_not_reported_as_candidates(self):
+        first = self.by_id("btc-vout-provider-a")
+        second = self.by_id("btc-second-vout")
+        first["movement"].pop("event_locator")
+        second["movement"].pop("event_locator")
+        second["movement"]["transaction_id"] = "different-transaction-id"
+        result = resolve_observations([first, second])
+        self.assertEqual(result["status"], "INSUFFICIENT_EVIDENCE")
+        self.assertEqual(result["events"], [])
+        self.assertEqual(result["links"][0]["match_class"], "NO_MATCH")
+
     def test_same_transaction_without_locator_remains_candidate(self):
         first = self.by_id("btc-vout-provider-a")
         second = self.by_id("btc-vout-provider-b")
