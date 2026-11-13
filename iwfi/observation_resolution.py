@@ -168,6 +168,20 @@ def _source_record_key(observation):
     return None
 
 
+def _provider_duplicate_relation(left, right):
+    left_id = left.get("observation_id")
+    right_id = right.get("observation_id")
+    left_target = (left.get("quality") or {}).get("duplicate_of")
+    right_target = (right.get("quality") or {}).get("duplicate_of")
+    if left_target == right_id and right_target == left_id:
+        return "BIDIRECTIONAL_DECLARATION"
+    if left_target == right_id:
+        return "LEFT_DECLARED_DUPLICATE_OF_RIGHT"
+    if right_target == left_id:
+        return "RIGHT_DECLARED_DUPLICATE_OF_LEFT"
+    return "NONE"
+
+
 def _source_record_relation(left, right):
     ls = left.get("source") or {}
     rs = right.get("source") or {}
@@ -261,6 +275,17 @@ def classify_observation_pair(left, right):
         if conflicts:
             reasons.append("CONTRADICTORY_FIELD_VALUES")
 
+    provider_duplicate_relation = _provider_duplicate_relation(left, right)
+    if provider_duplicate_relation != "NONE":
+        reasons.append("PROVIDER_DECLARED_DUPLICATE_RELATION")
+        if left_event is not None and right_event is not None:
+            if left_event == right_event:
+                reasons.append("PROVIDER_DUPLICATE_CONSISTENT_WITH_EVENT_IDENTITY")
+            else:
+                reasons.append("PROVIDER_DUPLICATE_CONTRADICTS_EVENT_IDENTITY")
+        else:
+            reasons.append("PROVIDER_DUPLICATE_IDENTITY_UNRESOLVED")
+
     source_relation = _source_record_relation(left, right)
     if source_relation == "EXACT_REPEAT":
         reasons.append("SAME_PROVIDER_RECORD_AND_PAYLOAD")
@@ -271,6 +296,7 @@ def classify_observation_pair(left, right):
         "observation_ids": ids,
         "match_class": match_class,
         "source_record_relation": source_relation,
+        "provider_duplicate_relation": provider_duplicate_relation,
         "field_conflicts": sorted(conflicts),
         "reasons": sorted(reasons),
     }
@@ -339,9 +365,16 @@ def resolve_observations(observations, supersedes_decision_id=None):
             errors.append(f"missing network_id: {identifier}")
         if asset_id not in ASSET_NETWORKS or ASSET_NETWORKS.get(asset_id) != network_id:
             errors.append(f"invalid asset/network identity: {identifier}")
-        quality_status = (item.get("quality") or {}).get("status")
+        quality = item.get("quality") or {}
+        quality_status = quality.get("status")
         if quality_status not in ALLOWED_QUALITY:
             errors.append(f"invalid quality status: {identifier}")
+        if quality_status == "DUPLICATE":
+            duplicate_of = quality.get("duplicate_of")
+            if not isinstance(duplicate_of, str) or not duplicate_of.strip():
+                errors.append(f"duplicate observation missing duplicate_of: {identifier}")
+            elif duplicate_of == identifier:
+                errors.append(f"observation cannot be duplicate of itself: {identifier}")
         if not isinstance(movement, dict) or movement.get("movement_type") != "TRANSFER":
             errors.append(f"observation has no TRANSFER movement: {identifier}")
         locator = movement.get("event_locator") if isinstance(movement, dict) else None
@@ -412,6 +445,15 @@ def resolve_observations(observations, supersedes_decision_id=None):
             partial_buckets[signature].append(index)
 
     pair_indexes = set()
+    observation_indexes = {
+        item["observation_id"]: index
+        for index, item in enumerate(canonical_items)
+    }
+    for index, item in enumerate(canonical_items):
+        duplicate_of = (item.get("quality") or {}).get("duplicate_of")
+        target_index = observation_indexes.get(duplicate_of)
+        if target_index is not None and target_index != index:
+            pair_indexes.add(tuple(sorted((index, target_index))))
 
     def add_pairs(indexes):
         for left_index, right_index in combinations(sorted(set(indexes)), 2):
@@ -431,7 +473,11 @@ def resolve_observations(observations, supersedes_decision_id=None):
     links = []
     for left_index, right_index in sorted(pair_indexes):
         link = classify_observation_pair(canonical_items[left_index], canonical_items[right_index])
-        if link["match_class"] != "NO_MATCH" or link["source_record_relation"] != "NONE":
+        if (
+            link["match_class"] != "NO_MATCH"
+            or link["source_record_relation"] != "NONE"
+            or link["provider_duplicate_relation"] != "NONE"
+        ):
             links.append(link)
     links.sort(key=lambda link: (link["observation_ids"], link["match_class"]))
 
@@ -524,7 +570,12 @@ def resolve_observations(observations, supersedes_decision_id=None):
         "decision_context_fingerprint": decision_context_fingerprint,
         "supersedes_decision_id": supersedes_decision_id,
         "status": (
-            "RESOLVED_WITH_CANDIDATES"
+            "RESOLVED_WITH_RELATION_CONFLICTS"
+            if any(
+                "PROVIDER_DUPLICATE_CONTRADICTS_EVENT_IDENTITY" in link["reasons"]
+                for link in links
+            )
+            else "RESOLVED_WITH_CANDIDATES"
             if events and any(link["match_class"] == "CANDIDATE" for link in links)
             else "RESOLVED" if events
             else "CANDIDATES_ONLY" if any(link["match_class"] == "CANDIDATE" for link in links)
