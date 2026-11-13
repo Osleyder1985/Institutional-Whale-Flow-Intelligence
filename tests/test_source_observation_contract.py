@@ -74,6 +74,11 @@ class SourceObservationContractTests(unittest.TestCase):
         )
         self.assertEqual(self.schema["properties"]["contract_version"]["const"], "1.1.0")
 
+    def test_schema_rejects_malformed_network_transaction_hash(self):
+        fixture = copy.deepcopy(next(x for x in self.fixtures if x["observation_type"] == "ON_CHAIN_TRANSACTION" and x["asset"]["network_id"] == "bitcoin-mainnet"))
+        fixture["movement"]["transaction_id"] = "not-a-hash"
+        self.assertFalse(self.validator.is_valid(fixture))
+
     def test_schema_rejects_contract_log_index_for_native_eth(self):
         fixture = copy.deepcopy(next(x for x in self.fixtures if x["asset"]["network_id"] == "eip155:1" and x["observation_type"] == "ON_CHAIN_TRANSACTION"))
         fixture["movement"]["event_locator"] = {"kind": "EVM_LOG_INDEX", "value": "5"}
