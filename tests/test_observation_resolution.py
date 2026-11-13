@@ -171,6 +171,26 @@ class ObservationResolutionTests(unittest.TestCase):
         self.assertEqual(classify_observation_pair(first, second)["match_class"], "NO_MATCH")
         self.assertEqual(len(resolve_observations([first, second])["events"]), 2)
 
+    def test_invalid_event_time_fails_closed(self):
+        observation = self.by_id("btc-vout-provider-a")
+        observation["event_time_utc"] = "2026-02-30T10:00:00Z"
+        result = resolve_observations([observation])
+        self.assertEqual(result["status"], "INVALID")
+        self.assertIn("invalid event_time_utc: btc-vout-provider-a", result["errors"])
+
+    def test_non_ascii_numeric_locator_is_rejected(self):
+        observation = self.by_id("btc-vout-provider-a")
+        observation["movement"]["event_locator"]["value"] = "٠"
+        result = resolve_observations([observation])
+        self.assertEqual(result["status"], "INVALID")
+        self.assertIn("invalid event_locator for observation: btc-vout-provider-a", result["errors"])
+
+    def test_very_long_numeric_locator_normalizes_without_integer_conversion(self):
+        observation = self.by_id("btc-vout-provider-a")
+        observation["movement"]["event_locator"]["value"] = "0" * 5000 + "1"
+        event = resolve_observations([observation])["events"][0]
+        self.assertEqual(event["event_locator"]["value"], "1")
+
     def test_invalid_transaction_hash_fails_closed(self):
         observation = self.by_id("btc-vout-provider-a")
         observation["movement"]["transaction_id"] = "not-a-real-txid"
