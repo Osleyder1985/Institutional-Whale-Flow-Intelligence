@@ -1,4 +1,4 @@
-# Observation Resolution Policy v1.3.1
+# Observation Resolution Policy v1.3.2
 
 Status: proposed, deterministic policy implemented as a pure in-memory resolver; no persistence or provider integration.
 
@@ -114,6 +114,11 @@ This implementation is an in-memory policy engine and test suite only. Pairwise 
 The movement integrity validator compares transaction IDs case-insensitively, normalizes EVM addresses case-insensitively, and canonicalizes numeric protocol locator components. This allows equivalent provider encodings (for example, vout `00` versus `0`) to be validated without weakening network or event identity. Invalid or network-incompatible locators do not compare as equal.
 
 
-### Fail-closed validation of malformed input — policy 1.3.1
+### Fail-closed validation of malformed input — policy 1.3.2
 
 The resolver rejects a non-iterable observation collection, non-object source/asset/movement/quality fields, and malformed event-locator kinds before indexing or grouping. These inputs return deterministic validation errors instead of raising runtime type errors. Valid observation behavior and strong event identity rules are unchanged.
+
+
+### Non-empty identifier validation — policy 1.3.2
+
+Observation IDs, source provider/endpoint/record identifiers, duplicate references, movement IDs, source-observation references and attribution-claim references must contain at least one non-whitespace character. JSON Schema and the runtime validators enforce this boundary. Malformed identifiers fail closed and cannot be used to create arbitrary source-record links, event identities or ledger references.
