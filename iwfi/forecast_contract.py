@@ -99,10 +99,13 @@ def validate_forecast(record):
             errors.append(f"price_zones[{index}] lower_price must be <= upper_price")
         if _utc(zone["valid_from"]) >= _utc(zone["valid_until"]):
             errors.append(f"price_zones[{index}] valid_until must follow valid_from")
-        if zone["probability_status"] == "CALIBRATED" and zone["probability"] is None:
-            errors.append(f"price_zones[{index}] calibrated probability must be present")
-        if zone["probability_status"] != "CALIBRATED" and zone["probability"] is not None:
-            errors.append(f"price_zones[{index}] probability must be null unless calibrated")
+        if zone["probability_status"] == "CALIBRATED":
+            if zone["probability"] is None:
+                errors.append(f"price_zones[{index}] calibrated probability must be present")
+            if not zone["calibration_ref"]:
+                errors.append(f"price_zones[{index}] calibrated probability requires calibration_ref")
+        elif zone["probability"] is not None or zone["calibration_ref"] is not None:
+            errors.append(f"price_zones[{index}] probability and calibration_ref must be null unless calibrated")
 
     for index, estimate in enumerate(prediction["time_to_target"]):
         lower, upper = estimate["lower_seconds"], estimate["upper_seconds"]
