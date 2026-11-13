@@ -6,7 +6,7 @@ import re
 from iwfi.attribution_integrity import validate_claim_collection
 
 
-TRANSFER_FIELDS = ("amount", "unit", "from_address", "to_address", "transaction_id", "confirmation_status")
+TRANSFER_FIELDS = ("amount", "unit", "from_address", "to_address", "transaction_id", "confirmation_status", "event_locator")
 UTC_TIMESTAMP_PATTERN = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z")
 DECIMAL_AMOUNT_PATTERN = re.compile(r"(?:0|[1-9][0-9]*)(?:\.[0-9]+)?")
 
@@ -63,6 +63,40 @@ def _same_amount(left, right):
         return False
 
 
+def _normalized_event_locator(value, network_id):
+    if value is None:
+        return None
+    if not isinstance(value, dict):
+        return ("INVALID_EVENT_LOCATOR",)
+    kind = value.get("kind")
+    raw = value.get("value")
+    if not isinstance(kind, str) or not isinstance(raw, str) or not raw:
+        return ("INVALID_EVENT_LOCATOR",)
+    if network_id == "bitcoin-mainnet" and kind == "UTXO_VOUT":
+        if re.fullmatch(r"[0-9]+", raw) is None:
+            return ("INVALID_EVENT_LOCATOR",)
+        return (kind, raw.lstrip("0") or "0")
+    if network_id == "eip155:1" and kind == "EVM_TRACE_PATH":
+        parts = raw.split("/")
+        if any(re.fullmatch(r"[0-9]+", part) is None for part in parts):
+            return ("INVALID_EVENT_LOCATOR",)
+        return (kind, "/".join(part.lstrip("0") or "0" for part in parts))
+    if network_id == "eip155:1" and kind == "EVM_TX_VALUE" and raw == "transaction-value":
+        return (kind, raw)
+    return ("INVALID_EVENT_LOCATOR",)
+
+
+def _same_event_locator(left, right, network_id):
+    if left is None or right is None:
+        return left is right
+    normalized_left = _normalized_event_locator(left, network_id)
+    normalized_right = _normalized_event_locator(right, network_id)
+    return (
+        normalized_left[0] != "INVALID_EVENT_LOCATOR"
+        and normalized_left == normalized_right
+    )
+
+
 def validate_movement_integrity(movement, observations, claims, known_claim_ids=()):
     """Return deterministic integrity errors; never infer missing source facts.
 
@@ -97,10 +131,12 @@ def validate_movement_integrity(movement, observations, claims, known_claim_ids=
         movement_transfer = {}
     referenced = movement.get("source_observation_ids", [])
     if not isinstance(referenced, (list, tuple)) or any(
-        not isinstance(identifier, str) or not identifier for identifier in referenced
+        not isinstance(identifier, str) or not identifier.strip() for identifier in referenced
     ):
         errors.append("source_observation_ids must be a list of non-empty strings")
         return errors
+    if len(referenced) != len(set(referenced)):
+        errors.append("source_observation_ids must be unique")
     attribution_resolutions = movement.get("attribution_resolutions", [])
     if not isinstance(attribution_resolutions, list):
         errors.append("attribution_resolutions must be a list")
@@ -114,7 +150,7 @@ def validate_movement_integrity(movement, observations, claims, known_claim_ids=
                     errors.append(f"observations[{index}] must be an object")
                 continue
             identifier = item.get(id_field)
-            if not isinstance(identifier, str) or not identifier:
+            if not isinstance(identifier, str) or not identifier.strip():
                 errors.append(f"invalid {id_field} in evidence collection")
                 continue
             counts[identifier] = counts.get(identifier, 0) + 1
@@ -184,6 +220,18 @@ def validate_movement_integrity(movement, observations, claims, known_claim_ids=
                 ):
                     errors.append("invalid movement amount format")
                 equal = _same_amount(source_value, movement_value)
+            elif field == "event_locator":
+                if source_value is not None and _normalized_event_locator(
+                    source_value, movement_asset.get("network_id")
+                )[0] == "INVALID_EVENT_LOCATOR":
+                    errors.append(f"invalid source event_locator format: {observation_id}")
+                if movement_value is not None and _normalized_event_locator(
+                    movement_value, movement_asset.get("network_id")
+                )[0] == "INVALID_EVENT_LOCATOR":
+                    errors.append("invalid movement event_locator format")
+                equal = _same_event_locator(
+                    source_value, movement_value, movement_asset.get("network_id")
+                )
             else:
                 equal = source_value == movement_value
             if source_value is not None and movement_value is not None and not equal:
@@ -209,6 +257,9 @@ def validate_movement_integrity(movement, observations, claims, known_claim_ids=
         if all(item.get("event_time_utc") is None for item in resolved_observations):
             errors.append("movement event_time has no supporting source observation")
 
+    if movement_transfer.get("event_locator") is None:
+        errors.append("movement event_locator is required")
+
     endpoints = [
         movement_transfer.get("from_address"),
         movement_transfer.get("to_address"),
@@ -218,7 +269,7 @@ def validate_movement_integrity(movement, observations, claims, known_claim_ids=
             errors.append("attribution resolution must be an object")
             continue
         claim_id = resolution.get("claim_id")
-        if not isinstance(claim_id, str) or not claim_id:
+        if not isinstance(claim_id, str) or not claim_id.strip():
             errors.append("attribution resolution has an invalid claim_id")
             continue
         claim = claim_index.get(claim_id)
