@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://iwfi.example/schemas/forecast/v1/forecast.schema.json",
+  "$id": "https://iwfi.invalid/schemas/forecast/v1/forecast.schema.json",
   "title": "IWFI Forecast v1",
   "description": "Immutable point-in-time forecast. Synthetic examples are not market evidence.",
   "type": "object",
@@ -31,7 +31,7 @@
   },
   "$defs":{"evidence_link":{"type":"object","additionalProperties":false,"required":["evidence_ref","role","observed_at","known_at"],"properties":{"evidence_ref":{"type":"string","minLength":1},"role":{"enum":["SUPPORTS","CONTRADICTS","CONTEXT"]},"observed_at":{"type":"string","format":"date-time"},"known_at":{"type":"string","format":"date-time"}}}},
   "allOf":[
-    {"if":{"properties":{"status":{"const":"ISSUED"}}},"then":{"properties":{"abstention":{"type":"null"},"prediction":{"properties":{"direction":{"not":{"const":"UNDETERMINED"}}}}}}},
+    {"if":{"properties":{"status":{"const":"ISSUED"}}},"then":{"required":["abstention"],"properties":{"abstention":{"type":"null"},"prediction":{"properties":{"direction":{"not":{"const":"UNDETERMINED"}}}}}}},
     {"if":{"properties":{"status":{"const":"ABSTAINED"}}},"then":{"required":["abstention"],"properties":{"abstention":{"type":"object"},"prediction":{"properties":{"direction":{"const":"UNDETERMINED"}}}}}}
   ]
 }
