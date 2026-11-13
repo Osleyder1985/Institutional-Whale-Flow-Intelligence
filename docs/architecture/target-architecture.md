@@ -125,3 +125,8 @@ The engine must report these caveats alongside any interpretation they materiall
 7. Optional presentation and user-authorized alerts.
 
 No language, framework, database, hosting service, or provider is mandated by this proposal.
+
+
+## 8. Implementation roadmap
+
+The prioritized, dependency-driven sequence, exit gates and current Issue/PR register are maintained in [the IWFI implementation roadmap](../roadmap/implementation-roadmap.md). The roadmap does not authorize provider access, polling, backfill, persistence or automatic market analysis.
