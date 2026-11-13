@@ -6,7 +6,7 @@ The repository contract-test workflow runs for every pull request without path-b
 
 ## Input contract
 
-`validate_movement_integrity(movement, observations, claims, known_claim_ids=())` receives one normalized movement, a collection of source-observation records and a collection of attribution claims. It returns a list of integrity errors and does not mutate any input. Claims are checked with `validate_claim_collection` before their attribution data is used. For a partial claim batch, `known_claim_ids` identifies superseded claims already resolved in persistent history.
+`validate_movement_integrity(movement, observations, claims, known_claim_ids=())` receives one normalized movement, a collection of source-observation records and a collection of attribution claims. It returns a list of integrity errors and does not mutate any input. Claims are checked with `validate_claim_collection` before their attribution data is used. For a partial claim batch, `known_claim_ids` identifies superseded claims already resolved in persistent history; each identifier must be a non-empty, non-whitespace string.
 
 This component is deliberately provider-neutral. It consumes the canonical contracts; it does not call providers, query a blockchain, infer labels, or persist data.
 
