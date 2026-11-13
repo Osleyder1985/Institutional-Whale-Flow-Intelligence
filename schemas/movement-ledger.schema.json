@@ -133,7 +133,6 @@
             "kind": {
               "enum": [
                 "UTXO_VOUT",
-                "EVM_LOG_INDEX",
                 "EVM_TRACE_PATH",
                 "EVM_TX_VALUE"
               ]
@@ -149,8 +148,7 @@
                 "properties": {
                   "kind": {
                     "enum": [
-                      "UTXO_VOUT",
-                      "EVM_LOG_INDEX"
+                      "UTXO_VOUT"
                     ]
                   }
                 },
@@ -480,7 +478,6 @@
                 "properties": {
                   "kind": {
                     "enum": [
-                      "EVM_LOG_INDEX",
                       "EVM_TRACE_PATH",
                       "EVM_TX_VALUE"
                     ]
