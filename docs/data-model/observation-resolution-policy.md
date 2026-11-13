@@ -20,9 +20,9 @@ A strong transfer-event identity requires all of:
 
 Supported locators in this version:
 - Bitcoin: `UTXO_VOUT` (output index).
-- Ethereum: `EVM_LOG_INDEX`, `EVM_TRACE_PATH`, or `EVM_TX_VALUE` (the transaction's native-value transfer).
+- Ethereum native ETH: `EVM_TRACE_PATH` (internal call path) or `EVM_TX_VALUE` (the transaction's native-value transfer). `EVM_LOG_INDEX` is excluded because it identifies contract logs, typically token events; token asset identities are outside this contract.
 
-Transaction IDs are normalized case-insensitively because the supported identifiers are hexadecimal. Numeric locator components are canonicalized so `05` and `5` identify the same index. Original values remain in field-level evidence.
+Transaction IDs are normalized case-insensitively because the supported identifiers are hexadecimal. Numeric locator components are canonicalized so `0/05` and `0/5` identify the same trace path, and Bitcoin `UTXO_VOUT` values such as `00` and `0` identify the same output index. Original values remain in field-level evidence.
 
 A transaction hash alone is not a transfer-event identity. If the hash matches but either observation lacks a valid locator, the relationship is only a candidate. Different locators within the same transaction are distinct events.
 
