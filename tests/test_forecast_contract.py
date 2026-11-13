@@ -70,6 +70,14 @@ class ForecastContractTests(unittest.TestCase):
         target["lower_price"] = 100500
         self.assertTrue(any("NOT_ESTIMABLE bounds must be null" in error for error in validate_forecast(item)))
 
+    def test_calibrated_zone_probability_requires_calibration_reference(self):
+        item = copy.deepcopy(self.forecast)
+        zone = item["prediction"]["price_zones"][0]
+        zone["probability_status"] = "CALIBRATED"
+        zone["probability"] = 0.6
+        zone["calibration_ref"] = None
+        self.assertTrue(any("requires calibration_ref" in error for error in validate_forecast(item)))
+
     def test_forecast_rejects_inverted_price_zone(self):
         item = copy.deepcopy(self.forecast)
         item["prediction"]["price_zones"][0]["lower_price"] = 103000
