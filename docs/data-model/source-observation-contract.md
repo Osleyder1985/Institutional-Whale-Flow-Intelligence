@@ -1,4 +1,4 @@
-# IWFI Source Observation Contract v1
+# IWFI Source Observation Contract v1.1
 
 Status: proposed contract, not a production integration.
 
@@ -23,7 +23,7 @@ A source observation is an immutable record of what a source reported at a point
 | event_time_utc | Time the observation refers to | RFC 3339 UTC ending in Z; nullable only when unavailable |
 | retrieved_at_utc | Time IWFI retrieved the record | RFC 3339 UTC ending in Z |
 | observation_type | What was observed | Explicit enum; transfer is not trade |
-| movement | Transfer facts, if applicable | Amount is decimal text, never binary float |
+| movement | Transfer facts, if applicable | Amount is decimal text; event locator identifies one transfer within a transaction |
 | attributions | Claims about endpoints/entities | Each claim carries status and source |
 | quality | Validation/freshness state | Missing, delayed, duplicate and invalid remain distinct |
 | retention | Permitted storage classification | Raw payload retention is not presumed |
@@ -39,7 +39,7 @@ A token on Ethereum is not ETH. Token contracts and token identifiers require a 
 
 Version 1 allows ON_CHAIN_TRANSACTION, ADDRESS_LABEL, EXCHANGE_FLOW_METRIC, and ETF_FLOW_METRIC. Flow/ETF metrics use a separate measurement object (metric name, decimal-text value, unit, and direction); the type describes the source observation, not inferred intention.
 
-A TRANSFER movement records observed on-chain movement between addresses. It does not establish an executed spot trade, beneficial ownership change, purchase, sale, accumulation, or distribution.
+A TRANSFER movement records observed on-chain movement between addresses. Version 1.1 adds an optional protocol-specific `event_locator`: Bitcoin `UTXO_VOUT`; Ethereum `EVM_LOG_INDEX`, `EVM_TRACE_PATH`, or `EVM_TX_VALUE`. A transaction hash without an event locator does not establish the identity of one transfer event. It does not establish an executed spot trade, beneficial ownership change, purchase, sale, accumulation, or distribution.
 
 Exchange flow metrics are aggregate measurements reported by a source and are represented under measurement, not movement. Inflow is not a sale; outflow is not a purchase. Do not manufacture a trade record from either.
 
