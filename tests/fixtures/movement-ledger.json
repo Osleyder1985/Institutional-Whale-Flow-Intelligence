@@ -1,6 +1,6 @@
 [
   {
-    "contract_version": "1.0.0",
+    "contract_version": "1.1.0",
     "movement_id": "movement-btc-synthetic-001",
     "asset": {
       "asset_id": "bitcoin:btc",
@@ -16,7 +16,11 @@
       "from_address": "bc1qsource",
       "to_address": "bc1qexchangeexample",
       "transaction_id": "btc-tx-001",
-      "confirmation_status": "CONFIRMED"
+      "confirmation_status": "CONFIRMED",
+      "event_locator": {
+        "kind": "UTXO_VOUT",
+        "value": "0"
+      }
     },
     "source_observation_ids": [
       "movement-source-btc-001"
@@ -38,7 +42,7 @@
     ]
   },
   {
-    "contract_version": "1.0.0",
+    "contract_version": "1.1.0",
     "movement_id": "movement-eth-synthetic-002",
     "asset": {
       "asset_id": "ethereum:eth",
@@ -54,7 +58,11 @@
       "from_address": "0xfrom",
       "to_address": "0xto",
       "transaction_id": "0xeth002",
-      "confirmation_status": "UNKNOWN"
+      "confirmation_status": "UNKNOWN",
+      "event_locator": {
+        "kind": "EVM_TX_VALUE",
+        "value": "transaction-value"
+      }
     },
     "source_observation_ids": [
       "movement-source-eth-002"
