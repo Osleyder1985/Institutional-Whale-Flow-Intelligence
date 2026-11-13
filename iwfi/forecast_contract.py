@@ -176,11 +176,27 @@ def validate_forecast_outcome(record, forecast=None):
         for index, event in enumerate(record[collection_name]):
             observed_at = event["first_observed_at"]
             observed_price = event["first_observed_price"]
+            crossing = event["crossing_interval"]
             if event["result"] in ("REACHED", "TOUCHED"):
                 if observed_at is None or observed_price is None:
                     errors.append(f"{collection_name}[{index}] confirmed event requires observed time and price")
-            if event["result"] == "CROSSED_BY_GAP" and not event["gap_crossed"]:
-                errors.append(f"{collection_name}[{index}] CROSSED_BY_GAP requires gap_crossed=true")
+                if crossing is not None or event["gap_crossed"]:
+                    errors.append(f"{collection_name}[{index}] exact touch cannot also be marked as a gap crossing")
+            if event["result"] == "CROSSED_BY_GAP":
+                if not event["gap_crossed"] or crossing is None:
+                    errors.append(f"{collection_name}[{index}] CROSSED_BY_GAP requires a gap flag and crossing interval")
+                elif observed_at is not None or observed_price is not None:
+                    errors.append(f"{collection_name}[{index}] gap crossing cannot claim an exact first-touch time or price")
+                else:
+                    before = _utc(crossing["last_observed_before"]["observed_at"])
+                    after = _utc(crossing["first_observed_after"]["observed_at"])
+                    if before is None or after is None or before >= after:
+                        errors.append(f"{collection_name}[{index}] crossing interval timestamps must be ordered UTC values")
+            elif crossing is not None:
+                errors.append(f"{collection_name}[{index}] crossing_interval must be null unless crossed by a gap")
+            if event["result"] == "NOT_REACHED":
+                if status != "COMPLETE" or end != expected_end or quality["status"] != "PASS":
+                    errors.append(f"{collection_name}[{index}] NOT_REACHED requires a fully observed horizon")
 
     if forecast is not None:
         if not isinstance(forecast, dict):
