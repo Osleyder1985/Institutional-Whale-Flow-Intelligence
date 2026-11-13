@@ -1,0 +1,489 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://iwfi.invalid/schemas/entity-attribution-claim.schema.json",
+  "title": "IWFI Entity Attribution Claim",
+  "description": "Append-only, evidence-backed, time-scoped attribution claim. Not legal identity proof.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "claim_id",
+    "subject",
+    "predicate",
+    "object",
+    "epistemic_status",
+    "claim_source",
+    "supporting_evidence",
+    "counter_evidence",
+    "recorded_at_utc",
+    "valid_from_utc",
+    "valid_to_utc",
+    "supersedes_claim_id",
+    "review_status",
+    "rationale"
+  ],
+  "properties": {
+    "contract_version": {
+      "const": "1.0.0"
+    },
+    "claim_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "subject": {
+      "$ref": "#/$defs/subject"
+    },
+    "predicate": {
+      "enum": [
+        "LABELLED_AS",
+        "CONTROLLED_BY",
+        "OPERATED_BY",
+        "ASSOCIATED_WITH",
+        "MEMBER_OF",
+        "CUSTODIED_BY"
+      ]
+    },
+    "object": {
+      "$ref": "#/$defs/object"
+    },
+    "epistemic_status": {
+      "enum": [
+        "VERIFIED",
+        "PROVIDER_LABELLED",
+        "INFERRED",
+        "UNKNOWN",
+        "DISPUTED"
+      ]
+    },
+    "claim_source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provider",
+        "endpoint",
+        "record_id",
+        "observation_ids"
+      ],
+      "properties": {
+        "provider": {
+          "type": "string",
+          "minLength": 1
+        },
+        "endpoint": {
+          "type": "string",
+          "minLength": 1
+        },
+        "record_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "observation_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "supporting_evidence": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/evidence"
+      },
+      "uniqueItems": true
+    },
+    "counter_evidence": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/evidence"
+      },
+      "uniqueItems": true
+    },
+    "recorded_at_utc": {
+      "$ref": "#/$defs/utcTimestamp"
+    },
+    "valid_from_utc": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/utcTimestamp"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "valid_to_utc": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/utcTimestamp"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "supersedes_claim_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "review_status": {
+      "enum": [
+        "UNREVIEWED",
+        "REVIEWED",
+        "DISPUTED"
+      ]
+    },
+    "rationale": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "$defs": {
+    "utcTimestamp": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\\\d{4}-\\\\d{2}-\\\\d{2}T\\\\d{2}:\\\\d{2}:\\\\d{2}Z$"
+    },
+    "subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "subject_type",
+        "subject_id",
+        "network_id"
+      ],
+      "properties": {
+        "subject_type": {
+          "enum": [
+            "ADDRESS",
+            "ENTITY"
+          ]
+        },
+        "subject_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "network_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "object": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "object_type",
+        "object_id",
+        "network_id"
+      ],
+      "properties": {
+        "object_type": {
+          "enum": [
+            "ADDRESS",
+            "ENTITY",
+            "CLASSIFICATION"
+          ]
+        },
+        "object_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "network_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_type",
+        "evidence_ref",
+        "source",
+        "observation_id"
+      ],
+      "properties": {
+        "evidence_type": {
+          "enum": [
+            "PROVIDER_RECORD",
+            "OFFICIAL_PUBLICATION",
+            "ON_CHAIN_OBSERVATION",
+            "PUBLIC_DISCLOSURE",
+            "OTHER"
+          ]
+        },
+        "evidence_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1
+        },
+        "observation_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "subject": {
+            "properties": {
+              "subject_type": {
+                "const": "ADDRESS"
+              }
+            },
+            "required": [
+              "subject_type"
+            ]
+          }
+        },
+        "required": [
+          "subject"
+        ]
+      },
+      "then": {
+        "properties": {
+          "subject": {
+            "properties": {
+              "network_id": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "subject": {
+            "properties": {
+              "subject_type": {
+                "const": "ENTITY"
+              }
+            },
+            "required": [
+              "subject_type"
+            ]
+          }
+        },
+        "required": [
+          "subject"
+        ]
+      },
+      "then": {
+        "properties": {
+          "subject": {
+            "properties": {
+              "network_id": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "object": {
+            "properties": {
+              "object_type": {
+                "const": "ADDRESS"
+              }
+            },
+            "required": [
+              "object_type"
+            ]
+          }
+        },
+        "required": [
+          "object"
+        ]
+      },
+      "then": {
+        "properties": {
+          "object": {
+            "properties": {
+              "network_id": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "object": {
+            "properties": {
+              "object_type": {
+                "enum": [
+                  "ENTITY",
+                  "CLASSIFICATION"
+                ]
+              }
+            },
+            "required": [
+              "object_type"
+            ]
+          }
+        },
+        "required": [
+          "object"
+        ]
+      },
+      "then": {
+        "properties": {
+          "object": {
+            "properties": {
+              "network_id": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "predicate": {
+            "const": "LABELLED_AS"
+          }
+        },
+        "required": [
+          "predicate"
+        ]
+      },
+      "then": {
+        "properties": {
+          "object": {
+            "properties": {
+              "object_type": {
+                "const": "CLASSIFICATION"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "predicate": {
+            "enum": [
+              "CONTROLLED_BY",
+              "OPERATED_BY",
+              "ASSOCIATED_WITH",
+              "MEMBER_OF",
+              "CUSTODIED_BY"
+            ]
+          }
+        },
+        "required": [
+          "predicate"
+        ]
+      },
+      "then": {
+        "properties": {
+          "object": {
+            "properties": {
+              "object_type": {
+                "const": "ENTITY"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "epistemic_status": {
+            "const": "VERIFIED"
+          }
+        },
+        "required": [
+          "epistemic_status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "review_status": {
+            "const": "REVIEWED"
+          },
+          "supporting_evidence": {
+            "minItems": 1
+          },
+          "counter_evidence": {
+            "maxItems": 0
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "epistemic_status": {
+            "const": "INFERRED"
+          }
+        },
+        "required": [
+          "epistemic_status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "supporting_evidence": {
+            "minItems": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "epistemic_status": {
+            "const": "DISPUTED"
+          }
+        },
+        "required": [
+          "epistemic_status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "review_status": {
+            "const": "DISPUTED"
+          },
+          "counter_evidence": {
+            "minItems": 1
+          }
+        }
+      }
+    }
+  ]
+}
