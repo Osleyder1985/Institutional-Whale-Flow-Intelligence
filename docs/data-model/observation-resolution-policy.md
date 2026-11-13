@@ -1,4 +1,4 @@
-# Observation Resolution Policy v1.0.0
+# Observation Resolution Policy v1.1.0
 
 Status: proposed, deterministic policy implemented as a pure in-memory resolver; no persistence or provider integration.
 
@@ -68,7 +68,19 @@ This relationship is distinct from provider record ID + payload-hash repeat/revi
 
 Distinct transaction IDs or distinct event locators remain distinct events even when amounts, endpoints or times are similar. Fan-in, fan-out, batches, parent/child transfers and possible common economic operations are not inferred or aggregated by this policy. They require a separate evidence-backed relationship model.
 
-## 8. Resolution states and analytical eligibility
+## 8. Source quality, historical evidence and analytical eligibility
+
+Source quality is not a single real-time freshness or trust score. This policy distinguishes:
+
+- `VALID`: source observation passes the provider/ingestion quality checks.
+- `PARTIAL`: observation is usable for the fields it actually contains; missing values remain missing.
+- `DELAYED`: observation arrived late but may still support historical reconstruction. Its delayed status is preserved in field-level evidence. It does not establish that the event was available to a real-time monitor at event time.
+- `DUPLICATE`: observation is retained and linked for audit, but is excluded from event field evidence, resolved values and the event's contributing `observation_ids`. Its ID is exposed separately as `excluded_observation_ids` when it shares a strong event identity with an event supported by other observations. A duplicate alone cannot create an event or make it analytically eligible.
+- `INVALID` / `QUARANTINED`: retained as adverse quality evidence and make the event ineligible.
+
+Only `VALID`, `PARTIAL` and `DELAYED` observations may contribute event fields. The Movement Ledger validator accepts the same set as source observations. A delayed observation is admissible for historical integrity validation, not proof of real-time availability. This contract defines no freshness threshold or real-time eligibility state; consumers requiring real-time monitoring must apply a separately specified and tested freshness policy.
+
+## 9. Resolution states and analytical eligibility
 
 Each strong event receives:
 - `COMPLETE`: all required analytical fields, including confirmation status, have one unambiguous value.
@@ -76,9 +88,9 @@ Each strong event receives:
 - `CONTRADICTORY`: at least one field has conflicting non-null values.
 - `INVALID`: at least one source is invalid/quarantined.
 
-Only `COMPLETE` events with `confirmation_status=CONFIRMED` and no material conflicts are `ELIGIBLE`. `PENDING` or `UNKNOWN` confirmation is `INELIGIBLE` with an explicit reason. Other states are also `INELIGIBLE`. A candidate link does not create an event and is not eligible for event-level analytics. Eligibility does not establish institutional attribution, trade direction, or buy/sell intent.
+Only `COMPLETE` events with `confirmation_status=CONFIRMED` and no material conflicts are `ELIGIBLE`. `DUPLICATE` observations never contribute to that completeness decision; `DELAYED` observations may contribute to historical completeness with their quality status preserved. `PENDING` or `UNKNOWN` confirmation is `INELIGIBLE` with an explicit reason. Other states are also `INELIGIBLE`. A candidate link does not create an event and is not eligible for event-level analytics. Eligibility does not establish institutional attribution, trade direction, or buy/sell intent.
 
-## 9. Determinism and audit
+## 10. Determinism and audit
 
 The resolver:
 - sorts observations, links, evidence and events deterministically;
@@ -92,11 +104,11 @@ The resolver:
 
 Reprocessing identical inputs with the same policy version and supersession context is idempotent. Changing the superseded decision reference changes the decision-context fingerprint and decision ID even when the observation input fingerprint is unchanged. Policy changes require a policy-version change and therefore produce a distinct decision ID.
 
-## 10. Scope and limitations
+## 11. Scope and limitations
 
 This implementation is an in-memory policy engine and test suite only. Pairwise work can still grow inside a large same-transaction or same-candidate bucket; production-scale performance has not been benchmarked. It does not persist observations or decisions, assign a canonical event in a database, implement provider adapters, resolve chain reorganizations/finality, infer common control, group transfers economically, or generate whale metrics/signals. Unsupported or absent event locators remain unresolved candidates rather than being guessed.
 
 
-## 11. Cross-contract normalization
+## 12. Cross-contract normalization
 
 The movement integrity validator compares transaction IDs case-insensitively, normalizes EVM addresses case-insensitively, and canonicalizes numeric protocol locator components. This allows equivalent provider encodings (for example, vout `00` versus `0`) to be validated without weakening network or event identity. Invalid or network-incompatible locators do not compare as equal.
