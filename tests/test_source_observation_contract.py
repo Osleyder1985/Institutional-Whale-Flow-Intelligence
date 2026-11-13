@@ -79,6 +79,11 @@ class SourceObservationContractTests(unittest.TestCase):
         fixture["movement"]["transaction_id"] = "not-a-hash"
         self.assertFalse(self.validator.is_valid(fixture))
 
+    def test_schema_requires_duplicate_status_when_duplicate_reference_is_present(self):
+        fixture = copy.deepcopy(next(x for x in self.fixtures if x["observation_type"] == "ON_CHAIN_TRANSACTION"))
+        fixture["quality"]["duplicate_of"] = "canonical-observation"
+        self.assertFalse(self.validator.is_valid(fixture))
+
     def test_schema_rejects_contract_log_index_for_native_eth(self):
         fixture = copy.deepcopy(next(x for x in self.fixtures if x["asset"]["network_id"] == "eip155:1" and x["observation_type"] == "ON_CHAIN_TRANSACTION"))
         fixture["movement"]["event_locator"] = {"kind": "EVM_LOG_INDEX", "value": "5"}
