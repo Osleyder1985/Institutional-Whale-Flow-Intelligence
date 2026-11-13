@@ -1,7 +1,10 @@
-"""Focused stdlib contract checks; not a full JSON Schema validator."""
+"""Contract invariants plus full Draft 2020-12 fixture validation."""
+import copy
 import json
 import re
 import unittest
+
+from jsonschema import Draft202012Validator, FormatChecker
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
@@ -21,6 +24,48 @@ class SourceObservationContractTests(unittest.TestCase):
     def setUpClass(cls):
         cls.schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
         cls.fixtures = json.loads(FIXTURE_PATH.read_text(encoding="utf-8"))
+        Draft202012Validator.check_schema(cls.schema)
+        cls.validator = Draft202012Validator(cls.schema, format_checker=FormatChecker())
+
+    def test_all_fixtures_validate_against_draft_2020_12_schema(self):
+        for fixture in self.fixtures:
+            errors = list(self.validator.iter_errors(fixture))
+            self.assertEqual(
+                errors,
+                [],
+                f"{fixture['observation_id']} failed schema validation: "
+                + "; ".join(error.message for error in errors),
+            )
+
+    def test_schema_rejects_asset_symbol_network_mismatch(self):
+        fixture = copy.deepcopy(self.fixtures[0])
+        fixture["asset"]["symbol"] = "ETH"
+        self.assertFalse(self.validator.is_valid(fixture))
+
+    def test_schema_rejects_transfer_unit_mismatch(self):
+        fixture = copy.deepcopy(self.fixtures[0])
+        fixture["movement"]["unit"] = "ETH"
+        self.assertFalse(self.validator.is_valid(fixture))
+
+    def test_schema_rejects_exchange_flow_encoded_as_movement(self):
+        fixture = copy.deepcopy(next(
+            x for x in self.fixtures if x["observation_type"] == "EXCHANGE_FLOW_METRIC"
+        ))
+        fixture["movement"] = None
+        self.assertFalse(self.validator.is_valid(fixture))
+
+    def test_schema_rejects_non_utc_timestamp(self):
+        fixture = copy.deepcopy(self.fixtures[0])
+        fixture["retrieved_at_utc"] = "2026-11-11T10:00:03+00:00"
+        self.assertFalse(self.validator.is_valid(fixture))
+
+    def test_schema_rejects_raw_retention_while_terms_are_pending(self):
+        fixture = copy.deepcopy(self.fixtures[0])
+        fixture["retention"] = {
+            "retention_classification": "UNKNOWN_PENDING_TERMS",
+            "raw_payload_retained": True,
+        }
+        self.assertFalse(self.validator.is_valid(fixture))
 
     def test_schema_is_draft_2020_12_and_versioned(self):
         self.assertEqual(
