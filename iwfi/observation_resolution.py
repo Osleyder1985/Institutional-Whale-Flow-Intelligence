@@ -177,7 +177,17 @@ def _source_record_relation(left, right):
         return "NONE"
     if left_key != right_key:
         return "NONE"
-    if ls.get("payload_sha256") == rs.get("payload_sha256"):
+    left_hash = ls.get("payload_sha256")
+    right_hash = rs.get("payload_sha256")
+    valid_hashes = all(
+        isinstance(value, str)
+        and len(value) == 64
+        and all(character in "0123456789abcdef" for character in value)
+        for value in (left_hash, right_hash)
+    )
+    if not valid_hashes:
+        return "SAME_RECORD_HASH_UNAVAILABLE"
+    if left_hash == right_hash:
         return "EXACT_REPEAT"
     return "SAME_RECORD_DIFFERENT_PAYLOAD"
 
@@ -309,6 +319,18 @@ def resolve_observations(observations, supersedes_decision_id=None):
         if not isinstance(item, dict) or item.get("observation_type") != "ON_CHAIN_TRANSACTION":
             errors.append(f"observation is not ON_CHAIN_TRANSACTION: {identifier}")
             continue
+        source = item.get("source") or {}
+        if not isinstance(source.get("provider"), str) or not source["provider"].strip():
+            errors.append(f"invalid source provider: {identifier}")
+        if not isinstance(source.get("endpoint"), str) or not source["endpoint"].strip():
+            errors.append(f"invalid source endpoint: {identifier}")
+        payload_hash = source.get("payload_sha256")
+        if (
+            not isinstance(payload_hash, str)
+            or len(payload_hash) != 64
+            or any(character not in "0123456789abcdef" for character in payload_hash)
+        ):
+            errors.append(f"invalid source payload_sha256: {identifier}")
         asset = item.get("asset") or {}
         movement = item.get("movement") or {}
         network_id = asset.get("network_id")
