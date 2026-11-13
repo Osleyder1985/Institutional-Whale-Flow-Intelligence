@@ -58,8 +58,8 @@ If an exact repeat of the same provider record and payload claims two different 
 The observation-level `quality.duplicate_of` field is preserved as an explicit provider/ingestion assertion and emitted as a separate observation link when its target is present in the resolution input. It never overrides transaction/event identity.
 
 - If the referenced observation has the same strong event identity, the duplicate assertion is consistent with the on-chain identity.
-- If both observations have strong but different event identities, the resolver retains both events and marks the decision `RESOLVED_WITH_RELATION_CONFLICTS`; it does not merge them.
-- If the target is not part of the current input, the original observation retains the external reference; no identity is inferred.
+- A `DUPLICATE` observation is excluded from event field evidence and cannot create an event by itself. If it shares the target's strong identity, its ID is retained in that event's `excluded_observation_ids`; if it claims a different strong identity or network, the conflicting relation remains visible and the decision is marked `RESOLVED_WITH_RELATION_CONFLICTS`. The duplicate's claimed identity is not promoted to a second event unless independently supported by a non-duplicate observation.
+- If the target is not part of the current input, the original observation retains the external reference; no identity is inferred and the duplicate cannot independently create an event.
 - A duplicate observation must reference a non-empty, different observation ID.
 
 This relationship is distinct from provider record ID + payload-hash repeat/revision detection.
