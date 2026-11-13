@@ -8,7 +8,7 @@ import re
 from datetime import datetime
 
 
-POLICY_VERSION = "1.3.1"
+POLICY_VERSION = "1.3.2"
 TRANSFER_FIELDS = (
     "asset_id",
     "network_id",
@@ -185,7 +185,7 @@ def _candidate_signature_keys(observation):
 def _source_record_key(observation):
     source = observation.get("source") or {}
     parts = (source.get("provider"), source.get("endpoint"), source.get("record_id"))
-    if all(isinstance(part, str) and part for part in parts):
+    if all(isinstance(part, str) and part.strip() for part in parts):
         return parts
     return None
 
@@ -209,7 +209,7 @@ def _source_record_relation(left, right):
     rs = right.get("source") or {}
     left_key = (ls.get("provider"), ls.get("endpoint"), ls.get("record_id"))
     right_key = (rs.get("provider"), rs.get("endpoint"), rs.get("record_id"))
-    if not all(isinstance(part, str) and part for part in left_key):
+    if not all(isinstance(part, str) and part.strip() for part in left_key):
         return "NONE"
     if left_key != right_key:
         return "NONE"
@@ -385,7 +385,7 @@ def resolve_observations(observations, supersedes_decision_id=None):
             errors.append(f"observation[{index}] must be an object")
             continue
         identifier = item.get("observation_id")
-        if not isinstance(identifier, str) or not identifier:
+        if not isinstance(identifier, str) or not identifier.strip():
             errors.append("observation_id must be a non-empty string")
         else:
             ids.append(identifier)
