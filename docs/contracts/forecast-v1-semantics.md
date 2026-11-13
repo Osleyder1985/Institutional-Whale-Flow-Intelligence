@@ -57,7 +57,7 @@ Zone/target bounds are inclusive and must satisfy lower_price <= upper_price. `v
 
 A target or zone does not imply an executable order, fill, or guaranteed touch. If observed prices jump across a target between samples, Outcome must record `CROSSED_BY_GAP`; it must not claim a fill at the target price.
 
-Probability attached to a zone is optional and must be null unless its meaning and calibration method are explicit. The schema carries `probability_status` to distinguish calibrated, uncalibrated and unquantified values.
+Probability attached to a zone is optional and must be null unless its meaning and calibration method are explicit. A calibrated zone probability requires a non-empty `calibration_ref`; uncalibrated or unquantified zone probabilities and calibration references must both be null. The schema carries `probability_status` to distinguish calibrated, uncalibrated and unquantified values.
 
 ## 6. Scenario probabilities
 
