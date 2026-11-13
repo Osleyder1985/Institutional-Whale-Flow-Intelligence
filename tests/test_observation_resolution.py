@@ -60,11 +60,12 @@ class ObservationResolutionTests(unittest.TestCase):
         second = copy.deepcopy(first)
         second["observation_id"] = "eth-second-log"
         second["movement"]["event_locator"] = {"kind": "EVM_LOG_INDEX", "value": "6"}
+        second["source"]["payload_sha256"] = "f" * 64
         result = resolve_observations([first, second])
         self.assertEqual(len(result["events"]), 2)
         self.assertEqual(len(result["links"]), 1)
         self.assertEqual(result["links"][0]["match_class"], "NO_MATCH")
-        self.assertEqual(result["links"][0]["source_record_relation"], "EXACT_REPEAT")
+        self.assertEqual(result["links"][0]["source_record_relation"], "SAME_RECORD_DIFFERENT_PAYLOAD")
         self.assertIn("DIFFERENT_EVENT_LOCATOR", result["links"][0]["reasons"])
 
     def test_same_transaction_hash_on_different_networks_is_not_a_match(self):
