@@ -170,6 +170,42 @@ class ObservationResolutionTests(unittest.TestCase):
             result["errors"],
         )
 
+    def test_conflicting_origin_destination_and_event_time_are_reported_by_field(self):
+        mutations = (
+            ("from_address", lambda item: item["movement"].__setitem__("from_address", "bc1qother-source"), "movement"),
+            ("to_address", lambda item: item["movement"].__setitem__("to_address", "bc1qother-destination"), "movement"),
+            ("event_time_utc", lambda item: item.__setitem__("event_time_utc", "2026-11-10T10:00:01Z"), "root"),
+        )
+        for field, mutate, _scope in mutations:
+            with self.subTest(field=field):
+                first = self.by_id("btc-vout-provider-a")
+                second = self.by_id("btc-vout-provider-b")
+                mutate(second)
+                event = resolve_observations([first, second])["events"][0]
+                self.assertIn(field, event["field_conflicts"])
+                self.assertEqual(event["analytical_eligibility"], "INELIGIBLE")
+
+    def test_invalid_asset_network_combination_fails_closed(self):
+        observation = self.by_id("btc-vout-provider-a")
+        observation["asset"]["asset_id"] = "ethereum:eth"
+        result = resolve_observations([observation])
+        self.assertEqual(result["status"], "INVALID")
+        self.assertIn(
+            "invalid asset/network identity: btc-vout-provider-a",
+            result["errors"],
+        )
+
+    def test_same_provider_record_with_changed_payload_is_a_revision_not_repeat(self):
+        first = self.by_id("btc-vout-provider-a")
+        revised = copy.deepcopy(first)
+        revised["observation_id"] = "btc-vout-provider-a-revision"
+        revised["source"]["payload_sha256"] = "f" * 64
+        link = classify_observation_pair(first, revised)
+        self.assertEqual(link["match_class"], "STRONG_MATCH")
+        self.assertEqual(link["source_record_relation"], "SAME_RECORD_DIFFERENT_PAYLOAD")
+        self.assertIn("SAME_PROVIDER_RECORD_WITH_CHANGED_PAYLOAD", link["reasons"])
+        self.assertEqual(len(resolve_observations([first, revised])["events"]), 1)
+
     def test_missing_is_not_zero_and_remains_missing_without_support(self):
         first = self.by_id("btc-vout-provider-a")
         first["movement"]["amount"] = None
