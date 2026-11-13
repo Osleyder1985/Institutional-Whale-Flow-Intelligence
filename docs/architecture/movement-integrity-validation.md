@@ -16,8 +16,9 @@ For every referenced `source_observation_id`, the validator requires:
 - Its quality is not `INVALID`, `QUARANTINED`, or `DUPLICATE`. A duplicate must be resolved to its canonical observation before ledger construction.
 - Asset ID, symbol and network match the movement.
 - It contains a `TRANSFER` movement.
-- Any source facts that are present (amount, addresses, transaction ID and event time) do not conflict with the normalized movement.
+- Any source facts that are present (amount, unit, addresses, transaction ID, confirmation status and event time) do not conflict with the normalized movement.
 - A known source fact cannot be dropped, and a movement fact cannot be populated when all referenced sources lack that fact.
+- Only source quality states `VALID` and `PARTIAL` are admissible; unrecognized states fail closed.
 - A non-null movement event time must be supported by at least one referenced observation with a matching event time.
 
 Amounts are compared with decimal arithmetic, never binary floating point. Different textual decimal representations with equal numeric value are accepted; the stored source and ledger strings remain unchanged.
