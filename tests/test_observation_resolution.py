@@ -108,13 +108,21 @@ class ObservationResolutionTests(unittest.TestCase):
         duplicate["quality"]["status"] = "DUPLICATE"
         duplicate["quality"]["duplicate_of"] = original["observation_id"]
         result = resolve_observations([original, duplicate])
-        self.assertEqual(len(result["events"]), 1)
+        self.assertEqual(len(result["events"]), 2)
         self.assertEqual(result["status"], "RESOLVED_WITH_RELATION_CONFLICTS")
         self.assertEqual(result["links"][0]["match_class"], "NO_MATCH")
         self.assertIn(
             "PROVIDER_DUPLICATE_CONTRADICTS_EVENT_IDENTITY",
             result["links"][0]["reasons"],
         )
+        self.assertTrue(all(event["analytical_eligibility"] == "INELIGIBLE" for event in result["events"]))
+        self.assertTrue(all(event["resolution_status"] == "CONTRADICTORY" for event in result["events"]))
+        self.assertTrue(all(
+            "CONTRADICTORY_EVENT_IDENTITY_RELATION" in event["eligibility_reasons"]
+            for event in result["events"]
+        ))
+        self.assertTrue(any(event["excluded_observation_ids"] == ["btc-false-duplicate-claim"] for event in result["events"]))
+        self.assertEqual(len({event["event_id"] for event in result["events"]}), 2)
 
     def test_provider_duplicate_claim_across_networks_is_a_visible_conflict(self):
         btc = self.by_id("btc-vout-provider-a")
@@ -421,6 +429,12 @@ class ObservationResolutionTests(unittest.TestCase):
             result["links"][0]["reasons"],
         )
         self.assertEqual(result["status"], "RESOLVED_WITH_RELATION_CONFLICTS")
+        self.assertTrue(all(event["analytical_eligibility"] == "INELIGIBLE" for event in result["events"]))
+        self.assertTrue(all(event["resolution_status"] == "CONTRADICTORY" for event in result["events"]))
+        self.assertTrue(all(
+            "CONTRADICTORY_EVENT_IDENTITY_RELATION" in event["eligibility_reasons"]
+            for event in result["events"]
+        ))
 
     def test_same_provider_record_with_changed_payload_is_a_revision_not_repeat(self):
         first = self.by_id("btc-vout-provider-a")
