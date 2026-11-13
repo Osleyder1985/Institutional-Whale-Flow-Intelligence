@@ -26,12 +26,12 @@ def resolve_temporal_status(event_time_utc, valid_from_utc, valid_to_utc, claim_
         return "TIME_UNRESOLVED"
     if event.tzinfo is None or (start is not None and start.tzinfo is None) or (end is not None and end.tzinfo is None):
         return "TIME_UNRESOLVED"
-    if start is not None and event < start:
-        return "NOT_YET_VALID"
-    if end is not None and event > end:
-        return "EXPIRED_AT_EVENT_TIME"
-    if start is None and end is None:
+    if start is None or end is None:
         return "TIME_UNRESOLVED"
+    if event < start:
+        return "NOT_YET_VALID"
+    if event > end:
+        return "EXPIRED_AT_EVENT_TIME"
     return "VALID_AT_EVENT_TIME"
 
 
