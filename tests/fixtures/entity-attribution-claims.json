@@ -36,7 +36,11 @@
     "valid_to_utc": null,
     "supersedes_claim_id": null,
     "review_status": "UNREVIEWED",
-    "rationale": "Provider A labels the address as an exchange; this is not independent identity verification."
+    "rationale": "Provider A labels the address as an exchange; this is not independent identity verification.",
+    "review": {
+      "reviewer_id": null,
+      "reviewed_at_utc": null
+    }
   },
   {
     "contract_version": "1.0.0",
@@ -73,7 +77,11 @@
     "valid_to_utc": null,
     "supersedes_claim_id": null,
     "review_status": "REVIEWED",
-    "rationale": "Synthetic example of a reviewed operator claim supported by an official publication explicitly naming the service and address."
+    "rationale": "Synthetic example of a reviewed operator claim supported by an official publication explicitly naming the service and address.",
+    "review": {
+      "reviewer_id": "synthetic-reviewer-claim-verified-operator-002",
+      "reviewed_at_utc": "2026-11-13T03:05:00Z"
+    }
   },
   {
     "contract_version": "1.0.0",
@@ -119,7 +127,11 @@
     "valid_to_utc": null,
     "supersedes_claim_id": null,
     "review_status": "DISPUTED",
-    "rationale": "Two providers return incompatible wallet classifications; neither label is promoted to verified identity."
+    "rationale": "Two providers return incompatible wallet classifications; neither label is promoted to verified identity.",
+    "review": {
+      "reviewer_id": "synthetic-reviewer-claim-conflict-003",
+      "reviewed_at_utc": "2026-11-13T03:10:00Z"
+    }
   },
   {
     "contract_version": "1.0.0",
@@ -149,7 +161,11 @@
     "valid_to_utc": null,
     "supersedes_claim_id": null,
     "review_status": "UNREVIEWED",
-    "rationale": "No sufficient evidence is available to attribute this address."
+    "rationale": "No sufficient evidence is available to attribute this address.",
+    "review": {
+      "reviewer_id": null,
+      "reviewed_at_utc": null
+    }
   },
   {
     "contract_version": "1.0.0",
@@ -186,7 +202,11 @@
     "valid_to_utc": "2025-12-31T23:59:59Z",
     "supersedes_claim_id": null,
     "review_status": "REVIEWED",
-    "rationale": "Historical relationship with a bounded validity period."
+    "rationale": "Historical relationship with a bounded validity period.",
+    "review": {
+      "reviewer_id": "synthetic-reviewer-claim-temporal-old-005",
+      "reviewed_at_utc": "2026-11-13T03:20:00Z"
+    }
   },
   {
     "contract_version": "1.0.0",
@@ -223,6 +243,10 @@
     "valid_to_utc": null,
     "supersedes_claim_id": "claim-temporal-old-005",
     "review_status": "REVIEWED",
-    "rationale": "Later claim supersedes the previous temporal assertion without rewriting it."
+    "rationale": "Later claim supersedes the previous temporal assertion without rewriting it.",
+    "review": {
+      "reviewer_id": "synthetic-reviewer-claim-temporal-new-006",
+      "reviewed_at_utc": "2026-11-13T03:25:00Z"
+    }
   }
 ]
