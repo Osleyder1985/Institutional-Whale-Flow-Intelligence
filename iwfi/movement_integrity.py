@@ -122,6 +122,8 @@ def validate_movement_integrity(movement, observations, claims, known_claim_ids=
         if report_duplicates:
             for identifier in duplicates:
                 errors.append(f"duplicate {id_field}: {identifier}")
+        # Duplicate IDs are ambiguous and must never resolve to an arbitrary
+        # record, regardless of whether this helper reports the duplicate.
         duplicate_set = set(duplicates)
         return {
             item[id_field]: item
