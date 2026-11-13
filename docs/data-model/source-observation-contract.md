@@ -39,7 +39,7 @@ A token on Ethereum is not ETH. Token contracts and token identifiers require a 
 
 Version 1.1 retains ON_CHAIN_TRANSACTION, ADDRESS_LABEL, EXCHANGE_FLOW_METRIC, and ETF_FLOW_METRIC. Flow/ETF metrics use a separate measurement object (metric name, decimal-text value, unit, and direction); the type describes the source observation, not inferred intention.
 
-A TRANSFER movement records observed on-chain movement between addresses. Version 1.1 adds an optional protocol-specific `event_locator`: Bitcoin `UTXO_VOUT`; Ethereum `EVM_LOG_INDEX`, `EVM_TRACE_PATH`, or `EVM_TX_VALUE`. A transaction hash without an event locator does not establish the identity of one transfer event. It does not establish an executed spot trade, beneficial ownership change, purchase, sale, accumulation, or distribution.
+A TRANSFER movement records observed on-chain movement between addresses. Version 1.1 adds an optional protocol-specific `event_locator`: Bitcoin `UTXO_VOUT`; Ethereum native ETH `EVM_TRACE_PATH` or `EVM_TX_VALUE`; contract `EVM_LOG_INDEX` is excluded until token assets have their own asset identity. A transaction hash without an event locator does not establish the identity of one transfer event. It does not establish an executed spot trade, beneficial ownership change, purchase, sale, accumulation, or distribution.
 
 Exchange flow metrics are aggregate measurements reported by a source and are represented under measurement, not movement. Inflow is not a sale; outflow is not a purchase. Do not manufacture a trade record from either.
 
