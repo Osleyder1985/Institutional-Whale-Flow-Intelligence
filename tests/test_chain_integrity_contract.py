@@ -69,9 +69,16 @@ class ChainIntegrityContractTests(unittest.TestCase):
             if scenario["network_id"] == "bitcoin-mainnet":
                 self.assertNotEqual(scenario["expected_assessment"], "FINALIZED")
 
+    def test_bitcoin_schema_rejects_finality_checkpoint(self):
+        record = {"observation_id": "b", "network_id": "bitcoin-mainnet", "source": {"kind": "SELF_HOSTED_NODE", "source_id": "n", "method": "getblock"}, "transaction_id": "a" * 64, "observation_kind": "FINALITY_CHECKPOINT", "observed_at_utc": "2026-11-13T12:00:00Z", "inclusion": {"block_height": 1, "block_hash": "b" * 64}, "source_asserted_head_tag": "finalized"}
+        self.assertTrue(list(self.validator.iter_errors(record)))
+
     def test_eth_finalized_assessment_requires_finalized_tag_evidence(self):
         scenario = next(x for x in self.scenarios if x["expected_assessment"] == "FINALIZED")
-        self.assertTrue(any(x.get("source_asserted_head_tag") == "finalized" for x in scenario["observations"]))
+        checkpoint = next(x for x in scenario["observations"] if x["observation_kind"] == "FINALITY_CHECKPOINT")
+        inclusion = next(x for x in scenario["observations"] if x["observation_kind"] == "BLOCK_INCLUDED")
+        self.assertEqual(checkpoint.get("source_asserted_head_tag"), "finalized")
+        self.assertGreaterEqual(checkpoint["inclusion"]["block_height"], inclusion["inclusion"]["block_height"])
 
 
 if __name__ == "__main__":

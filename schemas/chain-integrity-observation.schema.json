@@ -272,6 +272,62 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "properties": {
+          "network_id": {
+            "const": "bitcoin-mainnet"
+          }
+        },
+        "required": [
+          "network_id"
+        ]
+      },
+      "then": {
+        "properties": {
+          "observation_kind": {
+            "not": {
+              "const": "FINALITY_CHECKPOINT"
+            }
+          },
+          "source_asserted_head_tag": {
+            "enum": [
+              "latest",
+              null
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "observation_kind": {
+            "const": "FINALITY_CHECKPOINT"
+          }
+        },
+        "required": [
+          "observation_kind"
+        ]
+      },
+      "then": {
+        "properties": {
+          "network_id": {
+            "const": "eip155:1"
+          },
+          "source_asserted_head_tag": {
+            "const": "finalized"
+          },
+          "inclusion": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "source_asserted_head_tag",
+          "inclusion"
+        ]
+      }
     }
   ]
 }
