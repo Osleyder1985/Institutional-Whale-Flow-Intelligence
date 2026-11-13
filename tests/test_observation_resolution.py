@@ -474,3 +474,50 @@ class ObservationResolutionTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+    def test_delayed_observation_is_historical_evidence_not_a_realtime_assertion(self):
+        observation = self.by_id("btc-vout-provider-a")
+        observation["quality"]["status"] = "DELAYED"
+        event = resolve_observations([observation])["events"][0]
+        self.assertEqual(event["analytical_eligibility"], "ELIGIBLE")
+        self.assertEqual(
+            event["field_evidence"]["amount"][0]["evidence"][0]["quality_status"],
+            "DELAYED",
+        )
+
+    def test_duplicate_observation_is_excluded_from_event_evidence(self):
+        original = self.by_id("btc-vout-provider-a")
+        duplicate = copy.deepcopy(original)
+        duplicate["observation_id"] = "btc-vout-provider-a-duplicate"
+        duplicate["quality"] = {"status": "DUPLICATE", "duplicate_of": original["observation_id"]}
+        result = resolve_observations([original, duplicate])
+        self.assertEqual(len(result["events"]), 1)
+        event = result["events"][0]
+        self.assertEqual(event["observation_ids"], [original["observation_id"]])
+        self.assertEqual(event["excluded_observation_ids"], [duplicate["observation_id"]])
+        self.assertEqual(event["analytical_eligibility"], "ELIGIBLE")
+        self.assertEqual(
+            event["field_evidence"]["amount"][0]["evidence"][0]["observation_id"],
+            original["observation_id"],
+        )
+
+    def test_duplicate_observation_alone_cannot_create_an_event(self):
+        duplicate = self.by_id("btc-vout-provider-a")
+        duplicate["quality"] = {"status": "DUPLICATE", "duplicate_of": "not-in-input"}
+        result = resolve_observations([duplicate])
+        self.assertEqual(result["events"], [])
+        self.assertEqual(result["status"], "CANDIDATES_ONLY" if result["links"] else "INSUFFICIENT_EVIDENCE")
+
+    def test_valid_and_delayed_sources_can_complement_historical_event(self):
+        valid = self.by_id("btc-vout-provider-a")
+        delayed = self.by_id("btc-vout-provider-b")
+        delayed["quality"]["status"] = "DELAYED"
+        valid["movement"]["amount"] = None
+        event = resolve_observations([valid, delayed])["events"][0]
+        self.assertEqual(event["resolved_fields"]["amount"], "1")
+        self.assertEqual(event["analytical_eligibility"], "ELIGIBLE")
+        self.assertEqual(
+            {entry["quality_status"] for entry in event["field_evidence"]["amount"][0]["evidence"]},
+            {"VALID", "DELAYED"},
+        )
