@@ -289,6 +289,8 @@ def classify_observation_pair(left, right):
     source_relation = _source_record_relation(left, right)
     if source_relation == "EXACT_REPEAT":
         reasons.append("SAME_PROVIDER_RECORD_AND_PAYLOAD")
+        if left_event is not None and right_event is not None and left_event != right_event:
+            reasons.append("SOURCE_RECORD_REPEAT_CONTRADICTS_EVENT_IDENTITY")
     elif source_relation == "SAME_RECORD_DIFFERENT_PAYLOAD":
         reasons.append("SAME_PROVIDER_RECORD_WITH_CHANGED_PAYLOAD")
 
@@ -572,8 +574,12 @@ def resolve_observations(observations, supersedes_decision_id=None):
         "status": (
             "RESOLVED_WITH_RELATION_CONFLICTS"
             if any(
-                "PROVIDER_DUPLICATE_CONTRADICTS_EVENT_IDENTITY" in link["reasons"]
+                reason in link["reasons"]
                 for link in links
+                for reason in (
+                    "PROVIDER_DUPLICATE_CONTRADICTS_EVENT_IDENTITY",
+                    "SOURCE_RECORD_REPEAT_CONTRADICTS_EVENT_IDENTITY",
+                )
             )
             else "RESOLVED_WITH_CANDIDATES"
             if events and any(link["match_class"] == "CANDIDATE" for link in links)
