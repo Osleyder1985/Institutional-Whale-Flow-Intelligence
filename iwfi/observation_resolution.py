@@ -467,10 +467,15 @@ def resolve_observations(observations, supersedes_decision_id=None):
         if locator is not None:
             locator_kind = locator.get("kind") if isinstance(locator, dict) else None
             normalized_locator = _normalized_field("event_locator", locator, network_id)
+            network_locator_kinds = (
+                LOCATOR_KINDS.get(network_id, set())
+                if isinstance(network_id, str)
+                else set()
+            )
             if (
                 not isinstance(locator, dict)
                 or not isinstance(locator_kind, str)
-                or locator_kind not in LOCATOR_KINDS.get(network_id, set())
+                or locator_kind not in network_locator_kinds
                 or not isinstance(normalized_locator, tuple)
                 or normalized_locator[0] == "INVALID_LOCATOR"
             ):
