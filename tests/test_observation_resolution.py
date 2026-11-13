@@ -131,11 +131,11 @@ class ObservationResolutionTests(unittest.TestCase):
         self.assertIn("DIFFERENT_EVENT_LOCATOR", link["reasons"])
         self.assertEqual(len(resolve_observations([first, second])["events"]), 2)
 
-    def test_eth_transaction_can_contain_distinct_log_events(self):
+    def test_eth_transaction_can_contain_distinct_internal_trace_events(self):
         first = self.by_id("eth-log-provider-a")
         second = copy.deepcopy(first)
         second["observation_id"] = "eth-second-log"
-        second["movement"]["event_locator"] = {"kind": "EVM_LOG_INDEX", "value": "6"}
+        second["movement"]["event_locator"] = {"kind": "EVM_TRACE_PATH", "value": "0/6"}
         second["source"]["payload_sha256"] = "f" * 64
         result = resolve_observations([first, second])
         self.assertEqual(len(result["events"]), 2)
@@ -243,6 +243,16 @@ class ObservationResolutionTests(unittest.TestCase):
         self.assertEqual(event["resolution_status"], "INVALID")
         self.assertIsNone(event["resolved_fields"]["amount"])
         self.assertEqual(event["analytical_eligibility"], "INELIGIBLE")
+
+    def test_contract_log_index_is_rejected_for_native_eth_asset(self):
+        observation = self.by_id("eth-log-provider-a")
+        observation["movement"]["event_locator"] = {"kind": "EVM_LOG_INDEX", "value": "5"}
+        result = resolve_observations([observation])
+        self.assertEqual(result["status"], "INVALID")
+        self.assertIn(
+            "invalid event_locator for observation: eth-log-provider-a",
+            result["errors"],
+        )
 
     def test_invalid_event_locator_fails_closed(self):
         observation = self.by_id("btc-vout-provider-a")
