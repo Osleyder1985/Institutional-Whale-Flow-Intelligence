@@ -282,5 +282,42 @@
       "retention_classification": "UNKNOWN_PENDING_TERMS",
       "raw_payload_retained": false
     }
+  },
+  {
+    "contract_version": "1.0.0",
+    "observation_id": "fixture-exchange-inflow",
+    "source": {
+      "provider": "vendor-flow",
+      "endpoint": "exchange-flows",
+      "record_id": "flow-001",
+      "payload_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+      "schema_version": "2026-11"
+    },
+    "asset": {
+      "asset_id": "bitcoin:btc",
+      "symbol": "BTC",
+      "network_id": "bitcoin-mainnet"
+    },
+    "event_time_utc": "2026-11-11T13:00:00Z",
+    "retrieved_at_utc": "2026-11-11T13:02:00Z",
+    "observation_type": "EXCHANGE_FLOW_METRIC",
+    "measurement": {
+      "metric_name": "exchange_inflow",
+      "value": "42.75",
+      "unit": "BTC",
+      "direction": "IN"
+    },
+    "attributions": [],
+    "quality": {
+      "status": "VALID",
+      "notes": [
+        "aggregate_provider_metric"
+      ],
+      "duplicate_of": null
+    },
+    "retention": {
+      "retention_classification": "UNKNOWN_PENDING_TERMS",
+      "raw_payload_retained": false
+    }
   }
 ]
