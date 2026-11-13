@@ -93,6 +93,11 @@ class MovementLedgerContractTests(unittest.TestCase):
         item["transfer"]["event_locator"] = {"kind": "EVM_LOG_INDEX", "value": "1"}
         self.assertFalse(self.validator.is_valid(item))
 
+    def test_schema_rejects_event_locator_for_wrong_network(self):
+        item = copy.deepcopy(self.fixtures[0])
+        item["transfer"]["event_locator"] = {"kind": "EVM_LOG_INDEX", "value": "1"}
+        self.assertFalse(self.validator.is_valid(item))
+
     def test_schema_rejects_trade_type(self):
         item = copy.deepcopy(self.fixtures[0])
         item["transfer"]["movement_type"] = "TRADE"
