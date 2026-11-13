@@ -58,12 +58,12 @@ Distinct transaction IDs or distinct event locators remain distinct events even 
 ## 7. Resolution states and analytical eligibility
 
 Each strong event receives:
-- `COMPLETE`: all required analytical fields have one unambiguous value.
+- `COMPLETE`: all required analytical fields, including confirmation status, have one unambiguous value.
 - `PARTIAL`: one or more required fields remain missing.
 - `CONTRADICTORY`: at least one field has conflicting non-null values.
 - `INVALID`: at least one source is invalid/quarantined.
 
-Only `COMPLETE` events with no material conflicts are `ELIGIBLE`. Other states are `INELIGIBLE`. A candidate link does not create an event and is not eligible for event-level analytics. Eligibility does not establish institutional attribution, trade direction, or buy/sell intent.
+Only `COMPLETE` events with `confirmation_status=CONFIRMED` and no material conflicts are `ELIGIBLE`. `PENDING` or `UNKNOWN` confirmation is `INELIGIBLE` with an explicit reason. Other states are also `INELIGIBLE`. A candidate link does not create an event and is not eligible for event-level analytics. Eligibility does not establish institutional attribution, trade direction, or buy/sell intent.
 
 ## 8. Determinism and audit
 
@@ -72,7 +72,7 @@ The resolver:
 - derives a SHA-256 input fingerprint and decision ID from canonical JSON and the policy version;
 - produces the same result for the same inputs regardless of input order;
 - performs no I/O, persistence, provider calls, wallet clustering or probabilistic inference;
-- accepts an optional previous decision ID for explicit supersession without overwriting prior output.
+- accepts an optional previous decision ID for explicit supersession without overwriting prior output;\n- rejects unknown source-quality states and invalid asset/network combinations.
 
 Reprocessing identical inputs is idempotent. Policy changes require a policy-version change and therefore produce a distinct decision ID.
 
