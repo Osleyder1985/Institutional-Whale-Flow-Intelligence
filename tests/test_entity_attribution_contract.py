@@ -2,7 +2,6 @@
 import copy
 import json
 import unittest
-from datetime import datetime
 from pathlib import Path
 
 from jsonschema import Draft202012Validator, FormatChecker
