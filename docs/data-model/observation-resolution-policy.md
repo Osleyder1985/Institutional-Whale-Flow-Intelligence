@@ -60,7 +60,7 @@ The observation-level `quality.duplicate_of` field is preserved as an explicit p
 - If the referenced observation has the same strong event identity, the duplicate assertion is consistent with the on-chain identity.
 - A `DUPLICATE` observation is excluded from event field evidence and cannot create an event by itself. If its strong event identity matches the target but any non-null field contradicts the target, the event is marked `CONTRADICTORY` and becomes analytically ineligible; exclusion must not hide contradictory source data. If it shares the target's strong identity, its ID is retained in that event's `excluded_observation_ids`; if it claims a different strong identity or network, the conflicting relation remains visible and the decision is marked `RESOLVED_WITH_RELATION_CONFLICTS`. The duplicate's claimed identity is not promoted to a second event unless independently supported by a non-duplicate observation.
 - If the target is not part of the current input, the original observation retains the external reference; no identity is inferred and the duplicate cannot independently create an event.
-- A duplicate observation must reference a non-empty, different observation ID.
+- A duplicate observation must reference a non-empty, different observation ID. The `quality.duplicate_of` field must be null unless `quality.status=DUPLICATE`; a populated duplicate reference with any other quality status is invalid.
 
 This relationship is distinct from provider record ID + payload-hash repeat/revision detection.
 
