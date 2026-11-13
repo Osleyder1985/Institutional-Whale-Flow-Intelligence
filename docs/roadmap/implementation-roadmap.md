@@ -107,6 +107,6 @@ Execution is dependency-driven, not calendar-driven. No dates, durations, budget
 | Provider due diligence | #3 | #5 | Official documentation reviewed; no provider approved; account and sample validation pending |
 | Main-branch governance | #4 | — | Ruleset active; required status checks and strict up-to-date requirement missing |
 | Source-observation contract | #6 | #7 | CI verified; PR open |
-| Address/entity claims | #8 | #9 | CI 49 tests passed; PR open |
-| Movement Ledger | #10 | #11 | CI 98 tests passed; PR Draft |
-| Observation resolution | #12 | #13 | CI 173 tests passed; PR Draft |
+| Address/entity claims | #8 | #9 | CI 52 tests passed; PR open |
+| Movement Ledger | #10 | #11 | CI 101 tests passed; PR Draft |
+| Observation resolution | #12 | #13 | CI 177 tests passed; PR Draft |
