@@ -77,9 +77,9 @@ Time-to-target bounds are seconds from the forecast horizon start and must satis
 
 Outcome records distinguish:
 - reached/touched within observed data;
-- not reached by the end of a fully observed horizon;
-- censored because observation ended early or coverage is incomplete;
-- crossed by a data gap, where exact first-touch time/price is unknown;
+- not reached by the end of a fully observed horizon (event-level right-censoring at horizon end for time-to-event analysis);
+- censored because observation ended early or coverage is incomplete (record-level censoring);
+- crossed by a data gap, where exact first-touch time/price is unknown and the last pre-gap / first post-gap observations are retained as an interval-censoring bracket;
 - unassessable due to invalid or insufficient reference data.
 
 ## 8. Outcome price path
@@ -87,7 +87,7 @@ Outcome records distinguish:
 Outcome prices must use the same instrument/venue/quote currency as the forecast reference, unless a documented mapping/benchmark is part of the evaluation protocol. Record source references and gaps.
 
 - `max_favorable_excursion_pct` and `max_adverse_excursion_pct` are computed relative to the forecast's direction and declared reference price; the evaluator version must define the exact formula.
-- A gap crossing a target/zone is not a trade execution.
+- A gap crossing a target/zone is not a trade execution. The outcome schema records the pre-gap and post-gap observation bracket; it must not claim an exact touch time or price.
 - If coverage is incomplete, use `PARTIAL` or `CENSORED`; do not fill missing observations with fabricated values.
 - Metrics are versioned and carry explicit units.
 
