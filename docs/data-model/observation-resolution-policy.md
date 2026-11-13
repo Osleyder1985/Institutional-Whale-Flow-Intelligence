@@ -1,4 +1,4 @@
-# Observation Resolution Policy v1.2.0
+# Observation Resolution Policy v1.3.0
 
 Status: proposed, deterministic policy implemented as a pure in-memory resolver; no persistence or provider integration.
 
@@ -41,7 +41,7 @@ A transaction hash alone is not a transfer-event identity. If the hash matches b
 Only observations with a strong event identity are grouped. Within such a group:
 - Missing values may be complemented by a unique, non-null value from another observation.
 - Every value retains its observation ID and provider provenance.
-- Decimal amounts are compared exactly using `Decimal`; equivalent decimal formatting is not a conflict. Amount text must follow the source contract's canonical non-negative decimal notation; exponent notation, leading plus signs and non-canonical leading zeroes are invalid.
+- Decimal amounts are compared exactly using `Decimal`; equivalent decimal formatting is not a conflict. Amount text must follow the source contract's canonical non-negative decimal notation; exponent notation, leading plus signs and non-canonical leading zeroes are invalid. Invalid decimal values are excluded from candidate-field matching and make their source observation invalid for resolution.
 - Conflicting non-null values remain separately visible by field. No average, preferred-provider rule, or arbitrary winner is applied.
 - A contradictory event is ineligible for quantitative analysis.
 
