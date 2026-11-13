@@ -625,7 +625,9 @@ class ObservationResolutionTests(unittest.TestCase):
         second["movement"]["to_address"] = "bc1qdifferent-destination"
         second["event_time_utc"] = "2026-11-10T11:00:00Z"
         result = resolve_observations([first, second])
-        self.assertEqual(result["links"], [])
+        self.assertEqual(len(result["links"]), 1)
+        self.assertEqual(result["links"][0]["match_class"], "NO_MATCH")
+        self.assertIn("INSUFFICIENT_SHARED_EVIDENCE", result["links"][0]["reasons"])
         self.assertEqual(result["events"], [])
         self.assertEqual(result["status"], "INSUFFICIENT_EVIDENCE")
 
