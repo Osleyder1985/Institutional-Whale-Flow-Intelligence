@@ -1,0 +1,24 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://iwfi.example/schemas/forecast/v1/forecast-outcome.schema.json",
+  "title":"IWFI ForecastOutcome v1",
+  "description":"Append-only evaluation of a Forecast. It never mutates the original forecast.",
+  "type":"object",
+  "additionalProperties":false,
+  "required":["schema_version","outcome_id","forecast_id","status","observation_window","reference_market","observed_path","target_events","zone_events","metrics","data_quality","provenance"],
+  "properties":{
+    "schema_version":{"const":"1.0.0"},
+    "outcome_id":{"type":"string","minLength":1},
+    "forecast_id":{"type":"string","minLength":1},
+    "supersedes_outcome_id":{"type":["string","null"]},
+    "status":{"enum":["COMPLETE","PARTIAL","CENSORED","UNASSESSABLE"]},
+    "observation_window":{"type":"object","additionalProperties":false,"required":["start","end","expected_end"],"properties":{"start":{"type":"string","format":"date-time"},"end":{"type":"string","format":"date-time"},"expected_end":{"type":"string","format":"date-time"}}},
+    "reference_market":{"type":"object","additionalProperties":false,"required":["instrument","venue","price_source_ref","quote_currency"],"properties":{"instrument":{"type":"string","minLength":1},"venue":{"type":"string","minLength":1},"price_source_ref":{"type":"string","minLength":1},"quote_currency":{"type":"string","minLength":1}}},
+    "observed_path":{"type":"object","additionalProperties":false,"required":["start_price","end_price","high_price","low_price","max_favorable_excursion_pct","max_adverse_excursion_pct","observations_ref"],"properties":{"start_price":{"type":"number","exclusiveMinimum":0},"end_price":{"type":["number","null"],"exclusiveMinimum":0},"high_price":{"type":["number","null"],"exclusiveMinimum":0},"low_price":{"type":["number","null"],"exclusiveMinimum":0},"max_favorable_excursion_pct":{"type":["number","null"]},"max_adverse_excursion_pct":{"type":["number","null"]},"observations_ref":{"type":"string","minLength":1}}},
+    "target_events":{"type":"array","items":{"type":"object","additionalProperties":false,"required":["target_ref","result","first_observed_at","first_observed_price","gap_crossed"],"properties":{"target_ref":{"type":"string","minLength":1},"result":{"enum":["REACHED","NOT_REACHED","CROSSED_BY_GAP","UNASSESSABLE"]},"first_observed_at":{"type":["string","null"],"format":"date-time"},"first_observed_price":{"type":["number","null"],"exclusiveMinimum":0},"gap_crossed":{"type":"boolean"},"notes":{"type":["string","null"]}}}},
+    "zone_events":{"type":"array","items":{"type":"object","additionalProperties":false,"required":["zone_ref","result","first_observed_at","first_observed_price","gap_crossed"],"properties":{"zone_ref":{"type":"string","minLength":1},"result":{"enum":["TOUCHED","NOT_TOUCHED","CROSSED_BY_GAP","UNASSESSABLE"]},"first_observed_at":{"type":["string","null"],"format":"date-time"},"first_observed_price":{"type":["number","null"],"exclusiveMinimum":0},"gap_crossed":{"type":"boolean"}}}},
+    "metrics":{"type":"array","items":{"type":"object","additionalProperties":false,"required":["metric_id","metric_version","value","unit"],"properties":{"metric_id":{"type":"string","minLength":1},"metric_version":{"type":"string","minLength":1},"value":{"type":["number","null"]},"unit":{"type":"string","minLength":1},"notes":{"type":["string","null"]}}}},
+    "data_quality":{"type":"object","additionalProperties":false,"required":["status","coverage_ratio","missing_intervals"],"properties":{"status":{"enum":["PASS","DEGRADED","FAIL"]},"coverage_ratio":{"type":["number","null"],"minimum":0,"maximum":1},"missing_intervals":{"type":"array","items":{"type":"object","additionalProperties":false,"required":["start","end"],"properties":{"start":{"type":"string","format":"date-time"},"end":{"type":"string","format":"date-time"}}}}}},
+    "provenance":{"type":"object","additionalProperties":false,"required":["outcome_evaluator_version","price_data_source_refs","evaluation_protocol_version","evaluated_at"],"properties":{"outcome_evaluator_version":{"type":"string","minLength":1},"price_data_source_refs":{"type":"array","items":{"type":"string"}},"evaluation_protocol_version":{"type":"string","minLength":1},"evaluated_at":{"type":"string","format":"date-time"}}}
+  }
+}
