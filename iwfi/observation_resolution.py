@@ -92,7 +92,7 @@ def _normalized_field(field, value, network_id):
         raw = value.get("value")
         if not isinstance(kind, str) or not isinstance(raw, str) or not raw:
             return ("INVALID_LOCATOR", _canonical_json(value))
-        if kind in {"UTXO_VOUT", "EVM_LOG_INDEX"}:
+        if kind == "UTXO_VOUT":
             if not raw.isdigit():
                 return ("INVALID_LOCATOR", _canonical_json(value))
             raw = str(int(raw))
