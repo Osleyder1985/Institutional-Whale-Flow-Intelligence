@@ -92,6 +92,24 @@ class MovementIntegrityTests(unittest.TestCase):
         movement["transfer"]["event_locator"] = {"kind": "EVM_TRACE_PATH", "value": "0/5"}
         self.assertEqual(validate_movement_integrity(movement, observations, self.claims), [])
 
+    def test_invalid_event_time_is_rejected_by_ledger_integrity(self):
+        movement = copy.deepcopy(self.movements[0])
+        observations = copy.deepcopy(self.observations)
+        source_id = movement["source_observation_ids"][0]
+        source = next(item for item in observations if item["observation_id"] == source_id)
+        source["event_time_utc"] = "2026-02-30T10:00:00Z"
+        errors = validate_movement_integrity(movement, observations, self.claims)
+        self.assertTrue(any("invalid source event_time_utc" in error for error in errors))
+
+    def test_non_ascii_numeric_locator_is_not_canonically_equal(self):
+        movement = copy.deepcopy(self.movements[0])
+        observations = copy.deepcopy(self.observations)
+        source_id = movement["source_observation_ids"][0]
+        source = next(item for item in observations if item["observation_id"] == source_id)
+        source["movement"]["event_locator"]["value"] = "٠"
+        errors = validate_movement_integrity(movement, observations, self.claims)
+        self.assertTrue(any("event_locator mismatch" in error for error in errors))
+
     def test_malformed_source_transaction_id_is_rejected(self):
         movement = copy.deepcopy(self.movements[0])
         observations = copy.deepcopy(self.observations)
