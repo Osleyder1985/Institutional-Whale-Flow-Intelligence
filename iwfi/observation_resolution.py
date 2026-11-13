@@ -334,6 +334,10 @@ def resolve_observations(observations, supersedes_decision_id=None):
                 errors.append(f"invalid event_locator for observation: {identifier}")
     duplicate_ids = sorted(identifier for identifier in set(ids) if ids.count(identifier) > 1)
     errors.extend(f"duplicate observation_id: {identifier}" for identifier in duplicate_ids)
+    if supersedes_decision_id is not None and (
+        not isinstance(supersedes_decision_id, str) or not supersedes_decision_id.strip()
+    ):
+        errors.append("supersedes_decision_id must be null or a non-empty string")
 
     canonical_items = sorted(
         items,
@@ -343,15 +347,22 @@ def resolve_observations(observations, supersedes_decision_id=None):
         ),
     )
     fingerprint = hashlib.sha256(_canonical_json(canonical_items).encode("utf-8")).hexdigest()
-    decision_id = "decision-" + hashlib.sha256(
-        f"{POLICY_VERSION}:{fingerprint}".encode("utf-8")
-    ).hexdigest()[:32]
+    decision_context = {
+        "policy_version": POLICY_VERSION,
+        "input_fingerprint": fingerprint,
+        "supersedes_decision_id": supersedes_decision_id,
+    }
+    decision_context_fingerprint = hashlib.sha256(
+        _canonical_json(decision_context).encode("utf-8")
+    ).hexdigest()
+    decision_id = "decision-" + decision_context_fingerprint[:32]
 
     if errors:
         return {
             "decision_id": decision_id,
             "policy_version": POLICY_VERSION,
             "input_fingerprint": fingerprint,
+            "decision_context_fingerprint": decision_context_fingerprint,
             "supersedes_decision_id": supersedes_decision_id,
             "status": "INVALID",
             "errors": sorted(set(errors)),
@@ -488,6 +499,7 @@ def resolve_observations(observations, supersedes_decision_id=None):
         "decision_id": decision_id,
         "policy_version": POLICY_VERSION,
         "input_fingerprint": fingerprint,
+        "decision_context_fingerprint": decision_context_fingerprint,
         "supersedes_decision_id": supersedes_decision_id,
         "status": (
             "RESOLVED_WITH_CANDIDATES"
