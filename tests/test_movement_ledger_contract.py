@@ -88,6 +88,11 @@ class MovementLedgerContractTests(unittest.TestCase):
         item["attribution_resolutions"][0]["temporal_status"] = "VALID_AT_EVENT_TIME"
         self.assertFalse(self.validator.is_valid(item))
 
+    def test_schema_requires_event_locator_for_canonical_movement(self):
+        item = copy.deepcopy(self.fixtures[0])
+        item["transfer"].pop("event_locator")
+        self.assertFalse(self.validator.is_valid(item))
+
     def test_schema_rejects_event_locator_for_wrong_network(self):
         item = copy.deepcopy(self.fixtures[0])
         item["transfer"]["event_locator"] = {"kind": "EVM_LOG_INDEX", "value": "1"}
