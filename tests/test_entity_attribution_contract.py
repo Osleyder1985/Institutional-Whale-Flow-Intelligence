@@ -188,6 +188,16 @@ class EntityAttributionContractTests(unittest.TestCase):
         errors = validate_claim_collection(self.claims, known_claim_ids="not-a-collection")
         self.assertIn("known_claim_ids must be an iterable of non-empty claim IDs", errors)
 
+    def test_claim_collection_handles_long_supersession_history_iteratively(self):
+        claims = [
+            {
+                "claim_id": f"claim-{index:04d}",
+                "supersedes_claim_id": None if index == 0 else f"claim-{index - 1:04d}",
+            }
+            for index in range(1500)
+        ]
+        self.assertEqual(validate_claim_collection(claims), [])
+
     def test_claim_collection_rejects_invalid_claim_identity(self):
         self.assertIn(
             "claims[0] has an invalid claim_id",
