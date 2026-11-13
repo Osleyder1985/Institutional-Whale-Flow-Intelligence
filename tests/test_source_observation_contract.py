@@ -87,6 +87,14 @@ class SourceObservationContractTests(unittest.TestCase):
                 self.assertNotIn("side", item)
                 self.assertNotIn("buy_sell", item)
 
+    def test_exchange_inflow_is_a_metric_not_a_trade(self):
+        item = next(x for x in self.fixtures if x["observation_type"] == "EXCHANGE_FLOW_METRIC")
+        self.assertEqual(item["measurement"]["direction"], "IN")
+        self.assertEqual(item["measurement"]["metric_name"], "exchange_inflow")
+        self.assertNotIn("trade", item)
+        self.assertNotIn("side", item)
+        self.assertNotIn("buy_sell", item)
+
     def test_delayed_observation_preserves_both_times(self):
         item = next(x for x in self.fixtures if x["quality"]["status"] == "DELAYED")
         self.assertNotEqual(item["event_time_utc"], item["retrieved_at_utc"])
