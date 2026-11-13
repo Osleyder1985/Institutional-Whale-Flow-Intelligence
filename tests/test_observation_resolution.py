@@ -144,6 +144,14 @@ class ObservationResolutionTests(unittest.TestCase):
         self.assertEqual(result["links"][0]["source_record_relation"], "SAME_RECORD_DIFFERENT_PAYLOAD")
         self.assertIn("DIFFERENT_EVENT_LOCATOR", result["links"][0]["reasons"])
 
+    def test_eth_provider_trace_paths_normalize_to_one_native_transfer(self):
+        first = self.by_id("eth-log-provider-a")
+        second = self.by_id("eth-log-provider-b")
+        result = resolve_observations([first, second])
+        self.assertEqual(len(result["events"]), 1)
+        self.assertEqual(result["events"][0]["event_locator"], {"kind": "EVM_TRACE_PATH", "value": "0/5"})
+        self.assertEqual(result["links"][0]["match_class"], "STRONG_MATCH")
+
     def test_same_transaction_hash_on_different_networks_is_not_a_match(self):
         btc = self.by_id("btc-vout-provider-a")
         eth = self.by_id("eth-log-provider-a")
