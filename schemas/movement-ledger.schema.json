@@ -18,20 +18,47 @@
     "limitations"
   ],
   "properties": {
-    "contract_version": { "const": "1.0.0" },
-    "movement_id": { "type": "string", "minLength": 1 },
+    "contract_version": {
+      "const": "1.0.0"
+    },
+    "movement_id": {
+      "type": "string",
+      "minLength": 1
+    },
     "asset": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["asset_id", "symbol", "network_id"],
+      "required": [
+        "asset_id",
+        "symbol",
+        "network_id"
+      ],
       "properties": {
-        "asset_id": { "enum": ["bitcoin:btc", "ethereum:eth"] },
-        "symbol": { "enum": ["BTC", "ETH"] },
-        "network_id": { "enum": ["bitcoin-mainnet", "eip155:1"] }
+        "asset_id": {
+          "enum": [
+            "bitcoin:btc",
+            "ethereum:eth"
+          ]
+        },
+        "symbol": {
+          "enum": [
+            "BTC",
+            "ETH"
+          ]
+        },
+        "network_id": {
+          "enum": [
+            "bitcoin-mainnet",
+            "eip155:1"
+          ]
+        }
       }
     },
     "event_time_utc": {
-      "type": ["string", "null"],
+      "type": [
+        "string",
+        "null"
+      ],
       "format": "date-time",
       "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
     },
@@ -43,59 +70,270 @@
     "transfer": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["movement_type", "amount", "unit", "from_address", "to_address", "transaction_id", "confirmation_status"],
+      "required": [
+        "movement_type",
+        "amount",
+        "unit",
+        "from_address",
+        "to_address",
+        "transaction_id",
+        "confirmation_status"
+      ],
       "properties": {
-        "movement_type": { "const": "TRANSFER" },
-        "amount": { "type": ["string", "null"], "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$" },
-        "unit": { "enum": ["BTC", "ETH"] },
-        "from_address": { "type": ["string", "null] },
-        "to_address": { "type": ["string", "null] },
-        "transaction_id": { "type": ["string", "null] },
-        "confirmation_status": { "enum": ["CONFIRMED", "PENDING", "UNKNOWN"] }
+        "movement_type": {
+          "const": "TRANSFER"
+        },
+        "amount": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+        },
+        "unit": {
+          "enum": [
+            "BTC",
+            "ETH"
+          ]
+        },
+        "from_address": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "to_address": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "transaction_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "confirmation_status": {
+          "enum": [
+            "CONFIRMED",
+            "PENDING",
+            "UNKNOWN"
+          ]
+        }
       }
     },
     "source_observation_ids": {
       "type": "array",
       "minItems": 1,
       "uniqueItems": true,
-      "items": { "type": "string", "minLength": 1 }
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
     },
     "attribution_resolutions": {
       "type": "array",
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["claim_id", "address", "predicate", "object_type", "object_id", "epistemic_status", "temporal_status"],
+        "required": [
+          "claim_id",
+          "address",
+          "predicate",
+          "object_type",
+          "object_id",
+          "epistemic_status",
+          "temporal_status"
+        ],
         "properties": {
-          "claim_id": { "type": "string", "minLength": 1 },
-          "address": { "type": "string", "minLength": 1 },
-          "predicate": { "enum": ["LABELLED_AS", "CONTROLLED_BY", "OPERATED_BY", "ASSOCIATED_WITH", "MEMBER_OF", "CUSTODIED_BY"] },
-          "object_type": { "enum": ["ENTITY", "CLASSIFICATION"] },
-          "object_id": { "type": "string", "minLength": 1 },
-          "epistemic_status": { "enum": ["VERIFIED", "PROVIDER_LABELLED", "INFERRED", "UNKNOWN", "DISPUTED"] },
-          "temporal_status": { "enum": ["VALID_AT_EVENT_TIME", "NOT_YET_VALID", "EXPIRED_AT_EVENT_TIME", "TIME_UNRESOLVED", "CLAIM_NOT_FOUND"] }
+          "claim_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "address": {
+            "type": "string",
+            "minLength": 1
+          },
+          "predicate": {
+            "enum": [
+              "LABELLED_AS",
+              "CONTROLLED_BY",
+              "OPERATED_BY",
+              "ASSOCIATED_WITH",
+              "MEMBER_OF",
+              "CUSTODIED_BY"
+            ]
+          },
+          "object_type": {
+            "enum": [
+              "ENTITY",
+              "CLASSIFICATION"
+            ]
+          },
+          "object_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "epistemic_status": {
+            "enum": [
+              "VERIFIED",
+              "PROVIDER_LABELLED",
+              "INFERRED",
+              "UNKNOWN",
+              "DISPUTED"
+            ]
+          },
+          "temporal_status": {
+            "enum": [
+              "VALID_AT_EVENT_TIME",
+              "NOT_YET_VALID",
+              "EXPIRED_AT_EVENT_TIME",
+              "TIME_UNRESOLVED",
+              "CLAIM_NOT_FOUND"
+            ]
+          }
         }
       }
     },
-    "quality_status": { "enum": ["VALID", "PARTIAL", "QUARANTINED"] },
-    "limitations": { "type": "array", "items": { "type": "string" } }
+    "quality_status": {
+      "enum": [
+        "VALID",
+        "PARTIAL",
+        "QUARANTINED"
+      ]
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
   },
   "allOf": [
     {
-      "if": { "properties": { "asset": { "properties": { "asset_id": { "const": "bitcoin:btc" } }, "required": ["asset_id"] } }, "required": ["asset"] },
-      "then": { "properties": { "asset": { "properties": { "symbol": { "const": "BTC" }, "network_id": { "const": "bitcoin-mainnet" } } }, "transfer": { "properties": { "unit": { "const": "BTC" } } } } }
+      "if": {
+        "properties": {
+          "asset": {
+            "properties": {
+              "asset_id": {
+                "const": "bitcoin:btc"
+              }
+            },
+            "required": [
+              "asset_id"
+            ]
+          }
+        },
+        "required": [
+          "asset"
+        ]
+      },
+      "then": {
+        "properties": {
+          "asset": {
+            "properties": {
+              "symbol": {
+                "const": "BTC"
+              },
+              "network_id": {
+                "const": "bitcoin-mainnet"
+              }
+            }
+          },
+          "transfer": {
+            "properties": {
+              "unit": {
+                "const": "BTC"
+              }
+            }
+          }
+        }
+      }
     },
     {
-      "if": { "properties": { "asset": { "properties": { "asset_id": { "const": "ethereum:eth" } }, "required": ["asset_id"] } }, "required": ["asset"] },
-      "then": { "properties": { "asset": { "properties": { "symbol": { "const": "ETH" }, "network_id": { "const": "eip155:1" } } }, "transfer": { "properties": { "unit": { "const": "ETH" } } } }
+      "if": {
+        "properties": {
+          "asset": {
+            "properties": {
+              "asset_id": {
+                "const": "ethereum:eth"
+              }
+            },
+            "required": [
+              "asset_id"
+            ]
+          }
+        },
+        "required": [
+          "asset"
+        ]
+      },
+      "then": {
+        "properties": {
+          "asset": {
+            "properties": {
+              "symbol": {
+                "const": "ETH"
+              },
+              "network_id": {
+                "const": "eip155:1"
+              }
+            }
+          },
+          "transfer": {
+            "properties": {
+              "unit": {
+                "const": "ETH"
+              }
+            }
+          }
+        }
+      }
     },
     {
-      "if": { "properties": { "event_time_utc": { "type": "null" } }, "required": ["event_time_utc"] },
-      "then": { "properties": { "attribution_resolutions": { "items": { "properties": { "temporal_status": { "const": "TIME_UNRESOLVED" } } } } } }
+      "if": {
+        "properties": {
+          "event_time_utc": {
+            "type": "null"
+          }
+        },
+        "required": [
+          "event_time_utc"
+        ]
+      },
+      "then": {
+        "properties": {
+          "attribution_resolutions": {
+            "items": {
+              "properties": {
+                "temporal_status": {
+                  "const": "TIME_UNRESOLVED"
+                }
+              }
+            }
+          }
+        }
+      }
     },
     {
-      "if": { "properties": { "quality_status": { "const": "QUARANTINED" } }, "required": ["quality_status"] },
-      "then": { "properties": { "limitations": { "minItems": 1 } } }
+      "if": {
+        "properties": {
+          "quality_status": {
+            "const": "QUARANTINED"
+          }
+        },
+        "required": [
+          "quality_status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "limitations": {
+            "minItems": 1
+          }
+        }
+      }
     }
   ]
 }
