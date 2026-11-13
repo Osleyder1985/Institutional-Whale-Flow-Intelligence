@@ -76,7 +76,7 @@ Source quality is not a single real-time freshness or trust score. This policy d
 - `PARTIAL`: observation is usable for the fields it actually contains; missing values remain missing.
 - `DELAYED`: observation arrived late but may still support historical reconstruction. Its delayed status is preserved in field-level evidence. It does not establish that the event was available to a real-time monitor at event time.
 - `DUPLICATE`: observation is retained and linked for audit, but is excluded from event field evidence, resolved values and the event's contributing `observation_ids`. Its ID is exposed separately as `excluded_observation_ids` when it shares a strong event identity with an event supported by other observations. A duplicate alone cannot create an event or make it analytically eligible.
-- `INVALID` / `QUARANTINED`: retained as adverse quality evidence and make the event ineligible.
+- `INVALID` / `QUARANTINED`: retained as adverse quality evidence and make the event ineligible, but never contribute values to `field_evidence` or `resolved_fields`. Their IDs are exposed separately as `non_contributing_observation_ids`.
 
 Only `VALID`, `PARTIAL` and `DELAYED` observations may contribute event fields. The Movement Ledger validator accepts the same set as source observations. A delayed observation is admissible for historical integrity validation, not proof of real-time availability. This contract defines no freshness threshold or real-time eligibility state; consumers requiring real-time monitoring must apply a separately specified and tested freshness policy.
 

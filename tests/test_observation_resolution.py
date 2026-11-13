@@ -618,6 +618,43 @@ class ObservationResolutionTests(unittest.TestCase):
             "DELAYED",
         )
 
+    def test_invalid_and_quarantined_observations_are_retained_but_do_not_contribute(self):
+        for quality_status in ("INVALID", "QUARANTINED"):
+            with self.subTest(quality_status=quality_status):
+                observation = self.by_id("btc-vout-provider-a")
+                observation["quality"]["status"] = quality_status
+                observation["movement"]["amount"] = "999"
+                event = resolve_observations([observation])["events"][0]
+                self.assertEqual(event["resolution_status"], "INVALID")
+                self.assertEqual(event["analytical_eligibility"], "INELIGIBLE")
+                self.assertIsNone(event["resolved_fields"]["amount"])
+                self.assertEqual(event["field_evidence"]["amount"], [])
+                self.assertEqual(event["observation_ids"], [])
+                self.assertEqual(
+                    event["non_contributing_observation_ids"],
+                    [observation["observation_id"]],
+                )
+
+    def test_invalid_observation_cannot_override_valid_source_fields(self):
+        valid = self.by_id("btc-vout-provider-a")
+        adverse = self.by_id("btc-vout-provider-b")
+        adverse["quality"]["status"] = "INVALID"
+        adverse["movement"]["amount"] = "999"
+        result = resolve_observations([valid, adverse])
+        event = result["events"][0]
+        self.assertEqual(event["resolution_status"], "INVALID")
+        self.assertEqual(event["resolved_fields"]["amount"], "1")
+        self.assertEqual(len(event["field_evidence"]["amount"]), 1)
+        self.assertEqual(event["field_conflicts"], [])
+        self.assertEqual(
+            event["non_contributing_observation_ids"],
+            [adverse["observation_id"]],
+        )
+        self.assertEqual(
+            resolve_observations([adverse, valid]),
+            result,
+        )
+
     def test_duplicate_observation_is_excluded_from_event_evidence(self):
         original = self.by_id("btc-vout-provider-a")
         duplicate = copy.deepcopy(original)

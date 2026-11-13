@@ -601,13 +601,18 @@ def resolve_observations(observations, supersedes_decision_id=None):
         group.sort(key=lambda item: item["observation_id"])
         evidence_group = [
             item for item in group
-            if (item.get("quality") or {}).get("status") not in EXCLUDED_FROM_EVENT_EVIDENCE
+            if (item.get("quality") or {}).get("status") in {"VALID", "PARTIAL", "DELAYED"}
         ]
         excluded_observation_ids = sorted(
             item["observation_id"]
             for item in canonical_items
             if _event_key(item) == key
             and (item.get("quality") or {}).get("status") in EXCLUDED_FROM_EVENT_EVIDENCE
+        )
+        non_contributing_observation_ids = sorted(
+            item["observation_id"]
+            for item in group
+            if (item.get("quality") or {}).get("status") in INVALID_QUALITY
         )
         field_evidence = {
             field: _field_evidence(evidence_group, field, key[0])
@@ -699,6 +704,7 @@ def resolve_observations(observations, supersedes_decision_id=None):
             "event_locator": {"kind": key[2], "value": key[3]},
             "observation_ids": [item["observation_id"] for item in evidence_group],
             "excluded_observation_ids": excluded_observation_ids,
+            "non_contributing_observation_ids": non_contributing_observation_ids,
             "relationship_conflicts": relationship_conflicts,
             "resolved_fields": resolved_fields,
             "field_evidence": field_evidence,
