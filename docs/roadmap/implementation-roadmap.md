@@ -34,13 +34,13 @@ Execution is dependency-driven, not calendar-driven. No dates, durations, budget
 
 **Objective:** establish versioned, provider-neutral contracts before ingestion.
 
-- [x] Source-observation contract and automated schema tests — Issue #6 / PR #7.
-- [x] Temporal, evidence-backed address/entity claims — Issue #8 / PR #9.
-- [x] Movement Ledger for native BTC/ETH transfers with source and attribution integrity — Issue #10 / PR #11.
-- [x] Deterministic observation-resolution policy for duplicate records, contradictions, partial evidence and individual transfer identity — Issue #12 / PR #13.
+- [ ] Source-observation contract and automated schema tests — Issue #6 / PR #7 (implemented and CI-validated in an open PR; not merged).
+- [ ] Temporal, evidence-backed address/entity claims — Issue #8 / PR #9 (implemented and CI-validated in an open PR; not merged).
+- [ ] Movement Ledger for native BTC/ETH transfers with source and attribution integrity — Issue #10 / PR #11 (implemented and CI-validated in a Draft PR; not merged).
+- [ ] Deterministic observation-resolution policy for duplicate records, contradictions, partial evidence and individual transfer identity — Issue #12 / PR #13 (implemented and CI-validated in a Draft PR; not merged).
 - [ ] Complete review of all open contract PRs and merge only after their dependency chain, CI and semantics are accepted.
 
-**Exit gate:** a source record, a claim, a movement, and a resolution decision remain distinct and traceable. No ambiguous identity is silently merged; missing facts remain missing; contradictions remain visible.
+Implementation and CI evidence exist in the open PRs, but Phase 2 remains incomplete until the dependency chain is reviewed and accepted and the changes are merged in order. **Exit gate:** a source record, a claim, a movement, and a resolution decision remain distinct and traceable. No ambiguous identity is silently merged; missing facts remain missing; contradictions remain visible.
 
 ## Phase 3 — Authorized read-only vertical slice (P0)
 
