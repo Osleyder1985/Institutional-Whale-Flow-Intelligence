@@ -551,8 +551,9 @@ def resolve_observations(observations, supersedes_decision_id=None):
         ]
         excluded_observation_ids = sorted(
             item["observation_id"]
-            for item in group
-            if (item.get("quality") or {}).get("status") in EXCLUDED_FROM_EVENT_EVIDENCE
+            for item in canonical_items
+            if _event_key(item) == key
+            and (item.get("quality") or {}).get("status") in EXCLUDED_FROM_EVENT_EVIDENCE
         )
         field_evidence = {
             field: _field_evidence(evidence_group, field, key[0])
