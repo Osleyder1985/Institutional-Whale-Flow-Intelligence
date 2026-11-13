@@ -4,7 +4,7 @@ Status: first deterministic validator; synthetic fixtures only.
 
 ## Input contract
 
-`validate_movement_integrity(movement, observations, claims)` receives one normalized movement, a collection of source-observation records and a collection of attribution claims. It returns a list of integrity errors and does not mutate any input.
+`validate_movement_integrity(movement, observations, claims, known_claim_ids=())` receives one normalized movement, a collection of source-observation records and a collection of attribution claims. It returns a list of integrity errors and does not mutate any input. Claims are checked with `validate_claim_collection` before their attribution data is used. For a partial claim batch, `known_claim_ids` identifies superseded claims already resolved in persistent history.
 
 This component is deliberately provider-neutral. It consumes the canonical contracts; it does not call providers, query a blockchain, infer labels, or persist data.
 
@@ -34,9 +34,9 @@ For each attribution resolution:
 - Predicate, object type, object ID and epistemic status must match the canonical claim exactly.
 - Temporal status is recomputed from the claim's validity interval and the movement's event time.
 
-Both validity bounds are required for `VALID_AT_EVENT_TIME`. A known start can still prove `NOT_YET_VALID`; a known end can still prove `EXPIRED_AT_EVENT_TIME`. A missing bound is not interpreted as infinite. Reversed, malformed or non-UTC intervals resolve to `TIME_UNRESOLVED`.
+All timestamps are accepted only in the canonical UTC form `YYYY-MM-DDTHH:MM:SSZ`, including valid calendar dates; offsets and abbreviated timestamps are rejected. Both validity bounds are required for `VALID_AT_EVENT_TIME`. A known start can still prove `NOT_YET_VALID`; a known end can still prove `EXPIRED_AT_EVENT_TIME`. A missing bound is not interpreted as infinite. Reversed, malformed or non-UTC intervals resolve to `TIME_UNRESOLVED`.
 
-Temporal validity does not upgrade epistemic status. A provider-labelled claim remains provider-labelled.
+Temporal validity does not upgrade epistemic status. A provider-labelled claim remains provider-labelled. Collection validation also rejects duplicate claim IDs, unresolved supersession references, self-supersession, cycles in the supplied claim batch, and a successor recorded before its included predecessor. Partial batches must explicitly resolve external predecessor IDs with `known_claim_ids`.
 
 ## Error semantics and limitations
 
