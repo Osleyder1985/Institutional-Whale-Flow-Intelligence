@@ -27,6 +27,18 @@ class ObservationResolutionTests(unittest.TestCase):
         for fixture in self.fixtures:
             self.assertEqual(list(validator.iter_errors(fixture)), [])
 
+    def test_policy_document_covers_provider_duplicate_resolution(self):
+        document = (ROOT.parent / "docs" / "data-model" / "observation-resolution-policy.md").read_text(encoding="utf-8")
+        section_numbers = [
+            line.split(".")[0].removeprefix("## ")
+            for line in document.splitlines()
+            if line.startswith("## ")
+        ]
+        self.assertEqual(section_numbers, [str(number) for number in range(1, 12)])
+        self.assertIn("quality.duplicate_of", document)
+        self.assertIn("RESOLVED_WITH_RELATION_CONFLICTS", document)
+        self.assertIn("It never overrides transaction/event identity.", document)
+
     def by_id(self, identifier):
         return copy.deepcopy(next(item for item in self.fixtures if item["observation_id"] == identifier))
 
