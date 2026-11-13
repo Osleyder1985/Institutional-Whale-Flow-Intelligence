@@ -1,0 +1,83 @@
+{
+  "schema_version": "1.0.0",
+  "snapshot_id": "synthetic-feature-snapshot-001",
+  "status": "READY",
+  "asset": {
+    "asset_id": "bitcoin:btc",
+    "symbol": "BTC",
+    "network": "bitcoin-mainnet"
+  },
+  "market": {
+    "market_type": "SPOT",
+    "instrument": "BTC/USD",
+    "venue": "SYNTHETIC-REFERENCE",
+    "quote_currency": "USD"
+  },
+  "origin_time": "2026-01-01T00:00:03Z",
+  "data_cutoff_time": "2026-01-01T00:00:02Z",
+  "created_at": "2026-01-01T00:00:05Z",
+  "feature_set_version": "synthetic-feature-set-1",
+  "source_observations": [
+    {
+      "source_ref": "synthetic-price-observation",
+      "event_time": "2026-01-01T00:00:00Z",
+      "known_at": "2026-01-01T00:00:00Z",
+      "ingested_at": "2026-01-01T00:00:02Z",
+      "available_at": "2026-01-01T00:00:02Z",
+      "revision_id": "rev-1",
+      "supersedes_source_ref": null
+    },
+    {
+      "source_ref": "synthetic-scheduled-event",
+      "event_time": "2026-01-02T12:00:00Z",
+      "known_at": "2025-12-31T12:00:00Z",
+      "ingested_at": "2025-12-31T12:00:01Z",
+      "available_at": "2025-12-31T12:00:01Z",
+      "revision_id": "rev-1",
+      "supersedes_source_ref": null
+    }
+  ],
+  "features": [
+    {
+      "feature_id": "price_return_1h",
+      "definition_version": "1.0.0",
+      "status": "AVAILABLE",
+      "value": 0.015,
+      "unit": "RETURN_FRACTION",
+      "window_start": "2025-12-31T23:00:00Z",
+      "window_end": "2026-01-01T00:00:00Z",
+      "computed_at": "2026-01-01T00:00:04Z",
+      "source_refs": [
+        "synthetic-price-observation"
+      ],
+      "coverage_ratio": 1,
+      "missing_reason": null
+    },
+    {
+      "feature_id": "scheduled_event_count",
+      "definition_version": "1.0.0",
+      "status": "AVAILABLE",
+      "value": 1,
+      "unit": "COUNT",
+      "window_start": "2026-01-02T00:00:00Z",
+      "window_end": "2026-01-03T00:00:00Z",
+      "computed_at": "2026-01-01T00:00:04Z",
+      "source_refs": [
+        "synthetic-scheduled-event"
+      ],
+      "coverage_ratio": 1,
+      "missing_reason": null
+    }
+  ],
+  "quality": {
+    "status": "PASS",
+    "coverage_ratio": 1,
+    "issues": []
+  },
+  "provenance": {
+    "feature_code_version": "synthetic-code",
+    "config_version": "synthetic-config",
+    "snapshot_hash": "synthetic-hash",
+    "source_policy_version": "synthetic-policy"
+  }
+}

@@ -122,7 +122,8 @@ Implementation and CI evidence exist in the open PRs, but Phase 2 remains incomp
 - [x] Add semantic validation code and deterministic schema/contract tests — Issue #25 / PR #26 (CI run #232: 217 tests passed).
 - [x] Specify target, horizon, zone, and time-to-target semantics, including right/interval censoring — Issue #27 / PR in progress.
 - [ ] Validate anchor/source and candidate horizon-resolution matrix against authorized BTC/ETH samples; keep unverified combinations disabled.
-- [ ] Define point-in-time feature snapshots and data-leakage controls.
+- [x] Specify FeatureSnapshot/DatasetSnapshot contracts and point-in-time/knowledge-time rules — Issue #29 / PR in progress.
+- [ ] Implement and test walk-forward split manifests, purging/embargo and frozen holdout enforcement on authorized datasets.
 - [ ] Define baseline suite, walk-forward protocol, calibration procedure, and frozen acceptance gates.
 
 **Exit gate:** forecast outputs and evaluation can be reproduced from point-in-time inputs; schemas and semantic validators enforce the Forecast/ForecastOutcome invariants; no model is described as predictive until it demonstrates out-of-sample value against baselines.
