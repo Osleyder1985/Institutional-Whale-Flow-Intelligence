@@ -39,6 +39,55 @@ class ObservationResolutionTests(unittest.TestCase):
         self.assertEqual(len(event["observation_ids"]), 2)
         self.assertEqual(result["links"][0]["match_class"], "STRONG_MATCH")
 
+    def test_provider_declared_duplicate_is_preserved_as_a_separate_relation(self):
+        original = self.by_id("btc-vout-provider-a")
+        duplicate = copy.deepcopy(original)
+        duplicate["observation_id"] = "btc-declared-duplicate"
+        duplicate["source"]["record_id"] = None
+        duplicate["quality"]["status"] = "DUPLICATE"
+        duplicate["quality"]["duplicate_of"] = original["observation_id"]
+        result = resolve_observations([original, duplicate])
+        self.assertEqual(len(result["events"]), 1)
+        self.assertEqual(len(result["events"][0]["observation_ids"]), 2)
+        self.assertEqual(result["links"][0]["match_class"], "STRONG_MATCH")
+        self.assertEqual(
+            result["links"][0]["provider_duplicate_relation"],
+            "LEFT_DECLARED_DUPLICATE_OF_RIGHT",
+        )
+        self.assertIn(
+            "PROVIDER_DUPLICATE_CONSISTENT_WITH_EVENT_IDENTITY",
+            result["links"][0]["reasons"],
+        )
+
+    def test_provider_duplicate_claim_cannot_override_distinct_event_identity(self):
+        original = self.by_id("btc-vout-provider-a")
+        duplicate = copy.deepcopy(original)
+        duplicate["observation_id"] = "btc-false-duplicate-claim"
+        duplicate["source"]["record_id"] = None
+        duplicate["source"]["payload_sha256"] = "f" * 64
+        duplicate["movement"]["event_locator"]["value"] = "1"
+        duplicate["quality"]["status"] = "DUPLICATE"
+        duplicate["quality"]["duplicate_of"] = original["observation_id"]
+        result = resolve_observations([original, duplicate])
+        self.assertEqual(len(result["events"]), 2)
+        self.assertEqual(result["status"], "RESOLVED_WITH_RELATION_CONFLICTS")
+        self.assertEqual(result["links"][0]["match_class"], "NO_MATCH")
+        self.assertIn(
+            "PROVIDER_DUPLICATE_CONTRADICTS_EVENT_IDENTITY",
+            result["links"][0]["reasons"],
+        )
+
+    def test_duplicate_quality_requires_non_self_duplicate_reference(self):
+        observation = self.by_id("btc-vout-provider-a")
+        observation["quality"]["status"] = "DUPLICATE"
+        observation["quality"]["duplicate_of"] = observation["observation_id"]
+        result = resolve_observations([observation])
+        self.assertEqual(result["status"], "INVALID")
+        self.assertIn(
+            "observation cannot be duplicate of itself: btc-vout-provider-a",
+            result["errors"],
+        )
+
     def test_same_provider_record_repeat_is_not_a_second_event(self):
         first = self.by_id("btc-vout-provider-a")
         repeated = copy.deepcopy(first)
