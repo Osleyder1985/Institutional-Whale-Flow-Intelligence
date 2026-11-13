@@ -69,3 +69,6 @@ For a partial batch, pass `known_claim_ids` containing predecessor IDs already r
 - No causal attribution of price movements.
 - No buy/sell signals.
 - No live provider integration, polling, backfills, or real wallet data.
+
+
+Claim and supersession identifiers must contain at least one non-whitespace character. The schema and collection validator reject whitespace-only `claim_id`, `supersedes_claim_id`, and external history IDs.
