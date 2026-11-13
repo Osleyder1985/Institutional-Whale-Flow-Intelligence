@@ -337,6 +337,21 @@ class ObservationResolutionTests(unittest.TestCase):
             result["errors"],
         )
 
+    def test_exact_provider_record_repeat_cannot_claim_distinct_event_identities(self):
+        original = self.by_id("btc-vout-provider-a")
+        repeated = copy.deepcopy(original)
+        repeated["observation_id"] = "btc-same-record-different-event"
+        repeated["movement"]["event_locator"]["value"] = "1"
+        result = resolve_observations([original, repeated])
+        self.assertEqual(len(result["events"]), 2)
+        self.assertEqual(result["links"][0]["match_class"], "NO_MATCH")
+        self.assertEqual(result["links"][0]["source_record_relation"], "EXACT_REPEAT")
+        self.assertIn(
+            "SOURCE_RECORD_REPEAT_CONTRADICTS_EVENT_IDENTITY",
+            result["links"][0]["reasons"],
+        )
+        self.assertEqual(result["status"], "RESOLVED_WITH_RELATION_CONFLICTS")
+
     def test_same_provider_record_with_changed_payload_is_a_revision_not_repeat(self):
         first = self.by_id("btc-vout-provider-a")
         revised = copy.deepcopy(first)
