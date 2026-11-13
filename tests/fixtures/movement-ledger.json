@@ -1,0 +1,69 @@
+[
+  {
+    "contract_version": "1.0.0",
+    "movement_id": "movement-btc-synthetic-001",
+    "asset": {
+      "asset_id": "bitcoin:btc",
+      "symbol": "BTC",
+      "network_id": "bitcoin-mainnet"
+    },
+    "event_time_utc": "2026-11-10T12:00:00Z",
+    "recorded_at_utc": "2026-11-10T12:00:08Z",
+    "transfer": {
+      "movement_type": "TRANSFER",
+      "amount": "1.25000000",
+      "unit": "BTC",
+      "from_address": "bc1qsource",
+      "to_address": "bc1qexchangeexample",
+      "transaction_id": "btc-tx-001",
+      "confirmation_status": "CONFIRMED"
+    },
+    "source_observation_ids": [
+      "movement-source-btc-001"
+    ],
+    "attribution_resolutions": [
+      {
+        "claim_id": "claim-provider-label-001",
+        "address": "bc1qexchangeexample",
+        "predicate": "LABELLED_AS",
+        "object_type": "CLASSIFICATION",
+        "object_id": "exchange",
+        "epistemic_status": "PROVIDER_LABELLED",
+        "temporal_status": "TIME_UNRESOLVED"
+      }
+    ],
+    "quality_status": "PARTIAL",
+    "limitations": [
+      "claim_validity_interval_not_established"
+    ]
+  },
+  {
+    "contract_version": "1.0.0",
+    "movement_id": "movement-eth-synthetic-002",
+    "asset": {
+      "asset_id": "ethereum:eth",
+      "symbol": "ETH",
+      "network_id": "eip155:1"
+    },
+    "event_time_utc": "2026-11-11T09:30:00Z",
+    "recorded_at_utc": "2026-11-11T09:30:03Z",
+    "transfer": {
+      "movement_type": "TRANSFER",
+      "amount": null,
+      "unit": "ETH",
+      "from_address": "0xfrom",
+      "to_address": "0xto",
+      "transaction_id": "0xeth002",
+      "confirmation_status": "UNKNOWN"
+    },
+    "source_observation_ids": [
+      "movement-source-eth-002"
+    ],
+    "attribution_resolutions": [],
+    "quality_status": "PARTIAL",
+    "limitations": [
+      "amount_missing",
+      "confirmation_status_unverified"
+    ]
+  }
+]
