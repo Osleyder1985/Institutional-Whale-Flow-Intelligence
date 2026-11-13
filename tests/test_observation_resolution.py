@@ -290,6 +290,28 @@ class ObservationResolutionTests(unittest.TestCase):
         self.assertEqual(first["events"][0]["resolved_fields"]["amount"], "1")
         self.assertEqual(second["events"][0]["resolved_fields"]["amount"], "1.25")
 
+    def test_supersession_context_changes_decision_identity(self):
+        observations = [self.by_id("btc-vout-provider-a")]
+        base = resolve_observations(observations)
+        first = resolve_observations(observations, supersedes_decision_id="decision-prior-a")
+        repeated = resolve_observations(observations, supersedes_decision_id="decision-prior-a")
+        other = resolve_observations(observations, supersedes_decision_id="decision-prior-b")
+        self.assertEqual(first["input_fingerprint"], other["input_fingerprint"])
+        self.assertEqual(first["decision_id"], repeated["decision_id"])
+        self.assertNotEqual(first["decision_id"], other["decision_id"])
+        self.assertNotEqual(base["decision_id"], first["decision_id"])
+
+    def test_invalid_supersession_reference_fails_closed(self):
+        result = resolve_observations(
+            [self.by_id("btc-vout-provider-a")],
+            supersedes_decision_id=" ",
+        )
+        self.assertEqual(result["status"], "INVALID")
+        self.assertIn(
+            "supersedes_decision_id must be null or a non-empty string",
+            result["errors"],
+        )
+
     def test_invalid_duplicate_input_fingerprint_is_order_independent(self):
         first = self.by_id("btc-vout-provider-a")
         second = copy.deepcopy(first)
