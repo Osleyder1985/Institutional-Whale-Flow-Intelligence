@@ -40,10 +40,14 @@ This ADR is a design proposal. It does not select a production database, create 
 
 The following are requirements, not assumptions to be selected by the storage design:
 
-- Desktop, Android and iOS clients must read and write against the same authoritative IWFI dataset; independent per-device databases without a defined synchronization protocol do not satisfy this requirement.
+- Desktop, Android and iOS clients must read and write against the same authoritative IWFI dataset through an offline-first model: each client can work against its durable local replica while disconnected and synchronize later with the central authority.
 - Initial analytical scope is BTC and ETH.
 - Ingestion, resolution and research evaluations are user-initiated. This architecture does not authorize polling, scheduled market analysis or automatic backfills.
 - Historical observations, attribution claims and resolution decisions must remain reproducible and traceable across clients.
+- Offline operations are durable and queued locally until acknowledged by the central service. Synchronization is resumable and idempotent; duplicate delivery cannot duplicate canonical facts or decisions.
+- No last-write-wins policy may overwrite evidence, movements, attribution claims, resolution decisions, chain assessments or ResearchSnapshots. Semantic conflicts remain explicit and auditable.
+- A locally created ResearchSnapshot is frozen and marked local/pending until synchronized; synchronization never recalculates or mutates its historical contents.
+- Provider capture requires connectivity and explicit user initiation. Offline support does not authorize background polling, automatic backfills or automatic market analysis.
 - Provider retention terms constrain what may be stored. Raw payload storage remains disabled unless the exact provider/endpoint terms authorize it.
 - Strong movement identity uses network, normalized transaction ID and protocol-specific event locator when all are known. Missing locators remain unresolved; they are not replaced by a synthetic key.
 
@@ -59,7 +63,8 @@ No values are invented for the following operational requirements. They must be 
 | Concurrent writers and readers | Unknown | Desktop/mobile usage scenarios and simultaneous-session tests |
 | Query latency targets | Unknown | Prioritized user queries and measurable response-time objectives |
 | Availability target | Unknown | Product operating expectations and deployment constraints |
-| Offline operation and conflict handling | Not specified | Explicit product decision and synchronization scenarios |
+| Offline-first product behavior | Confirmed | User decision recorded in Issue #22; offline work and later sync are required |
+| Sync protocol, conflict handling and compatibility | Unknown | Protocol, entity-specific conflict policy, cursor, schema/policy compatibility and recovery tests (Issue #22) |
 | Retention duration per provider/endpoint | Unknown | Applicable terms and documented retention review |
 | Recovery point/time objectives (RPO/RTO) | Unknown | Acceptable data-loss and restoration windows |
 | Deployment region and data residency | Unknown | Operational/legal requirements and cost comparison |
@@ -73,6 +78,10 @@ The following is a logical model, not a committed SQL schema. Physical tables, c
 
 | Logical entity | Purpose | Mutability rule |
 |---|---|---|
+| Device | Stable client installation identity and revocation/status metadata | Versioned lifecycle; revocation is explicit |
+| SyncOperation | Durable operation envelope with globally unique idempotency key, device ID, schema/policy version and causal dependencies | Immutable; retry preserves the same operation ID |
+| SyncCursor | Server-confirmed progress for a client/device and stream | Monotonic server-issued cursor; never infer from device clock |
+| SyncConflict | Semantic conflict between concurrent or incompatible operations | Append-only; explicit resolution/supersession |
 | SourceObservation | Immutable provider observation envelope and permitted normalized facts | Insert new observation/version; do not overwrite |
 | ChainInclusionObservation | Immutable BTC/ETH mempool, block inclusion, block-status or finalized-checkpoint evidence with source and observed time | Append-only; each new block inclusion is a new record |
 | CanonicalityAssessment | Versioned assessment over a deterministic set of chain observation IDs and policy version | Append-only; supersede by a new assessment, never overwrite |
@@ -152,7 +161,7 @@ Retries must be idempotent. Concurrent runs over the same inputs must not create
 | Option | Strengths | Risks / costs | Fit |
 |---|---|---|---|
 | PostgreSQL | Relational constraints, transactions, concurrent writers, temporal/query support, JSONB for bounded provider extensions, mature backup and migration tooling | Requires a managed or self-operated service, credentials, network access, backup operations and cost control | Strong candidate if desktop/mobile clients share one authoritative dataset |
-| SQLite | Embedded, low operational cost, portable, transactional, good for local-first/offline prototypes | Multi-device synchronization, concurrent remote writers, central access control and conflict resolution become additional system responsibilities | Candidate if local-first/offline operation is a primary requirement |
+| SQLite | Embedded, low operational cost, portable, transactional, strong fit for durable per-device local work and outbox | Must be paired with a defined synchronization service/protocol; local database alone is not the shared authority | Strong candidate for local client storage; not the central authority by itself |
 | Append-only files/object storage | Simple evidence archive, low-cost immutable objects, easy content-addressing | Weak relational constraints, complex joins, idempotency catalog, transactional linking, concurrent updates and query indexing | Useful as a permitted raw/archive layer, not sufficient alone as the canonical ledger |
 
 ### 6.1 Comparative fit against known requirements
@@ -164,17 +173,17 @@ This is a qualitative constraint check, not a weighted score or a final selectio
 | One authoritative dataset shared by desktop, Android and iOS | Fits a central service model | Does not provide shared multi-client authority without a separate sync/service layer | Does not provide safe shared transactional access by itself |
 | Referential integrity across observations, movements, claims and decisions | Native relational constraints | Relational constraints available within one database file | Must be implemented in a separate index/catalog |
 | Atomic resolution writes and concurrent clients | Strong fit | Concurrency is more constrained and requires deployment-specific design | Multi-object atomicity is not generally available |
-| Local/offline operation | Requires a local cache/queue if needed | Strong local embedded fit | Can store local artifacts, but not relational consistency |
+| Local/offline operation | Suitable as central authority; clients still need durable local storage | Strong local transactional fit for per-device replica/outbox | Useful for export/archive, not a transactional offline domain store |
 | Content-addressed immutable archive | Can store hashes and metadata; large-object archive is separate | Can store hashes and metadata; large-object archive is separate | Strong fit for permitted immutable objects |
 | Cross-record temporal queries and traceability | Strong relational fit | Strong for a single local database | Requires a query/index layer |
 
-The comparison indicates that PostgreSQL is the strongest *current candidate* for a shared authoritative relational service, while SQLite is relevant as a possible local cache/offline component and object storage as an optional archive for content whose retention is explicitly permitted. This is not a decision: the unresolved volume, latency, availability, deployment, retention, recovery and cost requirements can still change the result.
+The comparison indicates PostgreSQL remains the leading *candidate* for the central authoritative relational service, while SQLite is now a strong candidate for durable per-device local storage, offline work and the synchronization outbox. This suggests a central relational service plus local relational replicas, but does not approve either physical implementation or protocol. Object storage remains an optional archive only for content whose retention is explicitly permitted. Volume, latency, availability, deployment, retention, recovery, security and cost requirements still need evidence.
 
 ### 6.2 Provisional direction
 
-A relational database is the leading category for the canonical ledger because the system needs referential integrity, transactions, temporal claims, deterministic decision records, and multi-client access.
+A central relational service is the leading category for the canonical shared ledger because IWFI requires referential integrity, transactions, temporal claims, deterministic decision records and multi-client synchronization.
 
-PostgreSQL is the leading candidate if IWFI requires one shared authoritative dataset across clients. SQLite remains viable if the product is explicitly local-first and synchronization is separately designed. Neither choice is approved by this ADR.
+The product decision is offline-first. The leading architectural hypothesis is PostgreSQL (or another validated central relational engine) as the server authority plus SQLite (or another validated embedded relational engine) on each client for local reads/writes and a durable outbox. The sync protocol—not direct database-file sharing—reconciles clients. Neither engine is approved by this ADR; protocol and operational requirements must be validated first.
 
 A hybrid PostgreSQL + object-storage design may be considered only if provider terms permit the exact raw object retention and a separate evidence-retention policy exists. No raw-payload bucket is assumed.
 
@@ -215,7 +224,7 @@ The chain-integrity contract dependency is now defined and integrated through PR
 
 The persistence implementation must honor `docs/data-model/chain-integrity-contract.md`. This resolves the contract-definition dependency; it does not prove durable snapshot immutability until the persistence model and integration tests are implemented.
 
-Other unresolved inputs include expected event volume, retention duration by provider, multi-device/offline requirements, deployment location, recovery objectives, and actual query workloads. No numeric operational target is invented here.
+Other unresolved inputs include expected event volume, retention duration by provider, deployment location, recovery objectives, security/key-management details, synchronization batch sizing, and actual query workloads. Offline-first behavior is a confirmed product requirement; its protocol and conflict policies remain assigned to Issue #22. No numeric operational target is invented here.
 
 ## 10. Validation plan before backend implementation
 
@@ -235,6 +244,13 @@ The implementation plan must include synthetic tests for:
 - INVALID/QUARANTINED evidence retained but excluded from resolved fields;
 - temporal claim correction and supersession;
 - interrupted transactions and retry after failure;
+- same sync batch submitted repeatedly, including a lost response after server commit;
+- disconnect mid-batch and resume from the last server-confirmed cursor;
+- concurrent changes from three simulated clients without last-write-wins data loss;
+- causal dependencies arriving out of order and device clocks drifting;
+- incompatible schema/policy versions, rejected operations and quarantine;
+- local ResearchSnapshot remaining immutable after later synchronized evidence;
+- device revocation, local logout, encrypted local data and key lifecycle;
 - backup restore and migration rollback/recovery rehearsal.
 
 ## 11. Decision gate
@@ -246,4 +262,4 @@ This ADR does not authorize:
 - raw payload retention;
 - wallet clustering, institutional attribution, whale statistics, or buy/sell analysis.
 
-Issue #16 remains open until requirements are measured, the options are evaluated against those requirements, unresolved finality/retention questions are assigned, and the project owner accepts the ADR. Only then should a separate implementation Issue and PR be created.
+Issue #16 remains open until requirements are measured, the options are evaluated against those requirements, retention/security/operational questions are assigned, and the project owner accepts the ADR. Issue #22 defines the offline-first synchronization protocol and must be resolved before backend implementation. Only then should separate implementation Issues and PRs be created.
