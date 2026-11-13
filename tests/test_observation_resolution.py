@@ -77,6 +77,21 @@ class ObservationResolutionTests(unittest.TestCase):
             result["links"][0]["reasons"],
         )
 
+    def test_provider_duplicate_claim_across_networks_is_a_visible_conflict(self):
+        btc = self.by_id("btc-vout-provider-a")
+        eth = self.by_id("eth-log-provider-a")
+        eth["quality"]["status"] = "DUPLICATE"
+        eth["quality"]["duplicate_of"] = btc["observation_id"]
+        result = resolve_observations([btc, eth])
+        self.assertEqual(len(result["events"]), 2)
+        self.assertEqual(result["status"], "RESOLVED_WITH_RELATION_CONFLICTS")
+        self.assertEqual(result["links"][0]["match_class"], "NO_MATCH")
+        self.assertIn("DIFFERENT_NETWORK", result["links"][0]["reasons"])
+        self.assertIn(
+            "PROVIDER_DUPLICATE_CONTRADICTS_EVENT_IDENTITY",
+            result["links"][0]["reasons"],
+        )
+
     def test_duplicate_quality_requires_non_self_duplicate_reference(self):
         observation = self.by_id("btc-vout-provider-a")
         observation["quality"]["status"] = "DUPLICATE"
