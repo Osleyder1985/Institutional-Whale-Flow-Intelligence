@@ -789,6 +789,37 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "properties": {
+          "quality": {
+            "properties": {
+              "duplicate_of": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "duplicate_of"
+            ]
+          }
+        },
+        "required": [
+          "quality"
+        ]
+      },
+      "then": {
+        "properties": {
+          "quality": {
+            "properties": {
+              "status": {
+                "const": "DUPLICATE"
+              }
+            }
+          }
+        }
+      }
     }
   ]
 }
