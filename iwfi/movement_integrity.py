@@ -145,7 +145,7 @@ def validate_movement_integrity(movement, observations, claims):
             errors.append(f"source observation is not ON_CHAIN_TRANSACTION: {observation_id}")
             continue
         source_quality = observation.get("quality", {}).get("status")
-        if source_quality not in {"VALID", "PARTIAL"}:
+        if source_quality not in {"VALID", "PARTIAL", "DELAYED"}:
             errors.append(f"source observation quality is not admissible: {observation_id}")
             continue
         source_asset = observation.get("asset", {})
