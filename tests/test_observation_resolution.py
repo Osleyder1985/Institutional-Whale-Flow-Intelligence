@@ -113,6 +113,34 @@ class ObservationResolutionTests(unittest.TestCase):
         event = resolve_observations([first, second])["events"][0]
         self.assertEqual(event["field_conflicts"], [])
 
+    def test_large_decimal_precision_is_preserved_exactly(self):
+        observation = self.by_id("btc-vout-provider-a")
+        observation["movement"]["amount"] = "123456789012345678901234567890123456789.000"
+        event = resolve_observations([observation])["events"][0]
+        self.assertEqual(
+            event["resolved_fields"]["amount"],
+            "123456789012345678901234567890123456789",
+        )
+        self.assertEqual(event["analytical_eligibility"], "ELIGIBLE")
+
+    def test_negative_amount_is_invalid_and_ineligible(self):
+        observation = self.by_id("btc-vout-provider-a")
+        observation["movement"]["amount"] = "-1"
+        event = resolve_observations([observation])["events"][0]
+        self.assertEqual(event["resolution_status"], "INVALID")
+        self.assertIsNone(event["resolved_fields"]["amount"])
+        self.assertEqual(event["analytical_eligibility"], "INELIGIBLE")
+
+    def test_invalid_event_locator_fails_closed(self):
+        observation = self.by_id("btc-vout-provider-a")
+        observation["movement"]["event_locator"] = {"kind": "EVM_LOG_INDEX", "value": "1"}
+        result = resolve_observations([observation])
+        self.assertEqual(result["status"], "INVALID")
+        self.assertIn(
+            "invalid event_locator for observation: btc-vout-provider-a",
+            result["errors"],
+        )
+
     def test_conflicting_amounts_are_preserved_and_block_eligibility(self):
         first = self.by_id("btc-vout-provider-a")
         second = self.by_id("btc-vout-provider-b")
