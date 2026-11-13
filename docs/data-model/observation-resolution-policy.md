@@ -62,7 +62,7 @@ The observation-level `quality.duplicate_of` field is preserved as an explicit p
 
 This relationship is distinct from provider record ID + payload-hash repeat/revision detection.
 
-## 6. Transfer fragments and economic relationships
+## 7. Transfer fragments and economic relationships
 
 Distinct transaction IDs or distinct event locators remain distinct events even when amounts, endpoints or times are similar. Fan-in, fan-out, batches, parent/child transfers and possible common economic operations are not inferred or aggregated by this policy. They require a separate evidence-backed relationship model.
 
