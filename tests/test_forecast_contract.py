@@ -60,6 +60,16 @@ class ForecastContractTests(unittest.TestCase):
         item["prediction"]["scenario_probabilities"]["bullish"] = 0.8
         self.assertTrue(any("must be null unless calibrated" in error for error in validate_forecast(item)))
 
+    def test_forecast_allows_explicit_unestimated_target(self):
+        item = copy.deepcopy(self.forecast)
+        target = item["prediction"]["price_targets"][0]
+        target["status"] = "NOT_ESTIMABLE"
+        target["lower_price"] = None
+        target["upper_price"] = None
+        self.assertEqual(validate_forecast(item), [])
+        target["lower_price"] = 100500
+        self.assertTrue(any("NOT_ESTIMABLE bounds must be null" in error for error in validate_forecast(item)))
+
     def test_forecast_rejects_inverted_price_zone(self):
         item = copy.deepcopy(self.forecast)
         item["prediction"]["price_zones"][0]["lower_price"] = 103000
