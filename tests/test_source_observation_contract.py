@@ -72,7 +72,12 @@ class SourceObservationContractTests(unittest.TestCase):
             self.schema["$schema"],
             "https://json-schema.org/draft/2020-12/schema",
         )
-        self.assertEqual(self.schema["properties"]["contract_version"]["const"], "1.0.0")
+        self.assertEqual(self.schema["properties"]["contract_version"]["const"], "1.1.0")
+
+    def test_schema_rejects_event_locator_for_wrong_network(self):
+        fixture = copy.deepcopy(next(x for x in self.fixtures if x["asset"]["network_id"] == "bitcoin-mainnet" and x["observation_type"] == "ON_CHAIN_TRANSACTION"))
+        fixture["movement"]["event_locator"] = {"kind": "EVM_LOG_INDEX", "value": "1"}
+        self.assertFalse(self.validator.is_valid(fixture))
 
     def test_fixture_ids_are_unique_and_required_fields_exist(self):
         ids = [item["observation_id"] for item in self.fixtures]
