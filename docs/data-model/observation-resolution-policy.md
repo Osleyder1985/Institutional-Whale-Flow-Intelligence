@@ -100,7 +100,7 @@ The resolver:
 - produces the same result for the same inputs regardless of input order;
 - performs no I/O, persistence, provider calls, wallet clustering or probabilistic inference;
 - accepts an optional previous decision ID for explicit supersession without overwriting prior output;
-- rejects unknown source-quality states and invalid asset/network combinations.
+- rejects unknown source-quality states and invalid asset/network combinations. For supported network-scoped assets, it also requires the declared symbol and any non-null transfer unit to agree with the asset identity (`BTC` on Bitcoin mainnet; `ETH` on Ethereum mainnet).
 
 Reprocessing identical inputs with the same policy version and supersession context is idempotent. Changing the superseded decision reference changes the decision-context fingerprint and decision ID even when the observation input fingerprint is unchanged. Policy changes require a policy-version change and therefore produce a distinct decision ID.
 
