@@ -188,10 +188,43 @@ class EntityAttributionContractTests(unittest.TestCase):
         errors = validate_claim_collection(self.claims, known_claim_ids="not-a-collection")
         self.assertIn("known_claim_ids must be an iterable of non-empty claim IDs", errors)
 
+    def test_claim_collection_handles_long_supersession_history_iteratively(self):
+        claims = [
+            {
+                "claim_id": f"claim-{index:04d}",
+                "supersedes_claim_id": None if index == 0 else f"claim-{index - 1:04d}",
+            }
+            for index in range(1500)
+        ]
+        self.assertEqual(validate_claim_collection(claims), [])
+
     def test_claim_collection_rejects_invalid_claim_identity(self):
         self.assertIn(
             "claims[0] has an invalid claim_id",
             validate_claim_collection([{"supersedes_claim_id": None}]),
+        )
+
+    def test_claim_collection_rejects_whitespace_only_claim_id(self):
+        claim = copy.deepcopy(self.claims[0])
+        claim["claim_id"] = "   "
+        self.assertIn(
+            "claims[0] has an invalid claim_id",
+            validate_claim_collection([claim]),
+        )
+
+    def test_claim_collection_rejects_whitespace_only_supersession_id(self):
+        claim = copy.deepcopy(self.claims[0])
+        claim["supersedes_claim_id"] = "   "
+        self.assertIn(
+            f"claim {claim['claim_id']} has an invalid supersedes_claim_id",
+            validate_claim_collection([claim]),
+        )
+
+    def test_claim_collection_rejects_whitespace_only_known_history_id(self):
+        errors = validate_claim_collection(self.claims, known_claim_ids=["   "])
+        self.assertIn(
+            "known_claim_ids must contain only non-empty strings",
+            errors,
         )
 
     def test_claim_collection_rejects_self_supersession(self):
