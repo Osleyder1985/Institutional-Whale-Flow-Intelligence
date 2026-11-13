@@ -99,6 +99,11 @@ class SourceObservationContractTests(unittest.TestCase):
         for item in self.fixtures:
             self.assertRegex(item["source"]["payload_sha256"], HASH_RE)
 
+    def test_schema_rejects_missing_source_integrity_hash(self):
+        fixture = copy.deepcopy(self.fixtures[0])
+        fixture["source"]["payload_sha256"] = None
+        self.assertFalse(self.validator.is_valid(fixture))
+
     def test_missing_amount_is_not_zero(self):
         item = next(x for x in self.fixtures if x["observation_id"] == "fixture-missing-amount")
         self.assertIsNone(item["movement"]["amount"])
