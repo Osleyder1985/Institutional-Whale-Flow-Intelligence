@@ -118,7 +118,8 @@ def validate_movement_integrity(movement, observations, claims, known_claim_ids=
         return {
             item[id_field]: item
             for item in items
-            if isinstance(item.get(id_field), str)
+            if isinstance(item, dict)
+            and isinstance(item.get(id_field), str)
             and item[id_field]
             and item[id_field] not in duplicate_set
         }
@@ -174,7 +175,7 @@ def validate_movement_integrity(movement, observations, claims, known_claim_ids=
     # Do not populate a fact that is absent from every referenced source.
     if resolved_observations:
         for field in TRANSFER_FIELDS:
-            movement_value = movement.get("transfer", {}).get(field)
+            movement_value = movement_transfer.get(field)
             known_values = [
                 item.get("movement", {}).get(field)
                 for item in resolved_observations
@@ -188,15 +189,18 @@ def validate_movement_integrity(movement, observations, claims, known_claim_ids=
         if all(item.get("event_time_utc") is None for item in resolved_observations):
             errors.append("movement event_time has no supporting source observation")
 
-    endpoints = {
-        movement.get("transfer", {}).get("from_address"),
-        movement.get("transfer", {}).get("to_address"),
-    }
+    endpoints = [
+        movement_transfer.get("from_address"),
+        movement_transfer.get("to_address"),
+    ]
     for resolution in attribution_resolutions:
         if not isinstance(resolution, dict):
             errors.append("attribution resolution must be an object")
             continue
         claim_id = resolution.get("claim_id")
+        if not isinstance(claim_id, str) or not claim_id:
+            errors.append("attribution resolution has an invalid claim_id")
+            continue
         claim = claim_index.get(claim_id)
         if claim is None:
             if resolution.get("temporal_status") != "CLAIM_NOT_FOUND":
@@ -211,7 +215,8 @@ def validate_movement_integrity(movement, observations, claims, known_claim_ids=
             errors.append(f"claim subject/address mismatch: {claim_id}")
         if subject.get("network_id") != movement_asset.get("network_id"):
             errors.append(f"claim network mismatch: {claim_id}")
-        if resolution.get("address") not in endpoints:
+        address = resolution.get("address")
+        if not isinstance(address, str) or address not in endpoints:
             errors.append(f"attribution address is not a transfer endpoint: {claim_id}")
         expected = {
             "predicate": claim.get("predicate"),
