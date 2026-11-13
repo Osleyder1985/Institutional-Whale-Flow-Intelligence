@@ -1,0 +1,212 @@
+[
+  {
+    "contract_version": "1.1.0",
+    "observation_id": "btc-vout-provider-a",
+    "source": {
+      "provider": "provider-a",
+      "endpoint": "transactions",
+      "record_id": "btc-tx-100",
+      "payload_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "schema_version": "1"
+    },
+    "asset": {
+      "asset_id": "bitcoin:btc",
+      "symbol": "BTC",
+      "network_id": "bitcoin-mainnet"
+    },
+    "event_time_utc": "2026-11-10T10:00:00Z",
+    "retrieved_at_utc": "2026-11-10T10:00:05Z",
+    "observation_type": "ON_CHAIN_TRANSACTION",
+    "movement": {
+      "movement_type": "TRANSFER",
+      "amount": "1.000",
+      "unit": "BTC",
+      "from_address": "bc1qsource",
+      "to_address": "bc1qdest",
+      "transaction_id": "0000000000000000000000000000000000000000000000000000000000000001",
+      "confirmation_status": "CONFIRMED",
+      "event_locator": {
+        "kind": "UTXO_VOUT",
+        "value": "0"
+      }
+    },
+    "attributions": [],
+    "quality": {
+      "status": "VALID",
+      "notes": [],
+      "duplicate_of": null
+    },
+    "retention": {
+      "retention_classification": "HASH_ONLY",
+      "raw_payload_retained": false
+    }
+  },
+  {
+    "contract_version": "1.1.0",
+    "observation_id": "btc-vout-provider-b",
+    "source": {
+      "provider": "provider-b",
+      "endpoint": "transfer-events",
+      "record_id": "btc-event-100-0",
+      "payload_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "schema_version": "2"
+    },
+    "asset": {
+      "asset_id": "bitcoin:btc",
+      "symbol": "BTC",
+      "network_id": "bitcoin-mainnet"
+    },
+    "event_time_utc": "2026-11-10T10:00:00Z",
+    "retrieved_at_utc": "2026-11-10T10:00:06Z",
+    "observation_type": "ON_CHAIN_TRANSACTION",
+    "movement": {
+      "movement_type": "TRANSFER",
+      "amount": "1.000000",
+      "unit": "BTC",
+      "from_address": "bc1qsource",
+      "to_address": "bc1qdest",
+      "transaction_id": "0000000000000000000000000000000000000000000000000000000000000001",
+      "confirmation_status": "CONFIRMED",
+      "event_locator": {
+        "kind": "UTXO_VOUT",
+        "value": "00"
+      }
+    },
+    "attributions": [],
+    "quality": {
+      "status": "VALID",
+      "notes": [],
+      "duplicate_of": null
+    },
+    "retention": {
+      "retention_classification": "HASH_ONLY",
+      "raw_payload_retained": false
+    }
+  },
+  {
+    "contract_version": "1.1.0",
+    "observation_id": "btc-second-vout",
+    "source": {
+      "provider": "provider-a",
+      "endpoint": "transactions",
+      "record_id": "btc-tx-100",
+      "payload_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "schema_version": "1"
+    },
+    "asset": {
+      "asset_id": "bitcoin:btc",
+      "symbol": "BTC",
+      "network_id": "bitcoin-mainnet"
+    },
+    "event_time_utc": "2026-11-10T10:00:00Z",
+    "retrieved_at_utc": "2026-11-10T10:00:05Z",
+    "observation_type": "ON_CHAIN_TRANSACTION",
+    "movement": {
+      "movement_type": "TRANSFER",
+      "amount": "2.000",
+      "unit": "BTC",
+      "from_address": "bc1qsource",
+      "to_address": "bc1qother",
+      "transaction_id": "0000000000000000000000000000000000000000000000000000000000000001",
+      "confirmation_status": "CONFIRMED",
+      "event_locator": {
+        "kind": "UTXO_VOUT",
+        "value": "1"
+      }
+    },
+    "attributions": [],
+    "quality": {
+      "status": "VALID",
+      "notes": [],
+      "duplicate_of": null
+    },
+    "retention": {
+      "retention_classification": "HASH_ONLY",
+      "raw_payload_retained": false
+    }
+  },
+  {
+    "contract_version": "1.1.0",
+    "observation_id": "eth-log-provider-a",
+    "source": {
+      "provider": "provider-a",
+      "endpoint": "logs",
+      "record_id": "eth-log-1",
+      "payload_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "schema_version": "1"
+    },
+    "asset": {
+      "asset_id": "ethereum:eth",
+      "symbol": "ETH",
+      "network_id": "eip155:1"
+    },
+    "event_time_utc": "2026-11-10T11:00:00Z",
+    "retrieved_at_utc": "2026-11-10T11:00:02Z",
+    "observation_type": "ON_CHAIN_TRANSACTION",
+    "movement": {
+      "movement_type": "TRANSFER",
+      "amount": "3.5",
+      "unit": "ETH",
+      "from_address": "0xAbCd",
+      "to_address": "0xEf01",
+      "transaction_id": "0x0000000000000000000000000000000000000000000000000000000000000004",
+      "confirmation_status": "CONFIRMED",
+      "event_locator": {
+        "kind": "EVM_TRACE_PATH",
+        "value": "0/5"
+      }
+    },
+    "attributions": [],
+    "quality": {
+      "status": "VALID",
+      "notes": [],
+      "duplicate_of": null
+    },
+    "retention": {
+      "retention_classification": "HASH_ONLY",
+      "raw_payload_retained": false
+    }
+  },
+  {
+    "contract_version": "1.1.0",
+    "observation_id": "eth-log-provider-b",
+    "source": {
+      "provider": "provider-b",
+      "endpoint": "logs",
+      "record_id": "eth-log-1",
+      "payload_sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "schema_version": "2"
+    },
+    "asset": {
+      "asset_id": "ethereum:eth",
+      "symbol": "ETH",
+      "network_id": "eip155:1"
+    },
+    "event_time_utc": "2026-11-10T11:00:00Z",
+    "retrieved_at_utc": "2026-11-10T11:00:03Z",
+    "observation_type": "ON_CHAIN_TRANSACTION",
+    "movement": {
+      "movement_type": "TRANSFER",
+      "amount": "3.500",
+      "unit": "ETH",
+      "from_address": "0xabcd",
+      "to_address": "0xef01",
+      "transaction_id": "0x0000000000000000000000000000000000000000000000000000000000000004",
+      "confirmation_status": "CONFIRMED",
+      "event_locator": {
+        "kind": "EVM_TRACE_PATH",
+        "value": "0/05"
+      }
+    },
+    "attributions": [],
+    "quality": {
+      "status": "VALID",
+      "notes": [],
+      "duplicate_of": null
+    },
+    "retention": {
+      "retention_classification": "HASH_ONLY",
+      "raw_payload_retained": false
+    }
+  }
+]

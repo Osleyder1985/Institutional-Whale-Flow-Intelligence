@@ -72,7 +72,27 @@ class SourceObservationContractTests(unittest.TestCase):
             self.schema["$schema"],
             "https://json-schema.org/draft/2020-12/schema",
         )
-        self.assertEqual(self.schema["properties"]["contract_version"]["const"], "1.0.0")
+        self.assertEqual(self.schema["properties"]["contract_version"]["const"], "1.1.0")
+
+    def test_schema_rejects_malformed_network_transaction_hash(self):
+        fixture = copy.deepcopy(next(x for x in self.fixtures if x["observation_type"] == "ON_CHAIN_TRANSACTION" and x["asset"]["network_id"] == "bitcoin-mainnet"))
+        fixture["movement"]["transaction_id"] = "not-a-hash"
+        self.assertFalse(self.validator.is_valid(fixture))
+
+    def test_schema_requires_duplicate_status_when_duplicate_reference_is_present(self):
+        fixture = copy.deepcopy(next(x for x in self.fixtures if x["observation_type"] == "ON_CHAIN_TRANSACTION"))
+        fixture["quality"]["duplicate_of"] = "canonical-observation"
+        self.assertFalse(self.validator.is_valid(fixture))
+
+    def test_schema_rejects_contract_log_index_for_native_eth(self):
+        fixture = copy.deepcopy(next(x for x in self.fixtures if x["asset"]["network_id"] == "eip155:1" and x["observation_type"] == "ON_CHAIN_TRANSACTION"))
+        fixture["movement"]["event_locator"] = {"kind": "EVM_LOG_INDEX", "value": "5"}
+        self.assertFalse(self.validator.is_valid(fixture))
+
+    def test_schema_rejects_event_locator_for_wrong_network(self):
+        fixture = copy.deepcopy(next(x for x in self.fixtures if x["asset"]["network_id"] == "bitcoin-mainnet" and x["observation_type"] == "ON_CHAIN_TRANSACTION"))
+        fixture["movement"]["event_locator"] = {"kind": "EVM_LOG_INDEX", "value": "1"}
+        self.assertFalse(self.validator.is_valid(fixture))
 
     def test_fixture_ids_are_unique_and_required_fields_exist(self):
         ids = [item["observation_id"] for item in self.fixtures]

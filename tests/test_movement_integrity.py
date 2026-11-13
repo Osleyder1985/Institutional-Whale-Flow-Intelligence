@@ -187,6 +187,67 @@ class MovementIntegrityTests(unittest.TestCase):
         )
         self.assertEqual(errors, [])
 
+    def test_source_event_locator_mismatch_is_rejected(self):
+        movement = copy.deepcopy(self.movements[0])
+        movement["transfer"]["event_locator"]["value"] = "9"
+        self.assertTrue(any("event_locator mismatch" in error for error in validate_movement_integrity(movement, self.observations, self.claims)))
+
+    def test_btc_transaction_id_and_vout_are_compared_canonically(self):
+        movement = copy.deepcopy(self.movements[0])
+        observations = copy.deepcopy(self.observations)
+        source = next(item for item in observations if item["observation_id"] == movement["source_observation_ids"][0])
+        source["movement"]["transaction_id"] = source["movement"]["transaction_id"].upper()
+        source["movement"]["event_locator"]["value"] = "00"
+        movement["transfer"]["transaction_id"] = movement["transfer"]["transaction_id"].upper()
+        movement["transfer"]["event_locator"]["value"] = "0"
+        self.assertEqual(validate_movement_integrity(movement, observations, self.claims), [])
+
+    def test_evm_transaction_id_addresses_and_trace_paths_are_compared_canonically(self):
+        movement = copy.deepcopy(self.movements[1])
+        observations = copy.deepcopy(self.observations)
+        source = next(item for item in observations if item["observation_id"] == movement["source_observation_ids"][0])
+        source["movement"]["transaction_id"] = source["movement"]["transaction_id"].upper()
+        source["movement"]["from_address"] = source["movement"]["from_address"].upper()
+        source["movement"]["to_address"] = source["movement"]["to_address"].upper()
+        source["movement"]["event_locator"] = {"kind": "EVM_TRACE_PATH", "value": "0/05"}
+        movement["transfer"]["transaction_id"] = movement["transfer"]["transaction_id"].lower()
+        movement["transfer"]["event_locator"] = {"kind": "EVM_TRACE_PATH", "value": "0/5"}
+        self.assertEqual(validate_movement_integrity(movement, observations, self.claims), [])
+
+    def test_invalid_event_time_is_rejected_by_ledger_integrity(self):
+        movement = copy.deepcopy(self.movements[0])
+        observations = copy.deepcopy(self.observations)
+        source_id = movement["source_observation_ids"][0]
+        source = next(item for item in observations if item["observation_id"] == source_id)
+        source["event_time_utc"] = "2026-02-30T10:00:00Z"
+        errors = validate_movement_integrity(movement, observations, self.claims)
+        self.assertTrue(any("invalid source event_time_utc" in error for error in errors))
+
+    def test_non_ascii_numeric_locator_is_not_canonically_equal(self):
+        movement = copy.deepcopy(self.movements[0])
+        observations = copy.deepcopy(self.observations)
+        source_id = movement["source_observation_ids"][0]
+        source = next(item for item in observations if item["observation_id"] == source_id)
+        source["movement"]["event_locator"]["value"] = "٠"
+        errors = validate_movement_integrity(movement, observations, self.claims)
+        self.assertTrue(any("event_locator mismatch" in error for error in errors))
+
+    def test_malformed_source_transaction_id_is_rejected(self):
+        movement = copy.deepcopy(self.movements[0])
+        observations = copy.deepcopy(self.observations)
+        source = next(item for item in observations if item["observation_id"] == movement["source_observation_ids"][0])
+        source["movement"]["transaction_id"] = "invalid"
+        errors = validate_movement_integrity(movement, observations, self.claims)
+        self.assertTrue(any("invalid source transaction_id" in error for error in errors))
+
+    def test_duplicate_observation_cannot_be_a_movement_source(self):
+        movement = copy.deepcopy(self.movements[0])
+        observations = copy.deepcopy(self.observations)
+        source_id = movement["source_observation_ids"][0]
+        source = next(item for item in observations if item["observation_id"] == source_id)
+        source["quality"] = {"status": "DUPLICATE", "duplicate_of": "another-source"}
+        errors = validate_movement_integrity(movement, observations, self.claims)
+        self.assertTrue(any("source observation quality is not admissible" in error for error in errors))
 
 
 if __name__ == "__main__":

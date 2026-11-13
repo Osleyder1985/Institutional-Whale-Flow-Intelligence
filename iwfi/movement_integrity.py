@@ -6,7 +6,7 @@ import re
 from iwfi.attribution_integrity import validate_claim_collection
 
 
-TRANSFER_FIELDS = ("amount", "unit", "from_address", "to_address", "transaction_id", "confirmation_status")
+TRANSFER_FIELDS = ("amount", "unit", "from_address", "to_address", "transaction_id", "confirmation_status", "event_locator")
 UTC_TIMESTAMP_PATTERN = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z")
 
 
@@ -53,6 +53,63 @@ def _same_amount(left, right):
         return Decimal(left) == Decimal(right)
     except (InvalidOperation, TypeError, ValueError):
         return False
+
+
+
+def _normalized_transaction_id(network_id, value):
+    if not isinstance(value, str):
+        return None
+    if network_id == "bitcoin-mainnet":
+        return value.lower() if re.fullmatch(r"[0-9a-fA-F]{64}", value) else None
+    if network_id == "eip155:1":
+        raw = value[2:] if value[:2].lower() == "0x" else value
+        return raw.lower() if re.fullmatch(r"[0-9a-fA-F]{64}", raw) else None
+    return None
+
+
+def _normalized_event_locator(value, network_id):
+    if not isinstance(value, dict):
+        return None
+    kind = value.get("kind")
+    raw = value.get("value")
+    allowed = {
+        "bitcoin-mainnet": {"UTXO_VOUT"},
+        "eip155:1": {"EVM_TRACE_PATH", "EVM_TX_VALUE"},
+    }
+    if kind not in allowed.get(network_id, set()) or not isinstance(raw, str):
+        return None
+    if kind == "UTXO_VOUT":
+        if re.fullmatch(r"[0-9]+", raw) is None:
+            return None
+        raw = raw.lstrip("0") or "0"
+    elif kind == "EVM_TRACE_PATH":
+        parts = raw.split("/")
+        if not parts or any(re.fullmatch(r"[0-9]+", part) is None for part in parts):
+            return None
+        raw = "/".join(part.lstrip("0") or "0" for part in parts)
+    elif kind == "EVM_TX_VALUE" and raw != "transaction-value":
+        return None
+    return kind, raw
+
+
+def _same_transfer_field(field, left, right, network_id):
+    if field == "amount":
+        return _same_amount(left, right)
+    if field == "transaction_id":
+        left_key = _normalized_transaction_id(network_id, left)
+        right_key = _normalized_transaction_id(network_id, right)
+        return left_key is not None and left_key == right_key
+    if field in {"from_address", "to_address"} and network_id == "eip155:1":
+        return (
+            left.lower() == right.lower()
+            if isinstance(left, str) and isinstance(right, str)
+            else left == right
+        )
+    if field == "event_locator":
+        left_key = _normalized_event_locator(left, network_id)
+        right_key = _normalized_event_locator(right, network_id)
+        return left_key is not None and left_key == right_key
+    return left == right
 
 
 def validate_movement_integrity(movement, observations, claims, known_claim_ids=()):
@@ -117,11 +174,21 @@ def validate_movement_integrity(movement, observations, claims, known_claim_ids=
             errors.append(f"asset/network mismatch for source observation: {observation_id}")
             continue
         source_transfer = observation.get("movement")
+        source_txid = source_transfer.get("transaction_id") if isinstance(source_transfer, dict) else None
+        if source_txid is not None and _normalized_transaction_id(source_asset.get("network_id"), source_txid) is None:
+            errors.append(f"invalid source transaction_id for observation: {observation_id}")
+        movement_txid = movement.get("transfer", {}).get("transaction_id")
+        if movement_txid is not None and _normalized_transaction_id(movement.get("asset", {}).get("network_id"), movement_txid) is None:
+            errors.append("movement transaction_id has invalid network-specific format")
         if not isinstance(source_transfer, dict) or source_transfer.get("movement_type") != "TRANSFER":
             errors.append(f"source observation has no transfer movement: {observation_id}")
             continue
         source_time = observation.get("event_time_utc")
         movement_time = movement.get("event_time_utc")
+        if source_time is not None and _utc_datetime(source_time) is None:
+            errors.append(f"invalid source event_time_utc: {observation_id}")
+        if movement_time is not None and _utc_datetime(movement_time) is None:
+            errors.append("movement event_time_utc is invalid")
         if source_time is not None and movement_time is None:
             errors.append(f"known source event_time omitted from movement: {observation_id}")
         elif source_time is not None and movement_time is not None and source_time != movement_time:
@@ -129,10 +196,12 @@ def validate_movement_integrity(movement, observations, claims, known_claim_ids=
         for field in TRANSFER_FIELDS:
             source_value = source_transfer.get(field)
             movement_value = movement.get("transfer", {}).get(field)
-            if field == "amount":
-                equal = _same_amount(source_value, movement_value)
-            else:
-                equal = source_value == movement_value
+            equal = _same_transfer_field(
+                field,
+                source_value,
+                movement_value,
+                movement.get("asset", {}).get("network_id"),
+            )
             if source_value is not None and movement_value is not None and not equal:
                 errors.append(f"{field} mismatch for source observation: {observation_id}")
             elif source_value is not None and movement_value is None:
