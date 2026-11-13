@@ -74,6 +74,24 @@ class SourceObservationContractTests(unittest.TestCase):
         )
         self.assertEqual(self.schema["properties"]["contract_version"]["const"], "1.1.0")
 
+    def test_schema_rejects_whitespace_only_source_identifiers(self):
+        base = copy.deepcopy(self.fixtures[0])
+        mutations = (
+            ("observation_id", lambda item: item.__setitem__("observation_id", "   ")),
+            ("provider", lambda item: item["source"].__setitem__("provider", "   ")),
+            ("endpoint", lambda item: item["source"].__setitem__("endpoint", "   ")),
+            ("record_id", lambda item: item["source"].__setitem__("record_id", "   ")),
+        )
+        for field, mutate in mutations:
+            with self.subTest(field=field):
+                item = copy.deepcopy(base)
+                mutate(item)
+                self.assertFalse(self.validator.is_valid(item))
+        duplicate = copy.deepcopy(base)
+        duplicate["quality"]["status"] = "DUPLICATE"
+        duplicate["quality"]["duplicate_of"] = "   "
+        self.assertFalse(self.validator.is_valid(duplicate))
+
     def test_schema_rejects_malformed_network_transaction_hash(self):
         fixture = copy.deepcopy(next(x for x in self.fixtures if x["observation_type"] == "ON_CHAIN_TRANSACTION" and x["asset"]["network_id"] == "bitcoin-mainnet"))
         fixture["movement"]["transaction_id"] = "not-a-hash"
