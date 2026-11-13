@@ -130,5 +130,22 @@ class EntityAttributionContractTests(unittest.TestCase):
         self.assertFalse(self.validator.is_valid(claim))
 
 
+    def test_validity_interval_rejects_timestamp_without_seconds(self):
+        claim = copy.deepcopy(self.claims[0])
+        claim["valid_from_utc"] = "2026-01-01T00:00Z"
+        self.assertEqual(
+            validate_claim_validity_interval(claim),
+            ["valid_from_utc must be a valid UTC timestamp ending in Z"],
+        )
+
+    def test_validity_interval_rejects_impossible_calendar_date(self):
+        claim = copy.deepcopy(self.claims[0])
+        claim["valid_from_utc"] = "2026-02-30T00:00:00Z"
+        self.assertEqual(
+            validate_claim_validity_interval(claim),
+            ["valid_from_utc must be a valid UTC timestamp ending in Z"],
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
