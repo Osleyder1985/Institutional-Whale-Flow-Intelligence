@@ -49,7 +49,7 @@
     "recorded_at_utc": "2026-11-11T09:30:03Z",
     "transfer": {
       "movement_type": "TRANSFER",
-      "amount": "12.5",
+      "amount": null,
       "unit": "ETH",
       "from_address": "0xfrom",
       "to_address": "0xto",
