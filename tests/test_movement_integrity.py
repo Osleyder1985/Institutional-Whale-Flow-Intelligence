@@ -47,6 +47,25 @@ class MovementIntegrityTests(unittest.TestCase):
         self.assertTrue(any("observations[0] must be an object" in error for error in errors))
         self.assertTrue(any("source observation not found" in error for error in errors))
 
+    def test_whitespace_only_source_observation_id_is_rejected(self):
+        movement = copy.deepcopy(self.movements[0])
+        movement["source_observation_ids"] = ["   "]
+        errors = validate_movement_integrity(movement, self.observations, self.claims)
+        self.assertIn("source_observation_ids must be a list of non-empty strings", errors)
+
+    def test_whitespace_only_observation_id_in_source_collection_is_rejected(self):
+        movement = copy.deepcopy(self.movements[0])
+        observations = copy.deepcopy(self.observations)
+        observations[0]["observation_id"] = "   "
+        errors = validate_movement_integrity(movement, observations, self.claims)
+        self.assertIn("invalid observation_id in evidence collection", errors)
+
+    def test_whitespace_only_attribution_claim_id_is_rejected(self):
+        movement = copy.deepcopy(self.movements[0])
+        movement["attribution_resolutions"][0]["claim_id"] = "   "
+        errors = validate_movement_integrity(movement, self.observations, self.claims)
+        self.assertIn("attribution resolution has an invalid claim_id", errors)
+
     def test_non_object_claim_returns_validation_error(self):
         movement = copy.deepcopy(self.movements[0])
         movement["attribution_resolutions"] = []
