@@ -13,7 +13,7 @@ class MovementIntegrityTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.movements = json.loads((ROOT / "fixtures" / "movement-ledger.json").read_text(encoding="utf-8"))
-        cls.observations = json.loads((ROOT / "fixtures" / "source-observations.json").read_text(encoding="utf-8"))
+        cls.observations = json.loads((ROOT / "fixtures" / "movement-integrity-source-observations.json").read_text(encoding="utf-8"))
         cls.claims = json.loads((ROOT / "fixtures" / "entity-attribution-claims.json").read_text(encoding="utf-8"))
 
     def test_btc_and_eth_movements_resolve_against_source_observations(self):
