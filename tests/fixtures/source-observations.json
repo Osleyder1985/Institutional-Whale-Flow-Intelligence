@@ -1,0 +1,286 @@
+[
+  {
+    "contract_version": "1.0.0",
+    "observation_id": "fixture-btc-confirmed",
+    "source": {
+      "provider": "fixture-chain-indexer",
+      "endpoint": "transactions",
+      "record_id": "btc-tx-001",
+      "payload_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "schema_version": "fixture-1"
+    },
+    "asset": {
+      "asset_id": "bitcoin:btc",
+      "symbol": "BTC",
+      "network_id": "bitcoin-mainnet"
+    },
+    "event_time_utc": "2026-11-11T10:00:00Z",
+    "retrieved_at_utc": "2026-11-11T10:00:03Z",
+    "observation_type": "ON_CHAIN_TRANSACTION",
+    "movement": {
+      "movement_type": "TRANSFER",
+      "amount": "1.25000000",
+      "unit": "BTC",
+      "from_address": "bc1qsource",
+      "to_address": "bc1qdestination",
+      "transaction_id": "btc-tx-001",
+      "confirmation_status": "CONFIRMED"
+    },
+    "attributions": [],
+    "quality": {
+      "status": "VALID",
+      "notes": [],
+      "duplicate_of": null
+    },
+    "retention": {
+      "retention_classification": "HASH_ONLY",
+      "raw_payload_retained": false
+    }
+  },
+  {
+    "contract_version": "1.0.0",
+    "observation_id": "fixture-eth-confirmed",
+    "source": {
+      "provider": "fixture-chain-indexer",
+      "endpoint": "transactions",
+      "record_id": "eth-tx-001",
+      "payload_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "schema_version": "fixture-1"
+    },
+    "asset": {
+      "asset_id": "ethereum:eth",
+      "symbol": "ETH",
+      "network_id": "eip155:1"
+    },
+    "event_time_utc": "2026-11-11T11:00:00Z",
+    "retrieved_at_utc": "2026-11-11T11:00:02Z",
+    "observation_type": "ON_CHAIN_TRANSACTION",
+    "movement": {
+      "movement_type": "TRANSFER",
+      "amount": "12.5",
+      "unit": "ETH",
+      "from_address": "0xfrom",
+      "to_address": "0xto",
+      "transaction_id": "0xeth001",
+      "confirmation_status": "CONFIRMED"
+    },
+    "attributions": [],
+    "quality": {
+      "status": "VALID",
+      "notes": [],
+      "duplicate_of": null
+    },
+    "retention": {
+      "retention_classification": "HASH_ONLY",
+      "raw_payload_retained": false
+    }
+  },
+  {
+    "contract_version": "1.0.0",
+    "observation_id": "fixture-exchange-label",
+    "source": {
+      "provider": "vendor-a",
+      "endpoint": "address-labels",
+      "record_id": "label-001",
+      "payload_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "schema_version": "2026-11"
+    },
+    "asset": {
+      "asset_id": "bitcoin:btc",
+      "symbol": "BTC",
+      "network_id": "bitcoin-mainnet"
+    },
+    "event_time_utc": "2026-11-10T00:00:00Z",
+    "retrieved_at_utc": "2026-11-11T12:00:00Z",
+    "observation_type": "ADDRESS_LABEL",
+    "movement": null,
+    "attributions": [
+      {
+        "subject": "bc1qexchange",
+        "claim": "exchange",
+        "status": "PROVIDER_LABELLED",
+        "claim_source": "vendor-a",
+        "valid_from_utc": null,
+        "valid_to_utc": null
+      }
+    ],
+    "quality": {
+      "status": "VALID",
+      "notes": [],
+      "duplicate_of": null
+    },
+    "retention": {
+      "retention_classification": "UNKNOWN_PENDING_TERMS",
+      "raw_payload_retained": false
+    }
+  },
+  {
+    "contract_version": "1.0.0",
+    "observation_id": "fixture-missing-amount",
+    "source": {
+      "provider": "fixture-chain-indexer",
+      "endpoint": "transactions",
+      "record_id": "btc-tx-002",
+      "payload_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "schema_version": "fixture-1"
+    },
+    "asset": {
+      "asset_id": "bitcoin:btc",
+      "symbol": "BTC",
+      "network_id": "bitcoin-mainnet"
+    },
+    "event_time_utc": "2026-11-11T12:00:00Z",
+    "retrieved_at_utc": "2026-11-11T12:00:04Z",
+    "observation_type": "ON_CHAIN_TRANSACTION",
+    "movement": {
+      "movement_type": "TRANSFER",
+      "amount": null,
+      "unit": "BTC",
+      "from_address": "bc1qa",
+      "to_address": "bc1qb",
+      "transaction_id": "btc-tx-002",
+      "confirmation_status": "CONFIRMED"
+    },
+    "attributions": [],
+    "quality": {
+      "status": "PARTIAL",
+      "notes": [
+        "amount_missing"
+      ],
+      "duplicate_of": null
+    },
+    "retention": {
+      "retention_classification": "HASH_ONLY",
+      "raw_payload_retained": false
+    }
+  },
+  {
+    "contract_version": "1.0.0",
+    "observation_id": "fixture-duplicate",
+    "source": {
+      "provider": "fixture-chain-indexer",
+      "endpoint": "transactions",
+      "record_id": "btc-tx-001",
+      "payload_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "schema_version": "fixture-1"
+    },
+    "asset": {
+      "asset_id": "bitcoin:btc",
+      "symbol": "BTC",
+      "network_id": "bitcoin-mainnet"
+    },
+    "event_time_utc": "2026-11-11T10:00:00Z",
+    "retrieved_at_utc": "2026-11-11T10:05:00Z",
+    "observation_type": "ON_CHAIN_TRANSACTION",
+    "movement": {
+      "movement_type": "TRANSFER",
+      "amount": "1.25000000",
+      "unit": "BTC",
+      "from_address": "bc1qsource",
+      "to_address": "bc1qdestination",
+      "transaction_id": "btc-tx-001",
+      "confirmation_status": "CONFIRMED"
+    },
+    "attributions": [],
+    "quality": {
+      "status": "DUPLICATE",
+      "notes": [
+        "same_source_record_retrieved_again"
+      ],
+      "duplicate_of": "fixture-btc-confirmed"
+    },
+    "retention": {
+      "retention_classification": "HASH_ONLY",
+      "raw_payload_retained": false
+    }
+  },
+  {
+    "contract_version": "1.0.0",
+    "observation_id": "fixture-delayed",
+    "source": {
+      "provider": "fixture-chain-indexer",
+      "endpoint": "transactions",
+      "record_id": "eth-tx-delayed",
+      "payload_sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "schema_version": "fixture-1"
+    },
+    "asset": {
+      "asset_id": "ethereum:eth",
+      "symbol": "ETH",
+      "network_id": "eip155:1"
+    },
+    "event_time_utc": "2026-11-10T08:00:00Z",
+    "retrieved_at_utc": "2026-11-11T08:00:00Z",
+    "observation_type": "ON_CHAIN_TRANSACTION",
+    "movement": {
+      "movement_type": "TRANSFER",
+      "amount": "0.75",
+      "unit": "ETH",
+      "from_address": "0xaaa",
+      "to_address": "0xbbb",
+      "transaction_id": "0xdelayed",
+      "confirmation_status": "CONFIRMED"
+    },
+    "attributions": [],
+    "quality": {
+      "status": "DELAYED",
+      "notes": [
+        "retrieved_24h_after_event"
+      ],
+      "duplicate_of": null
+    },
+    "retention": {
+      "retention_classification": "HASH_ONLY",
+      "raw_payload_retained": false
+    }
+  },
+  {
+    "contract_version": "1.0.0",
+    "observation_id": "fixture-conflicting-attribution",
+    "source": {
+      "provider": "aggregator",
+      "endpoint": "entity-attribution",
+      "record_id": "conflict-001",
+      "payload_sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "schema_version": "fixture-1"
+    },
+    "asset": {
+      "asset_id": "ethereum:eth",
+      "symbol": "ETH",
+      "network_id": "eip155:1"
+    },
+    "event_time_utc": "2026-11-11T09:00:00Z",
+    "retrieved_at_utc": "2026-11-11T09:01:00Z",
+    "observation_type": "ADDRESS_LABEL",
+    "movement": null,
+    "attributions": [
+      {
+        "subject": "0xwallet",
+        "claim": "exchange",
+        "status": "PROVIDER_LABELLED",
+        "claim_source": "vendor-a",
+        "valid_from_utc": null,
+        "valid_to_utc": null
+      },
+      {
+        "subject": "0xwallet",
+        "claim": "unknown",
+        "status": "DISPUTED",
+        "claim_source": "vendor-b",
+        "valid_from_utc": null,
+        "valid_to_utc": null
+      }
+    ],
+    "quality": {
+      "status": "PARTIAL",
+      "notes": [
+        "conflicting_provider_claims"
+      ],
+      "duplicate_of": null
+    },
+    "retention": {
+      "retention_classification": "UNKNOWN_PENDING_TERMS",
+      "raw_payload_retained": false
+    }
+  }
+]
