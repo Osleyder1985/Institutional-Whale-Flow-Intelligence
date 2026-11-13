@@ -77,7 +77,8 @@
         "from_address",
         "to_address",
         "transaction_id",
-        "confirmation_status"
+        "confirmation_status",
+        "event_locator"
       ],
       "properties": {
         "movement_type": {
