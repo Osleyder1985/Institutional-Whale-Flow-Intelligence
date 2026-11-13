@@ -104,6 +104,19 @@ class ObservationResolutionTests(unittest.TestCase):
         self.assertEqual(result["events"], [])
         self.assertEqual(result["links"][0]["match_class"], "NO_MATCH")
 
+    def test_missing_transaction_with_fewer_than_three_shared_fields_is_insufficient(self):
+        first = self.by_id("btc-vout-provider-a")
+        second = copy.deepcopy(first)
+        second["observation_id"] = "too-few-shared-fields"
+        second["movement"]["transaction_id"] = None
+        second["movement"].pop("event_locator")
+        second["movement"]["amount"] = "999"
+        second["movement"]["from_address"] = "bc1qdifferent"
+        second["movement"]["to_address"] = "bc1qother"
+        second["event_time_utc"] = "2026-11-10T10:00:01Z"
+        self.assertEqual(classify_observation_pair(first, second)["match_class"], "NO_MATCH")
+        self.assertEqual(resolve_observations([first, second])["status"], "RESOLVED")
+
     def test_same_transaction_without_locator_remains_candidate(self):
         first = self.by_id("btc-vout-provider-a")
         second = self.by_id("btc-vout-provider-b")
