@@ -76,6 +76,17 @@ class ObservationResolutionTests(unittest.TestCase):
             result["errors"],
         )
 
+    def test_unhashable_network_identity_fails_closed_without_exception(self):
+        observation = self.by_id("btc-vout-provider-a")
+        observation["asset"]["network_id"] = []
+        observation["asset"]["asset_id"] = []
+        result = resolve_observations([observation])
+        self.assertEqual(result["status"], "INVALID")
+        self.assertIn(
+            "invalid asset/network identity: btc-vout-provider-a",
+            result["errors"],
+        )
+
     def test_same_btc_event_from_two_providers_is_one_strong_event(self):
         result = resolve_observations([self.by_id("btc-vout-provider-a"), self.by_id("btc-vout-provider-b")])
         self.assertEqual(len(result["events"]), 1)
