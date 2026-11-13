@@ -58,11 +58,11 @@ def _normalized_event_locator(value, network_id):
     raw = value.get("value")
     allowed = {
         "bitcoin-mainnet": {"UTXO_VOUT"},
-        "eip155:1": {"EVM_LOG_INDEX", "EVM_TRACE_PATH", "EVM_TX_VALUE"},
+        "eip155:1": {"EVM_TRACE_PATH", "EVM_TX_VALUE"},
     }
     if kind not in allowed.get(network_id, set()) or not isinstance(raw, str):
         return None
-    if kind in {"UTXO_VOUT", "EVM_LOG_INDEX"}:
+    if kind == "UTXO_VOUT":
         if not raw.isdigit():
             return None
         raw = str(int(raw))
