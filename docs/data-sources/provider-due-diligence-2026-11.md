@@ -1,4 +1,4 @@
-# Provider Due Diligence — BTC/ETH Pilot (2026-11-12)
+# Provider Due Diligence — BTC/ETH Pilot (reviewed 2026-11-13)
 
 ## 1. Executive decision
 
@@ -12,7 +12,7 @@ Recommended next step: implement and test only the provider-neutral observation 
 
 | Provider | BTC coverage | ETH coverage | Relevant documented capabilities | Access / price evidence | Main limitation | Decision |
 |---|---|---|---|---|---|---|
-| Arkham Intel API | API announcement describes entity labels and fund-flow data; endpoint-level BTC coverage not independently verified | Same | Entity labels, fund-flow data, intelligence API | New API announced 2026-04-15; access, price and quota not published in the announcement | Need API access, endpoint docs, attribution methodology, plan, terms and retention confirmation | CONDITIONAL_CANDIDATE |
+| Arkham Intel API | API announcement describes entity labels and fund-flow data; address-intelligence updates feed is documented as real-time since 2026-09-08; endpoint-level BTC coverage still requires account verification | Same | Entity labels, fund-flow data, intelligence API | New API announced 2026-04-15; access, price and quota not published in the announcement | Need API access, endpoint docs, attribution methodology, plan, terms and retention confirmation | CONDITIONAL_CANDIDATE |
 | CryptoQuant | Explicitly lists BTC | Explicitly lists ETH | Exchange/miner/entity flows, market indicators, Fund & ETF data, network and flow indicators | Basic free: 10,000 credits/month, 10 req/min, 30 days, market data only. Professional: 500,000 credits/month, 120 req/min, one year, on-chain included. Premium: full history and unlimited credits. Price must be checked in current account/pricing page | Core whale/on-chain metrics are not included in free Basic; must validate exact BTC/ETH endpoint entitlements and methodology | BEST_DOCUMENTED_ONCHAIN_CANDIDATE; NOT_APPROVED |
 | Glassnode | Broad metric platform; confirm each metric's asset coverage | Broad metric platform; confirm each metric's asset coverage | On-chain and crypto-financial metrics, cohort and holder analysis | Advanced Light API: 14 days, daily resolution, 50 calls/day. Full API requires Professional subscription. Data credits consumed per request | Higher access barrier; exact plan price and each needed metric/asset must be confirmed | CONDITIONAL_CANDIDATE |
 | Nansen | Bitcoin is supported only by selected Profiler endpoints; no Smart Money netflow/holdings on Bitcoin | Smart Money endpoints support Ethereum | Smart Trader netflows, DEX trades, holdings, historical holdings; separate Fund Holdings API | Current official API help says credits are purchased; current credit prices/plan entitlements must be reconciled against account and docs | Smart Money is not an institutional-fund proxy; funds were removed from Smart Money on 2026-09-09. Bitcoin is not supported by Smart Money endpoints | ETH_ONLY_CANDIDATE_FOR_SMART_TRADER; NOT_BTC_SMART_MONEY |
@@ -22,7 +22,7 @@ Recommended next step: implement and test only the provider-neutral observation 
 
 ### 3.1 Arkham
 
-Arkham's 2026-04-15 announcement says its Intel API integrates entity labels and fund-flow data into workflows/products. The announcement links to API access, but does not itself provide sufficient detail to establish endpoint-level coverage, pricing, quotas, attribution confidence, retention, or redistribution rights.
+Arkham's 2026-04-15 announcement says its Intel API integrates entity labels and fund-flow data into workflows/products. A later 2026-09-08 update documents the address-intelligence updates feed as real-time: new, updated and deleted address intelligence is delivered within minutes rather than once per day. The update includes deposit-address detection, verified contract labels, token/NFT labels, deployer labels and analyst-curated labels. It also retires the metrics object (balance, volume, transfer counts) and `orderBy` options from that endpoint; these fields must not be assumed available there. Neither announcement establishes endpoint-level BTC/ETH coverage, pricing, quotas, attribution confidence, retention or redistribution rights for the user's account.
 
 Required before approval:
 - Obtain current API documentation and account access.
@@ -48,10 +48,10 @@ The free tier can support a low-cost API-contract experiment for market data but
 
 ### 3.3 Glassnode
 
-The current API setup documentation is more nuanced than a simple Professional-only statement:
+The current API setup documentation states:
 - Professional subscribers have access to the full API within their plan.
 - Advanced subscribers have a Light API limited to 14 days, daily resolution, 50 calls/day, and no bulk endpoints.
-- API usage consumes data credits.
+- API usage consumes data credits; bulk requests can consume multiple credits according to the number of asset/parameter combinations, so the number of HTTP requests alone is not a sufficient cost estimate.
 - The credit documentation currently lists BTC at 1 credit/request and other assets, including ETH, at 2 credits/request.
 
 This makes Advanced Light API a possible constrained evaluation route if the account's metric entitlements include the required BTC/ETH metrics. It is not a substitute for verifying the metric catalog, data finalization, timestamps, and historical availability. Exact subscription cost remains unverified here.
@@ -60,7 +60,7 @@ This makes Advanced Light API a possible constrained evaluation route if the acc
 
 The current Smart Money documentation states:
 - Smart Money is based on historically profitable traders (Smart Traders), not institutional funds.
-- Fund wallets stopped being part of Smart Money on 2026-09-09. The `Fund` label is deprecated for Smart Money filters.
+- Fund wallets stopped being part of Smart Money on 2026-09-09. The current API docs still accept the `Fund` filter temporarily but mark it deprecated; including it matches no wallets on the affected Smart Money endpoints, and future rejection dates differ by endpoint. Current fund holdings are a separate Fund Holdings API product.
 - Netflow, DEX Trades, and Holdings support Ethereum and selected EVM chains.
 - Bitcoin is not listed among Smart Money-supported chains.
 - Bitcoin support is limited to selected Profiler endpoints; this is not Smart Money netflow/holdings.
@@ -134,6 +134,9 @@ No paid plan is approved by this document. No API calls, polling, or backfill ar
 - Nansen Smart Money netflows: https://docs.nansen.ai/api/smart-money/netflows
 - CoinGlass API plans and permissions: https://docs.coinglass.com/reference/plans-and-permissions
 - Arkham API announcement (2026-04-15): https://arkm.com/announcements/the-new-arkham-api
+- Arkham real-time address-intelligence update (2026-09-08): https://arkm.com/announcements/arkham-api-upgrade-real-time-intel
+- Nansen Smart Money API and Fund-label deprecation: https://docs.nansen.ai/api/smart-money
+- Nansen chain support by endpoint: https://docs.nansen.ai/reference/chains
 
 ## 8. Audit status
 
@@ -146,3 +149,14 @@ Sample-response validation: **not performed**.
 Account-specific entitlement and terms verification: **pending**.
 
 Paid access, continuous polling, production ingestion and historical backfill: **not authorized**.
+
+
+## Revisión de cambios documentales — 2026-11-13
+
+Se revalidaron las páginas oficiales consultadas. CryptoQuant mantiene los límites documentados de Basic/Advanced/Professional/Premium y el acceso on-chain desde Professional. Glassnode confirma la Light API de Advanced (14 días, diario, 50 llamadas/día, sin bulk) y el consumo de créditos por combinaciones en endpoints bulk. CoinGlass mantiene en su tabla oficial los precios mensuales y los derechos personales/comerciales ya registrados.
+
+Se incorporan dos precisiones:
+- Nansen: `Fund` sigue apareciendo como filtro temporalmente aceptado, pero está deprecado y ya no devuelve wallets en Smart Money; los fondos se consultan mediante Fund Holdings. Bitcoin sigue sin soporte en Smart Money, aunque determinados endpoints de Profiler sí lo cubren.
+- Arkham: el feed de actualizaciones de inteligencia de direcciones pasó a tiempo real el 2026-09-08; además, se retiraron métricas de balance/volumen/transferencias y `orderBy` de ese endpoint. No se presume que esos campos existan en el feed actual.
+
+La revisión documental no equivale a validar acceso de cuenta, muestras, términos particulares ni retención. Ningún proveedor queda aprobado.
