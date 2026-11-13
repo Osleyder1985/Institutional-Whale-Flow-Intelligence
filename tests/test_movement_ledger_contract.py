@@ -93,6 +93,25 @@ class MovementLedgerContractTests(unittest.TestCase):
         item["transfer"].pop("event_locator")
         self.assertFalse(self.validator.is_valid(item))
 
+    def test_schema_rejects_whitespace_only_movement_and_reference_ids(self):
+        base = copy.deepcopy(self.fixtures[0])
+        base["movement_id"] = "   "
+        self.assertFalse(self.validator.is_valid(base))
+        base = copy.deepcopy(self.fixtures[0])
+        base["source_observation_ids"] = ["   "]
+        self.assertFalse(self.validator.is_valid(base))
+        base = copy.deepcopy(self.fixtures[0])
+        base["attribution_resolutions"] = [{
+            "claim_id": "   ",
+            "address": "bc1qsource",
+            "predicate": "LABELLED_AS",
+            "object_type": "CLASSIFICATION",
+            "object_id": "exchange",
+            "epistemic_status": "PROVIDER_LABELLED",
+            "temporal_status": "TIME_UNRESOLVED"
+        }]
+        self.assertFalse(self.validator.is_valid(base))
+
     def test_schema_rejects_malformed_network_transaction_hash(self):
         item = copy.deepcopy(self.fixtures[0])
         item["transfer"]["transaction_id"] = "not-a-hash"
