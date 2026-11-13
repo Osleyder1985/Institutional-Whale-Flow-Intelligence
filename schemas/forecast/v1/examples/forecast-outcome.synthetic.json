@@ -1,0 +1,16 @@
+{
+  "_example_notice": "SYNTHETIC FIXTURE ONLY — not an observed market outcome or performance result.",
+  "schema_version":"1.0.0",
+  "outcome_id":"synthetic-outcome-0001",
+  "forecast_id":"synthetic-forecast-0001",
+  "supersedes_outcome_id":null,
+  "status":"CENSORED",
+  "observation_window":{"start":"2026-01-01T00:00:00Z","end":"2026-01-01T12:00:00Z","expected_end":"2026-01-02T00:00:00Z"},
+  "reference_market":{"instrument":"BTC/USD","venue":"SYNTHETIC-REFERENCE","price_source_ref":"synthetic-price-series","quote_currency":"USD"},
+  "observed_path":{"start_price":100000,"end_price":100200,"high_price":100400,"low_price":99800,"max_favorable_excursion_pct":0.4,"max_adverse_excursion_pct":-0.2,"observations_ref":"synthetic-price-series"},
+  "target_events":[{"target_ref":"synthetic-target-1","result":"UNASSESSABLE","first_observed_at":null,"first_observed_price":null,"gap_crossed":false,"notes":"Observation ended before forecast horizon end."}],
+  "zone_events":[{"zone_ref":"synthetic-zone-1","result":"UNASSESSABLE","first_observed_at":null,"first_observed_price":null,"gap_crossed":false}],
+  "metrics":[{"metric_id":"synthetic-absolute-error","metric_version":"0.0.0-fixture","value":null,"unit":"USD","notes":"Not computed in this fixture."}],
+  "data_quality":{"status":"DEGRADED","coverage_ratio":0.5,"missing_intervals":[{"start":"2026-01-01T12:00:00Z","end":"2026-01-02T00:00:00Z"}]},
+  "provenance":{"outcome_evaluator_version":"fixture-only","price_data_source_refs":["synthetic-price-series"],"evaluation_protocol_version":"synthetic-0","evaluated_at":"2026-01-01T12:00:01Z"}
+}
