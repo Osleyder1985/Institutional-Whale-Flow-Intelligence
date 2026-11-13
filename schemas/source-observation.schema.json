@@ -99,11 +99,13 @@
         "string",
         "null"
       ],
-      "format": "date-time"
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
     },
     "retrieved_at_utc": {
       "type": "string",
-      "format": "date-time"
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
     },
     "observation_type": {
       "enum": [
@@ -214,14 +216,16 @@
               "string",
               "null"
             ],
-            "format": "date-time"
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
           },
           "valid_to_utc": {
             "type": [
               "string",
               "null"
             ],
-            "format": "date-time"
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
           }
         }
       }
@@ -388,6 +392,190 @@
         "properties": {
           "measurement": {
             "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "asset": {
+            "properties": {
+              "asset_id": {
+                "const": "bitcoin:btc"
+              }
+            },
+            "required": [
+              "asset_id"
+            ]
+          }
+        },
+        "required": [
+          "asset"
+        ]
+      },
+      "then": {
+        "properties": {
+          "asset": {
+            "properties": {
+              "symbol": {
+                "const": "BTC"
+              },
+              "network_id": {
+                "const": "bitcoin-mainnet"
+              }
+            }
+          },
+          "movement": {
+            "properties": {
+              "unit": {
+                "const": "BTC"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "asset": {
+            "properties": {
+              "asset_id": {
+                "const": "ethereum:eth"
+              }
+            },
+            "required": [
+              "asset_id"
+            ]
+          }
+        },
+        "required": [
+          "asset"
+        ]
+      },
+      "then": {
+        "properties": {
+          "asset": {
+            "properties": {
+              "symbol": {
+                "const": "ETH"
+              },
+              "network_id": {
+                "const": "eip155:1"
+              }
+            }
+          },
+          "movement": {
+            "properties": {
+              "unit": {
+                "const": "ETH"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "observation_type": {
+            "enum": [
+              "EXCHANGE_FLOW_METRIC",
+              "ETF_FLOW_METRIC"
+            ]
+          }
+        },
+        "required": [
+          "observation_type"
+        ]
+      },
+      "then": {
+        "required": [
+          "measurement"
+        ],
+        "not": {
+          "required": [
+            "movement"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "observation_type": {
+            "const": "ON_CHAIN_TRANSACTION"
+          }
+        },
+        "required": [
+          "observation_type"
+        ]
+      },
+      "then": {
+        "not": {
+          "required": [
+            "measurement"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "retention": {
+            "properties": {
+              "retention_classification": {
+                "const": "UNKNOWN_PENDING_TERMS"
+              }
+            },
+            "required": [
+              "retention_classification"
+            ]
+          }
+        },
+        "required": [
+          "retention"
+        ]
+      },
+      "then": {
+        "properties": {
+          "retention": {
+            "properties": {
+              "raw_payload_retained": {
+                "const": false
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "retention": {
+            "properties": {
+              "raw_payload_retained": {
+                "const": true
+              }
+            },
+            "required": [
+              "raw_payload_retained"
+            ]
+          }
+        },
+        "required": [
+          "retention"
+        ]
+      },
+      "then": {
+        "properties": {
+          "retention": {
+            "properties": {
+              "retention_classification": {
+                "const": "RAW_ALLOWED"
+              }
+            }
           }
         }
       }
