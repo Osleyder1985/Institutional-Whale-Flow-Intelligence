@@ -16,6 +16,28 @@ class MovementIntegrityTests(unittest.TestCase):
         cls.observations = json.loads((ROOT / "fixtures" / "movement-integrity-source-observations.json").read_text(encoding="utf-8"))
         cls.claims = json.loads((ROOT / "fixtures" / "entity-attribution-claims.json").read_text(encoding="utf-8"))
 
+    def test_noncanonical_decimal_amount_is_rejected_by_integrity_validator(self):
+        movement = copy.deepcopy(self.movements[0])
+        observations = copy.deepcopy(self.observations)
+        source_id = movement["source_observation_ids"][0]
+        source = next(item for item in observations if item["observation_id"] == source_id)
+        source["movement"]["amount"] = "1e3"
+        movement["transfer"]["amount"] = "1e3"
+        errors = validate_movement_integrity(movement, observations, self.claims)
+        self.assertIn(f"invalid source amount format: {source_id}", errors)
+        self.assertIn("invalid movement amount format", errors)
+
+    def test_float_amount_is_rejected_by_integrity_validator(self):
+        movement = copy.deepcopy(self.movements[0])
+        observations = copy.deepcopy(self.observations)
+        source_id = movement["source_observation_ids"][0]
+        source = next(item for item in observations if item["observation_id"] == source_id)
+        source["movement"]["amount"] = 1.0
+        movement["transfer"]["amount"] = 1.0
+        errors = validate_movement_integrity(movement, observations, self.claims)
+        self.assertIn(f"invalid source amount format: {source_id}", errors)
+        self.assertIn("invalid movement amount format", errors)
+
     def test_non_object_movement_returns_validation_error(self):
         self.assertEqual(validate_movement_integrity(None, [], []), ["movement must be an object"])
 

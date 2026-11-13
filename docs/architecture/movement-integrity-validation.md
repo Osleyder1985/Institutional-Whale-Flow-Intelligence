@@ -21,7 +21,7 @@ For every referenced `source_observation_id`, the validator requires:
 - Source quality states `VALID`, `PARTIAL` and `DELAYED` are admissible for historical reconstruction. `DELAYED` remains `DELAYED` and does not prove real-time availability. `INVALID`, `QUARANTINED`, `DUPLICATE` and unrecognized states fail closed.
 - A non-null movement event time must be supported by at least one referenced observation with a matching event time.
 
-Amounts are compared with decimal arithmetic, never binary floating point. Different textual decimal representations with equal numeric value are accepted; the stored source and ledger strings remain unchanged.
+Amounts must be canonical non-negative decimal strings; exponent notation, signs, leading zeroes and non-string numeric values are rejected. Valid amounts are compared with decimal arithmetic, never binary floating point. Different canonical textual decimal representations with equal numeric value are accepted; the stored source and ledger strings remain unchanged.
 
 Aggregate `EXCHANGE_FLOW_METRIC` and `ETF_FLOW_METRIC` observations are rejected as transfer provenance. They are measurements, not individual transfers.
 

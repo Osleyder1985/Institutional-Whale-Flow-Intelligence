@@ -8,6 +8,7 @@ from iwfi.attribution_integrity import validate_claim_collection
 
 TRANSFER_FIELDS = ("amount", "unit", "from_address", "to_address", "transaction_id", "confirmation_status", "event_locator")
 UTC_TIMESTAMP_PATTERN = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z")
+DECIMAL_AMOUNT_PATTERN = re.compile(r"(?:0|[1-9][0-9]*)(?:\.[0-9]+)?")
 
 
 def _utc_datetime(value):
@@ -49,6 +50,13 @@ def resolve_temporal_status(event_time_utc, valid_from_utc, valid_to_utc, claim_
 def _same_amount(left, right):
     if left is None or right is None:
         return left is right
+    if (
+        not isinstance(left, str)
+        or not isinstance(right, str)
+        or DECIMAL_AMOUNT_PATTERN.fullmatch(left) is None
+        or DECIMAL_AMOUNT_PATTERN.fullmatch(right) is None
+    ):
+        return False
     try:
         return Decimal(left) == Decimal(right)
     except (InvalidOperation, TypeError, ValueError):
@@ -233,6 +241,17 @@ def validate_movement_integrity(movement, observations, claims, known_claim_ids=
         for field in TRANSFER_FIELDS:
             source_value = source_transfer.get(field)
             movement_value = movement_transfer.get(field)
+            if field == "amount":
+                if source_value is not None and (
+                    not isinstance(source_value, str)
+                    or DECIMAL_AMOUNT_PATTERN.fullmatch(source_value) is None
+                ):
+                    errors.append(f"invalid source amount format: {observation_id}")
+                if movement_value is not None and (
+                    not isinstance(movement_value, str)
+                    or DECIMAL_AMOUNT_PATTERN.fullmatch(movement_value) is None
+                ):
+                    errors.append("invalid movement amount format")
             equal = _same_transfer_field(field, source_value, movement_value, network_id)
             if source_value is not None and movement_value is not None and not equal:
                 errors.append(f"{field} mismatch for source observation: {observation_id}")
