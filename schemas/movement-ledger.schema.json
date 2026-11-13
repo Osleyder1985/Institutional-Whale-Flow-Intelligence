@@ -23,7 +23,8 @@
     },
     "movement_id": {
       "type": "string",
-      "minLength": 1
+      "minLength": 1,
+      "pattern": "\\S"
     },
     "asset": {
       "type": "object",
@@ -212,7 +213,8 @@
       "uniqueItems": true,
       "items": {
         "type": "string",
-        "minLength": 1
+        "minLength": 1,
+        "pattern": "\\S"
       }
     },
     "attribution_resolutions": {
@@ -232,7 +234,8 @@
         "properties": {
           "claim_id": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "pattern": "\\S"
           },
           "address": {
             "type": "string",
