@@ -515,7 +515,7 @@ class ObservationResolutionTests(unittest.TestCase):
         self.assertEqual(event["resolved_fields"]["amount"], "1")
         self.assertEqual(event["analytical_eligibility"], "ELIGIBLE")
         self.assertEqual(
-            {entry["quality_status"] for entry in event["field_evidence"]["amount"][0]["evidence"]},
+            {entry["quality_status"] for entry in event["field_evidence"]["from_address"][0]["evidence"]},
             {"VALID", "DELAYED"},
         )
 
