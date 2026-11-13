@@ -152,6 +152,24 @@ class ObservationResolutionTests(unittest.TestCase):
         self.assertEqual(event["analytical_eligibility"], "INELIGIBLE")
         self.assertEqual(len(event["field_evidence"]["amount"]), 2)
 
+    def test_unconfirmed_transfer_is_not_analytically_eligible(self):
+        observation = self.by_id("btc-vout-provider-a")
+        observation["movement"]["confirmation_status"] = "UNKNOWN"
+        event = resolve_observations([observation])["events"][0]
+        self.assertEqual(event["resolution_status"], "COMPLETE")
+        self.assertEqual(event["analytical_eligibility"], "INELIGIBLE")
+        self.assertIn("CONFIRMATION_NOT_CONFIRMED", event["eligibility_reasons"])
+
+    def test_unknown_quality_status_fails_closed(self):
+        observation = self.by_id("btc-vout-provider-a")
+        observation["quality"]["status"] = "UNRECOGNIZED"
+        result = resolve_observations([observation])
+        self.assertEqual(result["status"], "INVALID")
+        self.assertIn(
+            "invalid quality status: btc-vout-provider-a",
+            result["errors"],
+        )
+
     def test_missing_is_not_zero_and_remains_missing_without_support(self):
         first = self.by_id("btc-vout-provider-a")
         first["movement"]["amount"] = None
