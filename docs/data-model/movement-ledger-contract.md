@@ -1,4 +1,4 @@
-# IWFI Movement Ledger Contract v1
+# IWFI Movement Ledger Contract v1.1
 
 Status: proposed domain contract; synthetic fixtures only.
 
@@ -15,12 +15,13 @@ Each record links back to one or more canonical source observation IDs. Source o
 - From/to addresses and transaction ID may be null when the source does not provide them.
 - Asset, symbol, network and unit must agree for the supported BTC and Ethereum mainnet records.
 - Confirmation state is descriptive; pending or unknown confirmation is not silently treated as final.
+- `event_locator` is required and identifies the individual transfer within its transaction: Bitcoin output index, or Ethereum internal-call trace path or transaction native-value event; contract log indexes are excluded until token assets have their own asset identity.
 
 A transfer alone does not prove a trade, exchange deposit/withdrawal, common control, ownership, or intent.
 
 ## Source observations
 
-`source_observation_ids` is a non-empty, unique list of canonical observation IDs. Ingestion must verify that every referenced observation exists, has type `ON_CHAIN_TRANSACTION`, describes a transfer, and agrees on asset/network, transaction identity and event time where those values are available. `VALID`, `PARTIAL` and `DELAYED` observations may support historical reconstruction. The original quality state is preserved: `DELAYED` is not promoted to `VALID` and does not imply real-time availability. This ledger integrity contract does not assess source freshness or real-time eligibility. `INVALID`, `QUARANTINED`, `DUPLICATE` and unknown quality states are inadmissible as direct evidence.
+`source_observation_ids` is a non-empty, unique list of canonical observation IDs. Ingestion must verify that every referenced observation exists, has type `ON_CHAIN_TRANSACTION`, describes a transfer, and agrees on asset/network, transaction identity, protocol event locator and event time where those values are available. `VALID`, `PARTIAL` and `DELAYED` observations may support historical reconstruction. Their original quality is preserved: `DELAYED` is not promoted to `VALID` and does not imply real-time availability. This ledger integrity contract does not assess source freshness or real-time eligibility. `INVALID`, `QUARANTINED`, `DUPLICATE` and unknown quality states are inadmissible as direct evidence.
 
 `EXCHANGE_FLOW_METRIC` and `ETF_FLOW_METRIC` observations are aggregate measurements. They must remain in a separate measurement series and must never be materialized as individual ledger transfers.
 
@@ -48,3 +49,7 @@ Missing data is not zero. Unknown attribution is not a negative attribution. No 
 ## Temporal validation
 
 The schema validates UTC timestamp notation. Application-level validation must additionally verify chronological ordering of claim intervals and evaluate event-time inclusion; JSON Schema is not used as a substitute for temporal comparison logic.
+
+## Event identity
+
+A transaction hash identifies a transaction, not necessarily one transfer within it. The canonical event identity is network ID + transaction ID + protocol-specific event locator. Records without a valid locator remain candidates and must not be merged into a canonical movement.

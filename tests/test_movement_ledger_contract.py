@@ -45,7 +45,7 @@ class MovementLedgerContractTests(unittest.TestCase):
 
     def test_schema_is_draft_2020_12(self):
         self.assertEqual(self.schema["$schema"], "https://json-schema.org/draft/2020-12/schema")
-        self.assertEqual(self.schema["properties"]["contract_version"]["const"], "1.0.0")
+        self.assertEqual(self.schema["properties"]["contract_version"]["const"], "1.1.0")
 
     def test_all_synthetic_fixtures_validate(self):
         for item in self.fixtures:
@@ -86,6 +86,45 @@ class MovementLedgerContractTests(unittest.TestCase):
         item["attribution_resolutions"][0]["temporal_status"] = "TIME_UNRESOLVED"
         self.assertTrue(self.validator.is_valid(item))
         item["attribution_resolutions"][0]["temporal_status"] = "VALID_AT_EVENT_TIME"
+        self.assertFalse(self.validator.is_valid(item))
+
+    def test_schema_requires_event_locator_for_canonical_movement(self):
+        item = copy.deepcopy(self.fixtures[0])
+        item["transfer"].pop("event_locator")
+        self.assertFalse(self.validator.is_valid(item))
+
+    def test_schema_rejects_whitespace_only_movement_and_reference_ids(self):
+        base = copy.deepcopy(self.fixtures[0])
+        base["movement_id"] = "   "
+        self.assertFalse(self.validator.is_valid(base))
+        base = copy.deepcopy(self.fixtures[0])
+        base["source_observation_ids"] = ["   "]
+        self.assertFalse(self.validator.is_valid(base))
+        base = copy.deepcopy(self.fixtures[0])
+        base["attribution_resolutions"] = [{
+            "claim_id": "   ",
+            "address": "bc1qsource",
+            "predicate": "LABELLED_AS",
+            "object_type": "CLASSIFICATION",
+            "object_id": "exchange",
+            "epistemic_status": "PROVIDER_LABELLED",
+            "temporal_status": "TIME_UNRESOLVED"
+        }]
+        self.assertFalse(self.validator.is_valid(base))
+
+    def test_schema_rejects_malformed_network_transaction_hash(self):
+        item = copy.deepcopy(self.fixtures[0])
+        item["transfer"]["transaction_id"] = "not-a-hash"
+        self.assertFalse(self.validator.is_valid(item))
+
+    def test_schema_rejects_contract_log_index_for_native_eth(self):
+        item = copy.deepcopy(next(x for x in self.fixtures if x["asset"]["network_id"] == "eip155:1"))
+        item["transfer"]["event_locator"] = {"kind": "EVM_LOG_INDEX", "value": "5"}
+        self.assertFalse(self.validator.is_valid(item))
+
+    def test_schema_rejects_event_locator_for_wrong_network(self):
+        item = copy.deepcopy(self.fixtures[0])
+        item["transfer"]["event_locator"] = {"kind": "EVM_LOG_INDEX", "value": "1"}
         self.assertFalse(self.validator.is_valid(item))
 
     def test_schema_rejects_trade_type(self):

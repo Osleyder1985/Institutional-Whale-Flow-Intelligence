@@ -19,11 +19,12 @@
   ],
   "properties": {
     "contract_version": {
-      "const": "1.0.0"
+      "const": "1.1.0"
     },
     "observation_id": {
       "type": "string",
-      "minLength": 1
+      "minLength": 1,
+      "pattern": "\\S"
     },
     "source": {
       "type": "object",
@@ -38,17 +39,20 @@
       "properties": {
         "provider": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "pattern": "\\S"
         },
         "endpoint": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "pattern": "\\S"
         },
         "record_id": {
           "type": [
             "string",
             "null"
-          ]
+          ],
+          "pattern": "\\S"
         },
         "payload_sha256": {
           "type": "string",
@@ -168,6 +172,88 @@
             "PENDING",
             "UNKNOWN"
           ]
+        },
+        "event_locator": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "value"
+          ],
+          "properties": {
+            "kind": {
+              "enum": [
+                "UTXO_VOUT",
+                "EVM_TRACE_PATH",
+                "EVM_TX_VALUE"
+              ]
+            },
+            "value": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "UTXO_VOUT"
+                    ]
+                  }
+                },
+                "required": [
+                  "kind"
+                ]
+              },
+              "then": {
+                "properties": {
+                  "value": {
+                    "pattern": "^[0-9]+$"
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "kind": {
+                    "const": "EVM_TRACE_PATH"
+                  }
+                },
+                "required": [
+                  "kind"
+                ]
+              },
+              "then": {
+                "properties": {
+                  "value": {
+                    "pattern": "^[0-9]+(/[0-9]+)*$"
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "kind": {
+                    "const": "EVM_TX_VALUE"
+                  }
+                },
+                "required": [
+                  "kind"
+                ]
+              },
+              "then": {
+                "properties": {
+                  "value": {
+                    "const": "transaction-value"
+                  }
+                }
+              }
+            }
+          ]
         }
       }
     },
@@ -256,7 +342,8 @@
           "type": [
             "string",
             "null"
-          ]
+          ],
+          "pattern": "\\S"
         }
       }
     },
@@ -571,6 +658,168 @@
             "properties": {
               "retention_classification": {
                 "const": "RAW_ALLOWED"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "asset": {
+            "properties": {
+              "network_id": {
+                "const": "bitcoin-mainnet"
+              }
+            },
+            "required": [
+              "network_id"
+            ]
+          }
+        },
+        "required": [
+          "asset"
+        ]
+      },
+      "then": {
+        "properties": {
+          "movement": {
+            "properties": {
+              "event_locator": {
+                "properties": {
+                  "kind": {
+                    "const": "UTXO_VOUT"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "asset": {
+            "properties": {
+              "network_id": {
+                "const": "eip155:1"
+              }
+            },
+            "required": [
+              "network_id"
+            ]
+          }
+        },
+        "required": [
+          "asset"
+        ]
+      },
+      "then": {
+        "properties": {
+          "movement": {
+            "properties": {
+              "event_locator": {
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "EVM_TRACE_PATH",
+                      "EVM_TX_VALUE"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "asset": {
+            "properties": {
+              "network_id": {
+                "const": "bitcoin-mainnet"
+              }
+            },
+            "required": [
+              "network_id"
+            ]
+          }
+        },
+        "required": [
+          "asset"
+        ]
+      },
+      "then": {
+        "properties": {
+          "movement": {
+            "properties": {
+              "transaction_id": {
+                "pattern": "^[0-9a-fA-F]{64}$"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "asset": {
+            "properties": {
+              "network_id": {
+                "const": "eip155:1"
+              }
+            },
+            "required": [
+              "network_id"
+            ]
+          }
+        },
+        "required": [
+          "asset"
+        ]
+      },
+      "then": {
+        "properties": {
+          "movement": {
+            "properties": {
+              "transaction_id": {
+                "pattern": "^(0x)?[0-9a-fA-F]{64}$"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "quality": {
+            "properties": {
+              "duplicate_of": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "duplicate_of"
+            ]
+          }
+        },
+        "required": [
+          "quality"
+        ]
+      },
+      "then": {
+        "properties": {
+          "quality": {
+            "properties": {
+              "status": {
+                "const": "DUPLICATE"
               }
             }
           }

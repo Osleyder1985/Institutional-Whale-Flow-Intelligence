@@ -6,7 +6,7 @@ The repository contract-test workflow runs for every pull request without path-b
 
 ## Input contract
 
-`validate_movement_integrity(movement, observations, claims, known_claim_ids=())` receives one normalized movement, a collection of source-observation records and a collection of attribution claims. It returns a list of integrity errors and does not mutate any input. Claims are checked with `validate_claim_collection` before their attribution data is used. For a partial claim batch, `known_claim_ids` identifies superseded claims already resolved in persistent history; each identifier must be a non-empty, non-whitespace string.
+`validate_movement_integrity(movement, observations, claims, known_claim_ids=())` receives one normalized movement, a collection of source-observation records and a collection of attribution claims. It returns a list of integrity errors and does not mutate any input. Claims are checked with `validate_claim_collection` before their attribution data is used. For a partial claim batch, `known_claim_ids` identifies superseded claims already resolved in persistent history.
 
 This component is deliberately provider-neutral. It consumes the canonical contracts; it does not call providers, query a blockchain, infer labels, or persist data.
 
@@ -23,7 +23,7 @@ For every referenced `source_observation_id`, the validator requires:
 - Source quality states `VALID`, `PARTIAL` and `DELAYED` are admissible for historical integrity/reconstruction; `INVALID`, `QUARANTINED`, `DUPLICATE` and unrecognized states fail closed. `DELAYED` remains `DELAYED` and is not evidence of real-time availability. This validator does not evaluate freshness or real-time eligibility.
 - A non-null movement event time must be supported by at least one referenced observation with a matching event time.
 
-Amounts must be canonical non-negative decimal strings; exponent notation, signs, leading zeroes and non-string numeric values are rejected. Valid amounts are compared with decimal arithmetic, never binary floating point. Different canonical textual decimal representations with equal numeric value are accepted; the stored source and ledger strings remain unchanged.
+Event locators are mandatory in the normalized movement and must be supported by source observations. Numeric Bitcoin output indexes and Ethereum trace-path components are compared canonically; a locator cannot be added when all referenced sources lack it. Invalid or mismatched locators fail closed. Amounts must be canonical non-negative decimal strings; exponent notation, signs, leading zeroes and non-string numeric values are rejected. Valid amounts are compared with decimal arithmetic, never binary floating point. Different canonical textual decimal representations with equal numeric value are accepted; the stored source and ledger strings remain unchanged.
 
 Aggregate `EXCHANGE_FLOW_METRIC` and `ETF_FLOW_METRIC` observations are rejected as transfer provenance. They are measurements, not individual transfers.
 
