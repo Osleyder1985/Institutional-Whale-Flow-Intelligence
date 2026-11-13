@@ -52,10 +52,11 @@ def validate_feature_snapshot(snapshot):
         if ref in sources:
             errors.append(f"source_observations[{index}] duplicates source_ref")
         sources[ref] = source
+        event_time = source["event_time"]
         known = _utc(source["known_at"])
         ingested = _utc(source["ingested_at"])
         available = _utc(source["available_at"])
-        if any(value is None for value in (known, ingested, available)):
+        if (event_time is not None and _utc(event_time) is None) or any(value is None for value in (known, ingested, available)):
             errors.append(f"source_observations[{index}] timestamps must be UTC values ending in Z")
             continue
         if available < known or available < ingested:
