@@ -32,6 +32,37 @@ This ADR is a design proposal. It does not select a production database, create 
 9. **Semantic separation:** aggregate exchange/ETF metrics are not stored as individual transfers. Transfers are not trades, purchases, or sales.
 10. **Explicit execution:** ingestion, resolution, and research runs are initiated by the user. No polling, background market analysis, or backfill is enabled by this design.
 
+## 2.1 Requirements already fixed by product scope
+
+The following are requirements, not assumptions to be selected by the storage design:
+
+- Desktop, Android and iOS clients must read and write against the same authoritative IWFI dataset; independent per-device databases without a defined synchronization protocol do not satisfy this requirement.
+- Initial analytical scope is BTC and ETH.
+- Ingestion, resolution and research evaluations are user-initiated. This architecture does not authorize polling, scheduled market analysis or automatic backfills.
+- Historical observations, attribution claims and resolution decisions must remain reproducible and traceable across clients.
+- Provider retention terms constrain what may be stored. Raw payload storage remains disabled unless the exact provider/endpoint terms authorize it.
+- Strong movement identity uses network, normalized transaction ID and protocol-specific event locator when all are known. Missing locators remain unresolved; they are not replaced by a synthetic key.
+
+These requirements rule out treating disconnected local databases as the complete system. A local cache or offline queue may still be considered, but its synchronization and conflict semantics must be designed separately.
+
+## 2.2 Requirements not yet measured
+
+No values are invented for the following operational requirements. They must be measured or explicitly set before a production storage decision:
+
+| Requirement | Current status | Evidence needed |
+|---|---|---|
+| Daily and peak observation volume | Unknown | Representative provider samples and expected ingestion cadence |
+| Concurrent writers and readers | Unknown | Desktop/mobile usage scenarios and simultaneous-session tests |
+| Query latency targets | Unknown | Prioritized user queries and measurable response-time objectives |
+| Availability target | Unknown | Product operating expectations and deployment constraints |
+| Offline operation and conflict handling | Not specified | Explicit product decision and synchronization scenarios |
+| Retention duration per provider/endpoint | Unknown | Applicable terms and documented retention review |
+| Recovery point/time objectives (RPO/RTO) | Unknown | Acceptable data-loss and restoration windows |
+| Deployment region and data residency | Unknown | Operational/legal requirements and cost comparison |
+| Operating budget | Unknown | Hosting, backup, network and maintenance estimates |
+
+These are decision inputs. They must not be filled with arbitrary industry defaults.
+
 ## 3. Logical persistence model
 
 The following is a logical model, not a committed SQL schema. Physical tables, column types, partitions, and indexes depend on the selected storage engine.
@@ -110,7 +141,22 @@ Retries must be idempotent. Concurrent runs over the same inputs must not create
 | SQLite | Embedded, low operational cost, portable, transactional, good for local-first/offline prototypes | Multi-device synchronization, concurrent remote writers, central access control and conflict resolution become additional system responsibilities | Candidate if local-first/offline operation is a primary requirement |
 | Append-only files/object storage | Simple evidence archive, low-cost immutable objects, easy content-addressing | Weak relational constraints, complex joins, idempotency catalog, transactional linking, concurrent updates and query indexing | Useful as a permitted raw/archive layer, not sufficient alone as the canonical ledger |
 
-### 6.1 Provisional direction
+### 6.1 Comparative fit against known requirements
+
+This is a qualitative constraint check, not a weighted score or a final selection.
+
+| Requirement / constraint | PostgreSQL | SQLite alone | Append-only files/object storage alone |
+|---|---|---|---|
+| One authoritative dataset shared by desktop, Android and iOS | Fits a central service model | Does not provide shared multi-client authority without a separate sync/service layer | Does not provide safe shared transactional access by itself |
+| Referential integrity across observations, movements, claims and decisions | Native relational constraints | Relational constraints available within one database file | Must be implemented in a separate index/catalog |
+| Atomic resolution writes and concurrent clients | Strong fit | Concurrency is more constrained and requires deployment-specific design | Multi-object atomicity is not generally available |
+| Local/offline operation | Requires a local cache/queue if needed | Strong local embedded fit | Can store local artifacts, but not relational consistency |
+| Content-addressed immutable archive | Can store hashes and metadata; large-object archive is separate | Can store hashes and metadata; large-object archive is separate | Strong fit for permitted immutable objects |
+| Cross-record temporal queries and traceability | Strong relational fit | Strong for a single local database | Requires a query/index layer |
+
+The comparison indicates that PostgreSQL is the strongest *current candidate* for a shared authoritative relational service, while SQLite is relevant as a possible local cache/offline component and object storage as an optional archive for content whose retention is explicitly permitted. This is not a decision: the unresolved volume, latency, availability, deployment, retention, recovery and cost requirements can still change the result.
+
+### 6.2 Provisional direction
 
 A relational database is the leading category for the canonical ledger because the system needs referential integrity, transactions, temporal claims, deterministic decision records, and multi-client access.
 
