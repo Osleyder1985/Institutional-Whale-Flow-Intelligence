@@ -81,5 +81,84 @@ class ChainIntegrityContractTests(unittest.TestCase):
         self.assertGreaterEqual(checkpoint["inclusion"]["block_height"], inclusion["inclusion"]["block_height"])
 
 
+    def _record(self, observation_id, kind, tx="a" * 64, height=100, block="b" * 64, status="UNKNOWN", network="bitcoin-mainnet", source="node-a", tag=None):
+        return {
+            "observation_id": observation_id,
+            "network_id": network,
+            "transaction_id": tx if network == "bitcoin-mainnet" else "0x" + tx[-64:],
+            "source": {"kind": "SELF_HOSTED_NODE", "source_id": source, "method": "fixture"},
+            "observation_kind": kind,
+            "observed_at_utc": "2026-11-13T12:00:00Z",
+            "inclusion": None if kind == "MEMPOOL_SEEN" else {"block_height": height, "block_hash": block if network == "bitcoin-mainnet" else "0x" + block[-64:], "transaction_index": 0},
+            "source_asserted_chain_status": status,
+            "source_asserted_head_tag": tag,
+        }
+
+    def test_assessment_is_deterministic_and_input_order_invariant(self):
+        from iwfi.chain_integrity import assess_chain_observations
+        records = [self._record("a", "BLOCK_INCLUDED"), self._record("b", "BLOCK_STATUS", status="ACTIVE")]
+        self.assertEqual(assess_chain_observations(records), assess_chain_observations(list(reversed(records))))
+
+    def test_assessment_is_idempotent_for_identical_evidence(self):
+        from iwfi.chain_integrity import assess_chain_observations
+        records = [self._record("a", "BLOCK_INCLUDED")]
+        self.assertEqual(assess_chain_observations(records), assess_chain_observations(records))
+
+    def test_mempool_only_is_observed_not_included(self):
+        from iwfi.chain_integrity import assess_chain_observations
+        result = assess_chain_observations([self._record("a", "MEMPOOL_SEEN")])
+        self.assertEqual(result["status"], "OBSERVED")
+
+    def test_positive_non_active_block_evidence_marks_that_inclusion_noncanonical(self):
+        from iwfi.chain_integrity import assess_chain_observations
+        result = assess_chain_observations([self._record("a", "BLOCK_INCLUDED", status="NOT_ACTIVE")])
+        self.assertEqual(result["status"], "NOT_CANONICAL")
+
+    def test_old_non_active_then_new_active_inclusion_is_reobserved(self):
+        from iwfi.chain_integrity import assess_chain_observations
+        records = [
+            self._record("old", "BLOCK_INCLUDED", block="b" * 64, status="NOT_ACTIVE"),
+            self._record("new", "BLOCK_INCLUDED", block="c" * 64, status="ACTIVE"),
+        ]
+        self.assertEqual(assess_chain_observations(records)["status"], "REOBSERVED")
+
+    def test_conflicting_sources_for_same_block_remain_unresolved(self):
+        from iwfi.chain_integrity import assess_chain_observations
+        records = [
+            self._record("a", "BLOCK_INCLUDED", status="ACTIVE", source="node-a"),
+            self._record("b", "BLOCK_STATUS", status="NOT_ACTIVE", source="node-b"),
+        ]
+        self.assertEqual(assess_chain_observations(records)["status"], "CANONICALITY_UNRESOLVED")
+
+    def test_eth_finalized_requires_same_source_checkpoint_covering_block(self):
+        from iwfi.chain_integrity import assess_chain_observations
+        tx = "a" * 64
+        inclusion = self._record("included", "BLOCK_INCLUDED", tx=tx, network="eip155:1", height=100, block="b" * 64, status="ACTIVE", source="eth-node")
+        checkpoint = self._record("checkpoint", "FINALITY_CHECKPOINT", tx=tx, network="eip155:1", height=101, block="c" * 64, source="eth-node", tag="finalized")
+        self.assertEqual(assess_chain_observations([inclusion, checkpoint])["status"], "FINALIZED")
+        checkpoint["inclusion"]["block_height"] = 99
+        self.assertEqual(assess_chain_observations([inclusion, checkpoint])["status"], "INCLUDED")
+
+    def test_bitcoin_never_receives_finalized_assessment(self):
+        from iwfi.chain_integrity import assess_chain_observations
+        records = [self._record("a", "BLOCK_INCLUDED", status="ACTIVE")]
+        records.append(self._record("f", "FINALITY_CHECKPOINT", tag="finalized"))
+        self.assertNotEqual(assess_chain_observations(records)["status"], "FINALIZED")
+
+    def test_invalid_mixed_transaction_evidence_is_rejected(self):
+        from iwfi.chain_integrity import assess_chain_observations
+        records = [self._record("a", "BLOCK_INCLUDED"), self._record("b", "BLOCK_INCLUDED", tx="d" * 64)]
+        with self.assertRaises(ValueError):
+            assess_chain_observations(records)
+
+    def test_assessment_does_not_mutate_observations(self):
+        from copy import deepcopy
+        from iwfi.chain_integrity import assess_chain_observations
+        records = [self._record("a", "BLOCK_INCLUDED")]
+        before = deepcopy(records)
+        assess_chain_observations(records)
+        self.assertEqual(records, before)
+
+
 if __name__ == "__main__":
     unittest.main()
