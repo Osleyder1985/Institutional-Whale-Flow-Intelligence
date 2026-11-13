@@ -45,7 +45,7 @@ class MovementLedgerContractTests(unittest.TestCase):
 
     def test_schema_is_draft_2020_12(self):
         self.assertEqual(self.schema["$schema"], "https://json-schema.org/draft/2020-12/schema")
-        self.assertEqual(self.schema["properties"]["contract_version"]["const"], "1.0.0")
+        self.assertEqual(self.schema["properties"]["contract_version"]["const"], "1.1.0")
 
     def test_all_synthetic_fixtures_validate(self):
         for item in self.fixtures:
@@ -86,6 +86,11 @@ class MovementLedgerContractTests(unittest.TestCase):
         item["attribution_resolutions"][0]["temporal_status"] = "TIME_UNRESOLVED"
         self.assertTrue(self.validator.is_valid(item))
         item["attribution_resolutions"][0]["temporal_status"] = "VALID_AT_EVENT_TIME"
+        self.assertFalse(self.validator.is_valid(item))
+
+    def test_schema_rejects_event_locator_for_wrong_network(self):
+        item = copy.deepcopy(self.fixtures[0])
+        item["transfer"]["event_locator"] = {"kind": "EVM_LOG_INDEX", "value": "1"}
         self.assertFalse(self.validator.is_valid(item))
 
     def test_schema_rejects_trade_type(self):
