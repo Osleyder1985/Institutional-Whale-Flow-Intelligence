@@ -196,6 +196,16 @@ class ObservationResolutionTests(unittest.TestCase):
         self.assertEqual(event["analytical_eligibility"], "INELIGIBLE")
         self.assertIn("CONFIRMATION_NOT_CONFIRMED", event["eligibility_reasons"])
 
+    def test_missing_source_integrity_hash_fails_closed(self):
+        observation = self.by_id("btc-vout-provider-a")
+        observation["source"]["payload_sha256"] = None
+        result = resolve_observations([observation])
+        self.assertEqual(result["status"], "INVALID")
+        self.assertIn(
+            "invalid source payload_sha256: btc-vout-provider-a",
+            result["errors"],
+        )
+
     def test_unknown_quality_status_fails_closed(self):
         observation = self.by_id("btc-vout-provider-a")
         observation["quality"]["status"] = "UNRECOGNIZED"
