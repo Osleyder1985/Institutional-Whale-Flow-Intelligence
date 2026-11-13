@@ -34,6 +34,26 @@ class MovementIntegrityTests(unittest.TestCase):
         for movement in self.movements:
             self.assertEqual(validate_movement_integrity(movement, self.observations, self.claims), [])
 
+    def test_duplicate_observation_ids_are_rejected_independent_of_input_order(self):
+        duplicate = copy.deepcopy(self.observations[0])
+        duplicate["observation_id"] = self.observations[0]["observation_id"]
+        forward = self.observations + [duplicate]
+        reverse = [duplicate] + self.observations
+        errors_forward = validate_movement_integrity(self.movements[0], forward, self.claims)
+        errors_reverse = validate_movement_integrity(self.movements[0], reverse, self.claims)
+        self.assertEqual(errors_forward, errors_reverse)
+        self.assertIn(f"duplicate observation_id: {duplicate['observation_id']}", errors_forward)
+
+    def test_duplicate_claim_ids_are_rejected_independent_of_input_order(self):
+        duplicate = copy.deepcopy(self.claims[0])
+        duplicate["claim_id"] = self.claims[0]["claim_id"]
+        forward = self.claims + [duplicate]
+        reverse = [duplicate] + self.claims
+        errors_forward = validate_movement_integrity(self.movements[0], self.observations, forward)
+        errors_reverse = validate_movement_integrity(self.movements[0], self.observations, reverse)
+        self.assertEqual(errors_forward, errors_reverse)
+        self.assertIn(f"duplicate claim_id: {duplicate['claim_id']}", errors_forward)
+
     def test_missing_source_observation_is_rejected(self):
         movement = copy.deepcopy(self.movements[0])
         movement["source_observation_ids"] = ["not-present"]
