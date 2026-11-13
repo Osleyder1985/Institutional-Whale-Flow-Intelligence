@@ -53,6 +53,11 @@ class PointInTimeDatasetTests(unittest.TestCase):
         source["available_at"] = "2026-01-01T00:00:03Z"
         self.assertTrue(any("not available by data_cutoff_time" in error for error in validate_feature_snapshot(item)))
 
+    def test_source_event_time_must_be_utc_when_present(self):
+        item = copy.deepcopy(self.feature)
+        item["source_observations"][0]["event_time"] = "2026-01-01T00:00:00-05:00"
+        self.assertTrue(any("timestamps must be UTC" in error for error in validate_feature_snapshot(item)))
+
     def test_source_available_at_cannot_precede_ingestion(self):
         item = copy.deepcopy(self.feature)
         item["source_observations"][0]["available_at"] = "2026-01-01T00:00:01Z"
