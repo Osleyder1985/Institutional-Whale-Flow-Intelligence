@@ -117,12 +117,14 @@ Implementation and CI evidence exist in the open PRs, but Phase 2 remains incomp
 - [x] Record the owner's approved product direction: predict direction, magnitude, target price/range, probable price zones, and time-to-target — Issue #23.
 - [x] Create the initial predictive requirements register covering functional, non-functional, validation, audit, and acceptance requirements — Issue #23.
 - [x] Add the official product objective and predictive architecture boundary to repository documentation — PR for Issue #23 in progress.
-- [ ] Define versioned Forecast and ForecastOutcome contracts, including abstention and uncalibrated states.
+- [x] Define initial versioned Forecast and ForecastOutcome JSON Schemas, including abstention and uncalibrated states — Issue #25 / PR in progress.
+- [x] Document cross-field semantics for UTC, targets, zones, calibrated probabilities, time-to-target, gaps and censoring — Issue #25 / PR in progress.
+- [ ] Add semantic validation code and deterministic schema/contract tests — Issue #25.
 - [ ] Define target construction, price-zone semantics, horizon semantics, and time-to-target/censoring rules.
 - [ ] Define point-in-time feature snapshots and data-leakage controls.
 - [ ] Define baseline suite, walk-forward protocol, calibration procedure, and frozen acceptance gates.
 
-**Exit gate:** forecast outputs and evaluation can be reproduced from point-in-time inputs; no model is described as predictive until it demonstrates out-of-sample value against baselines.
+**Exit gate:** forecast outputs and evaluation can be reproduced from point-in-time inputs; schemas and semantic validators enforce the Forecast/ForecastOutcome invariants; no model is described as predictive until it demonstrates out-of-sample value against baselines.
 
 ## Phase 8 — Predictive research and model validation (P1; blocked by prior phases)
 
