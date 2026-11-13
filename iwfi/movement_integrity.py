@@ -74,6 +74,10 @@ def validate_movement_integrity(movement, observations, claims):
         if observation.get("observation_type") != "ON_CHAIN_TRANSACTION":
             errors.append(f"source observation is not ON_CHAIN_TRANSACTION: {observation_id}")
             continue
+        source_quality = observation.get("quality", {}).get("status")
+        if source_quality in {"INVALID", "QUARANTINED", "DUPLICATE"}:
+            errors.append(f"source observation quality is not admissible: {observation_id}")
+            continue
         source_asset = observation.get("asset", {})
         if source_asset != movement.get("asset", {}):
             errors.append(f"asset/network mismatch for source observation: {observation_id}")
@@ -98,6 +102,15 @@ def validate_movement_integrity(movement, observations, claims):
             elif source_value is not None and movement_value is None:
                 errors.append(f"known source {field} omitted from movement: {observation_id}")
         resolved_observations.append(observation)
+
+    # Do not populate a fact that is absent from every referenced source.
+    if resolved_observations:
+        for field in TRANSFER_FIELDS:
+            movement_value = movement.get("transfer", {}).get(field)
+            known_values = [item.get("movement", {}).get(field) for item in resolved_observations
+                            if item.get("movement", {}).get(field) is not None]
+            if not known_values and movement_value is not None:
+                errors.append(f"movement {field} has no supporting source value")
 
     # A movement event time cannot be invented if every referenced observation lacks it.
     if movement.get("event_time_utc") is not None and resolved_observations:
