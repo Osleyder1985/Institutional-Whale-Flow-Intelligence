@@ -51,7 +51,7 @@ A transaction observation may support the existence of a transfer. It does not, 
 
 `recorded_at_utc` is when IWFI recorded the claim. `valid_from_utc` and `valid_to_utc` describe the asserted period, not when IWFI learned it. All timestamps use RFC 3339 UTC ending in `Z`. A current provider label must not be projected backwards without historical evidence.
 
-The JSON Schema checks timestamp format and UTC notation. `iwfi.attribution_integrity.validate_claim_validity_interval` checks that a supplied start does not occur after a supplied end. A null bound remains unknown and is not treated as an infinite timestamp.
+The JSON Schema and `iwfi.attribution_integrity.validate_claim_validity_interval` require the canonical UTC form `YYYY-MM-DDTHH:MM:SSZ` and a valid calendar timestamp. The application validator also checks that a supplied start does not occur after a supplied end. A null bound remains unknown and is not treated as an infinite timestamp.
 
 ## Append-only corrections
 
