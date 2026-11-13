@@ -174,6 +174,26 @@ class EntityAttributionContractTests(unittest.TestCase):
             [],
         )
 
+    def test_claim_collection_duplicate_ids_with_conflicting_edges_are_order_independent(self):
+        first = copy.deepcopy(self.claims[0])
+        duplicate = copy.deepcopy(first)
+        first["supersedes_claim_id"] = "missing-predecessor-a"
+        duplicate["supersedes_claim_id"] = "missing-predecessor-b"
+        forward = validate_claim_collection([first, duplicate])
+        reverse = validate_claim_collection([duplicate, first])
+        self.assertEqual(forward, reverse)
+        self.assertEqual(forward, [f"duplicate claim_id: {first['claim_id']}"])
+
+    def test_claim_collection_rejects_invalid_known_claim_ids_without_exception(self):
+        errors = validate_claim_collection(self.claims, known_claim_ids="not-a-collection")
+        self.assertIn("known_claim_ids must be an iterable of non-empty claim IDs", errors)
+
+    def test_claim_collection_rejects_invalid_claim_identity(self):
+        self.assertIn(
+            "claims[0] has an invalid claim_id",
+            validate_claim_collection([{"supersedes_claim_id": None}]),
+        )
+
     def test_claim_collection_rejects_self_supersession(self):
         claims = [copy.deepcopy(self.claims[0])]
         claims[0]["supersedes_claim_id"] = claims[0]["claim_id"]

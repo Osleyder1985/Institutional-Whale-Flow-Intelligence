@@ -41,40 +41,92 @@ def validate_claim_collection(claims, known_claim_ids=()):
     Pass a complete claim history to resolve every supersession reference.
     For a partial batch, known_claim_ids may contain IDs resolved in the
     persistent history but not included in this batch. Cycles are checked
-    within the supplied batch.
+    within the supplied batch. Duplicate claim IDs are treated as ambiguous
+    and are not used to resolve supersession edges.
     """
     errors = []
-    known_ids = set(known_claim_ids)
-    claims_by_id = {}
 
-    for index, claim in enumerate(claims):
+    if isinstance(known_claim_ids, (str, bytes)):
+        errors.append("known_claim_ids must be an iterable of non-empty claim IDs")
+        known_values = []
+    else:
+        try:
+            known_values = list(known_claim_ids)
+        except TypeError:
+            errors.append("known_claim_ids must be an iterable of non-empty claim IDs")
+            known_values = []
+    invalid_known_ids = [
+        value for value in known_values
+        if not isinstance(value, str) or not value
+    ]
+    if invalid_known_ids:
+        errors.append("known_claim_ids must contain only non-empty strings")
+    known_ids = {
+        value for value in known_values
+        if isinstance(value, str) and value
+    }
+
+    if isinstance(claims, (str, bytes)):
+        return sorted(set(errors + ["claims must be an iterable of claim objects"]))
+    try:
+        claim_items = list(claims)
+    except TypeError:
+        return sorted(set(errors + ["claims must be an iterable of claim objects"]))
+
+    claims_by_id = {}
+    id_counts = {}
+    for index, claim in enumerate(claim_items):
         if not isinstance(claim, dict):
             errors.append(f"claims[{index}] must be an object")
             continue
         claim_id = claim.get("claim_id")
         if not isinstance(claim_id, str) or not claim_id:
+            errors.append(f"claims[{index}] has an invalid claim_id")
             continue
-        if claim_id in claims_by_id:
-            errors.append(f"duplicate claim_id: {claim_id}")
-        else:
+        id_counts[claim_id] = id_counts.get(claim_id, 0) + 1
+        if claim_id not in claims_by_id:
             claims_by_id[claim_id] = claim
 
+    duplicate_ids = {
+        claim_id for claim_id, count in id_counts.items()
+        if count > 1
+    }
+    for claim_id in sorted(duplicate_ids):
+        errors.append(f"duplicate claim_id: {claim_id}")
+
+    # A duplicated ID is ambiguous. Exclude every version of it from the
+    # graph so input order cannot select an arbitrary predecessor edge.
+    unique_claims = {
+        claim_id: claim
+        for claim_id, claim in claims_by_id.items()
+        if claim_id not in duplicate_ids
+    }
+
     graph = {}
-    for claim_id, claim in claims_by_id.items():
+    for claim_id in sorted(unique_claims):
+        claim = unique_claims[claim_id]
         predecessor_id = claim.get("supersedes_claim_id")
-        if predecessor_id is None or not isinstance(predecessor_id, str):
+        if predecessor_id is None:
+            continue
+        if not isinstance(predecessor_id, str) or not predecessor_id:
+            errors.append(f"claim {claim_id} has an invalid supersedes_claim_id")
             continue
         if predecessor_id == claim_id:
             errors.append(f"claim {claim_id} cannot supersede itself")
             continue
-        if predecessor_id not in claims_by_id and predecessor_id not in known_ids:
+        if predecessor_id in duplicate_ids:
+            errors.append(
+                f"claim {claim_id} references ambiguous supersedes_claim_id: {predecessor_id}"
+            )
+            continue
+        if predecessor_id not in unique_claims and predecessor_id not in known_ids:
             errors.append(
                 f"claim {claim_id} references unresolved supersedes_claim_id: {predecessor_id}"
             )
             continue
-        if predecessor_id in claims_by_id:
+        if predecessor_id in unique_claims:
             graph[claim_id] = predecessor_id
-            previous = claims_by_id[predecessor_id]
+            previous = unique_claims[predecessor_id]
             current_recorded = _parse_utc_timestamp(claim.get("recorded_at_utc"))
             previous_recorded = _parse_utc_timestamp(previous.get("recorded_at_utc"))
             if (
@@ -86,23 +138,22 @@ def validate_claim_collection(claims, known_claim_ids=()):
                     f"claim {claim_id} is recorded before superseded claim {predecessor_id}"
                 )
 
+    # Iterative traversal avoids recursion-depth failures on long histories.
     visited = set()
-    active = set()
+    for start_id in sorted(graph):
+        if start_id in visited:
+            continue
+        path = []
+        active_positions = {}
+        current_id = start_id
+        while current_id in graph and current_id not in visited:
+            if current_id in active_positions:
+                cycle_start = path[active_positions[current_id]]
+                errors.append(f"supersession cycle detected at claim_id: {cycle_start}")
+                break
+            active_positions[current_id] = len(path)
+            path.append(current_id)
+            current_id = graph[current_id]
+        visited.update(path)
 
-    def visit(claim_id):
-        if claim_id in active:
-            errors.append(f"supersession cycle detected at claim_id: {claim_id}")
-            return
-        if claim_id in visited:
-            return
-        active.add(claim_id)
-        predecessor_id = graph.get(claim_id)
-        if predecessor_id is not None:
-            visit(predecessor_id)
-        active.remove(claim_id)
-        visited.add(claim_id)
-
-    for claim_id in graph:
-        visit(claim_id)
-
-    return errors
+    return sorted(set(errors))
