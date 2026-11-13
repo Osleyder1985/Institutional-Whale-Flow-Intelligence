@@ -21,7 +21,7 @@ For every referenced `source_observation_id`, the validator requires:
 - Source quality states `VALID`, `PARTIAL` and `DELAYED` are admissible for historical integrity/reconstruction; `INVALID`, `QUARANTINED`, `DUPLICATE` and unrecognized states fail closed. `DELAYED` remains `DELAYED` and is not evidence of real-time availability. This validator does not evaluate freshness or real-time eligibility.
 - A non-null movement event time must be supported by at least one referenced observation with a matching event time.
 
-Amounts must be canonical non-negative decimal strings; exponent notation, signs, leading zeroes and non-string numeric values are rejected. Valid amounts are compared with decimal arithmetic, never binary floating point. Different canonical textual decimal representations with equal numeric value are accepted; the stored source and ledger strings remain unchanged.
+Event locators are mandatory in the normalized movement and must be supported by source observations. Numeric Bitcoin output indexes and Ethereum trace-path components are compared canonically; a locator cannot be added when all referenced sources lack it. Invalid or mismatched locators fail closed. Amounts must be canonical non-negative decimal strings; exponent notation, signs, leading zeroes and non-string numeric values are rejected. Valid amounts are compared with decimal arithmetic, never binary floating point. Different canonical textual decimal representations with equal numeric value are accepted; the stored source and ledger strings remain unchanged.
 
 Aggregate `EXCHANGE_FLOW_METRIC` and `ETF_FLOW_METRIC` observations are rejected as transfer provenance. They are measurements, not individual transfers.
 
