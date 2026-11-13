@@ -51,6 +51,53 @@ def _same_amount(left, right):
         return False
 
 
+def _normalized_event_locator(value, network_id):
+    if not isinstance(value, dict):
+        return None
+    kind = value.get("kind")
+    raw = value.get("value")
+    allowed = {
+        "bitcoin-mainnet": {"UTXO_VOUT"},
+        "eip155:1": {"EVM_LOG_INDEX", "EVM_TRACE_PATH", "EVM_TX_VALUE"},
+    }
+    if kind not in allowed.get(network_id, set()) or not isinstance(raw, str):
+        return None
+    if kind in {"UTXO_VOUT", "EVM_LOG_INDEX"}:
+        if not raw.isdigit():
+            return None
+        raw = str(int(raw))
+    elif kind == "EVM_TRACE_PATH":
+        parts = raw.split("/")
+        if not parts or any(not part.isdigit() for part in parts):
+            return None
+        raw = "/".join(str(int(part)) for part in parts)
+    elif kind == "EVM_TX_VALUE" and raw != "transaction-value":
+        return None
+    return kind, raw
+
+
+def _same_transfer_field(field, left, right, network_id):
+    if field == "amount":
+        return _same_amount(left, right)
+    if field == "transaction_id":
+        return (
+            left.casefold() == right.casefold()
+            if isinstance(left, str) and isinstance(right, str)
+            else left == right
+        )
+    if field in {"from_address", "to_address"} and network_id == "eip155:1":
+        return (
+            left.lower() == right.lower()
+            if isinstance(left, str) and isinstance(right, str)
+            else left == right
+        )
+    if field == "event_locator":
+        left_key = _normalized_event_locator(left, network_id)
+        right_key = _normalized_event_locator(right, network_id)
+        return left_key is not None and left_key == right_key
+    return left == right
+
+
 def validate_movement_integrity(movement, observations, claims):
     """Return deterministic integrity errors; never infer missing source facts.
 
@@ -118,10 +165,10 @@ def validate_movement_integrity(movement, observations, claims):
         for field in TRANSFER_FIELDS:
             source_value = source_transfer.get(field)
             movement_value = movement.get("transfer", {}).get(field)
-            if field == "amount":
-                equal = _same_amount(source_value, movement_value)
-            else:
-                equal = source_value == movement_value
+            equal = _same_transfer_field(
+                field, source_value, movement_value,
+                movement.get("asset", {}).get("network_id"),
+            )
             if source_value is not None and movement_value is not None and not equal:
                 errors.append(f"{field} mismatch for source observation: {observation_id}")
             elif source_value is not None and movement_value is None:
