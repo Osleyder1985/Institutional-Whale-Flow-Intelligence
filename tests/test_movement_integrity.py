@@ -70,11 +70,6 @@ class MovementIntegrityTests(unittest.TestCase):
         movement["transfer"]["event_locator"]["value"] = "9"
         self.assertTrue(any("event_locator mismatch" in error for error in validate_movement_integrity(movement, self.observations, self.claims)))
 
-    def test_source_event_locator_mismatch_is_rejected(self):
-        movement = copy.deepcopy(self.movements[0])
-        movement["transfer"]["event_locator"]["value"] = "9"
-        self.assertTrue(any("event_locator mismatch" in error for error in validate_movement_integrity(movement, self.observations, self.claims)))
-
     def test_source_transaction_mismatch_is_rejected(self):
         movement = copy.deepcopy(self.movements[0])
         movement["transfer"]["transaction_id"] = "different-tx"
