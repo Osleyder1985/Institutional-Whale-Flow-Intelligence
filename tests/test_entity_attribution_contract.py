@@ -204,6 +204,29 @@ class EntityAttributionContractTests(unittest.TestCase):
             validate_claim_collection([{"supersedes_claim_id": None}]),
         )
 
+    def test_claim_collection_rejects_whitespace_only_claim_id(self):
+        claim = copy.deepcopy(self.claims[0])
+        claim["claim_id"] = "   "
+        self.assertIn(
+            "claims[0] has an invalid claim_id",
+            validate_claim_collection([claim]),
+        )
+
+    def test_claim_collection_rejects_whitespace_only_supersession_id(self):
+        claim = copy.deepcopy(self.claims[0])
+        claim["supersedes_claim_id"] = "   "
+        self.assertIn(
+            f"claim {claim['claim_id']} has an invalid supersedes_claim_id",
+            validate_claim_collection([claim]),
+        )
+
+    def test_claim_collection_rejects_whitespace_only_known_history_id(self):
+        errors = validate_claim_collection(self.claims, known_claim_ids=["   "])
+        self.assertIn(
+            "known_claim_ids must contain only non-empty strings",
+            errors,
+        )
+
     def test_claim_collection_rejects_self_supersession(self):
         claims = [copy.deepcopy(self.claims[0])]
         claims[0]["supersedes_claim_id"] = claims[0]["claim_id"]
