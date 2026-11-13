@@ -34,7 +34,7 @@ class ObservationResolutionTests(unittest.TestCase):
             for line in document.splitlines()
             if line.startswith("## ")
         ]
-        self.assertEqual(section_numbers, [str(number) for number in range(1, 12)])
+        self.assertEqual(section_numbers, [str(number) for number in range(1, 13)])
         self.assertIn("quality.duplicate_of", document)
         self.assertIn("RESOLVED_WITH_RELATION_CONFLICTS", document)
         self.assertIn("SOURCE_RECORD_REPEAT_CONTRADICTS_EVENT_IDENTITY", document)
@@ -62,7 +62,8 @@ class ObservationResolutionTests(unittest.TestCase):
         duplicate["quality"]["duplicate_of"] = original["observation_id"]
         result = resolve_observations([original, duplicate])
         self.assertEqual(len(result["events"]), 1)
-        self.assertEqual(len(result["events"][0]["observation_ids"]), 2)
+        self.assertEqual(result["events"][0]["observation_ids"], [original["observation_id"]])
+        self.assertEqual(result["events"][0]["excluded_observation_ids"], [duplicate["observation_id"]])
         self.assertEqual(result["links"][0]["match_class"], "STRONG_MATCH")
         self.assertEqual(
             result["links"][0]["provider_duplicate_relation"],
