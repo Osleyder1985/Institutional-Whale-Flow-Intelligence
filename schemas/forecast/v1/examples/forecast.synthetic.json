@@ -1,5 +1,4 @@
 {
-  "_example_notice": "SYNTHETIC FIXTURE ONLY — not a live forecast, market observation, model output, or evidence.",
   "schema_version": "1.0.0",
   "forecast_id": "synthetic-forecast-0001",
   "supersedes_forecast_id": null,
