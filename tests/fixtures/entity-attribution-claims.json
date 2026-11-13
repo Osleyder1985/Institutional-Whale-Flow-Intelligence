@@ -1,0 +1,228 @@
+[
+  {
+    "contract_version": "1.0.0",
+    "claim_id": "claim-provider-label-001",
+    "subject": {
+      "subject_type": "ADDRESS",
+      "subject_id": "bc1qexchangeexample",
+      "network_id": "bitcoin-mainnet"
+    },
+    "predicate": "LABELLED_AS",
+    "object": {
+      "object_type": "CLASSIFICATION",
+      "object_id": "exchange",
+      "network_id": null
+    },
+    "epistemic_status": "PROVIDER_LABELLED",
+    "claim_source": {
+      "provider": "vendor-a",
+      "endpoint": "address-labels",
+      "record_id": "label-001",
+      "observation_ids": [
+        "fixture-exchange-label"
+      ]
+    },
+    "supporting_evidence": [
+      {
+        "evidence_type": "PROVIDER_RECORD",
+        "evidence_ref": "vendor-a:label-001",
+        "source": "vendor-a",
+        "observation_id": "fixture-exchange-label"
+      }
+    ],
+    "counter_evidence": [],
+    "recorded_at_utc": "2026-11-13T03:00:00Z",
+    "valid_from_utc": null,
+    "valid_to_utc": null,
+    "supersedes_claim_id": null,
+    "review_status": "UNREVIEWED",
+    "rationale": "Provider A labels the address as an exchange; this is not independent identity verification."
+  },
+  {
+    "contract_version": "1.0.0",
+    "claim_id": "claim-verified-operator-002",
+    "subject": {
+      "subject_type": "ADDRESS",
+      "subject_id": "bc1qserviceexample",
+      "network_id": "bitcoin-mainnet"
+    },
+    "predicate": "OPERATED_BY",
+    "object": {
+      "object_type": "ENTITY",
+      "object_id": "iwfi-entity-0002",
+      "network_id": null
+    },
+    "epistemic_status": "VERIFIED",
+    "claim_source": {
+      "provider": "iwfi-review",
+      "endpoint": "manual-evidence-review",
+      "record_id": "review-002",
+      "observation_ids": []
+    },
+    "supporting_evidence": [
+      {
+        "evidence_type": "OFFICIAL_PUBLICATION",
+        "evidence_ref": "public-announcement-002",
+        "source": "official-public-source",
+        "observation_id": null
+      }
+    ],
+    "counter_evidence": [],
+    "recorded_at_utc": "2026-11-13T03:05:00Z",
+    "valid_from_utc": "2026-01-01T00:00:00Z",
+    "valid_to_utc": null,
+    "supersedes_claim_id": null,
+    "review_status": "REVIEWED",
+    "rationale": "Synthetic example of a reviewed operator claim supported by an official publication explicitly naming the service and address."
+  },
+  {
+    "contract_version": "1.0.0",
+    "claim_id": "claim-conflict-003",
+    "subject": {
+      "subject_type": "ADDRESS",
+      "subject_id": "0xsyntheticwallet003",
+      "network_id": "eip155:1"
+    },
+    "predicate": "LABELLED_AS",
+    "object": {
+      "object_type": "CLASSIFICATION",
+      "object_id": "exchange",
+      "network_id": null
+    },
+    "epistemic_status": "DISPUTED",
+    "claim_source": {
+      "provider": "attribution-review",
+      "endpoint": "claim-reconciliation",
+      "record_id": "conflict-003",
+      "observation_ids": [
+        "fixture-conflicting-attribution"
+      ]
+    },
+    "supporting_evidence": [
+      {
+        "evidence_type": "PROVIDER_RECORD",
+        "evidence_ref": "vendor-a:wallet-label",
+        "source": "vendor-a",
+        "observation_id": "fixture-conflicting-attribution"
+      }
+    ],
+    "counter_evidence": [
+      {
+        "evidence_type": "PROVIDER_RECORD",
+        "evidence_ref": "vendor-b:wallet-label",
+        "source": "vendor-b",
+        "observation_id": "fixture-conflicting-attribution"
+      }
+    ],
+    "recorded_at_utc": "2026-11-13T03:10:00Z",
+    "valid_from_utc": null,
+    "valid_to_utc": null,
+    "supersedes_claim_id": null,
+    "review_status": "DISPUTED",
+    "rationale": "Two providers return incompatible wallet classifications; neither label is promoted to verified identity."
+  },
+  {
+    "contract_version": "1.0.0",
+    "claim_id": "claim-unknown-004",
+    "subject": {
+      "subject_type": "ADDRESS",
+      "subject_id": "bc1qunknownexample",
+      "network_id": "bitcoin-mainnet"
+    },
+    "predicate": "LABELLED_AS",
+    "object": {
+      "object_type": "CLASSIFICATION",
+      "object_id": "unknown",
+      "network_id": null
+    },
+    "epistemic_status": "UNKNOWN",
+    "claim_source": {
+      "provider": "iwfi",
+      "endpoint": "manual-review",
+      "record_id": null,
+      "observation_ids": []
+    },
+    "supporting_evidence": [],
+    "counter_evidence": [],
+    "recorded_at_utc": "2026-11-13T03:15:00Z",
+    "valid_from_utc": null,
+    "valid_to_utc": null,
+    "supersedes_claim_id": null,
+    "review_status": "UNREVIEWED",
+    "rationale": "No sufficient evidence is available to attribute this address."
+  },
+  {
+    "contract_version": "1.0.0",
+    "claim_id": "claim-temporal-old-005",
+    "subject": {
+      "subject_type": "ADDRESS",
+      "subject_id": "bc1qtemporalexample",
+      "network_id": "bitcoin-mainnet"
+    },
+    "predicate": "OPERATED_BY",
+    "object": {
+      "object_type": "ENTITY",
+      "object_id": "iwfi-entity-old",
+      "network_id": null
+    },
+    "epistemic_status": "INFERRED",
+    "claim_source": {
+      "provider": "iwfi-review",
+      "endpoint": "temporal-review",
+      "record_id": "period-old",
+      "observation_ids": []
+    },
+    "supporting_evidence": [
+      {
+        "evidence_type": "PUBLIC_DISCLOSURE",
+        "evidence_ref": "historical-disclosure-old",
+        "source": "public-archive",
+        "observation_id": null
+      }
+    ],
+    "counter_evidence": [],
+    "recorded_at_utc": "2026-11-13T03:20:00Z",
+    "valid_from_utc": "2024-01-01T00:00:00Z",
+    "valid_to_utc": "2025-12-31T23:59:59Z",
+    "supersedes_claim_id": null,
+    "review_status": "REVIEWED",
+    "rationale": "Historical relationship with a bounded validity period."
+  },
+  {
+    "contract_version": "1.0.0",
+    "claim_id": "claim-temporal-new-006",
+    "subject": {
+      "subject_type": "ADDRESS",
+      "subject_id": "bc1qtemporalexample",
+      "network_id": "bitcoin-mainnet"
+    },
+    "predicate": "OPERATED_BY",
+    "object": {
+      "object_type": "ENTITY",
+      "object_id": "iwfi-entity-new",
+      "network_id": null
+    },
+    "epistemic_status": "INFERRED",
+    "claim_source": {
+      "provider": "iwfi-review",
+      "endpoint": "temporal-review",
+      "record_id": "period-new",
+      "observation_ids": []
+    },
+    "supporting_evidence": [
+      {
+        "evidence_type": "PUBLIC_DISCLOSURE",
+        "evidence_ref": "historical-disclosure-new",
+        "source": "public-archive",
+        "observation_id": null
+      }
+    ],
+    "counter_evidence": [],
+    "recorded_at_utc": "2026-11-13T03:25:00Z",
+    "valid_from_utc": "2026-01-01T00:00:00Z",
+    "valid_to_utc": null,
+    "supersedes_claim_id": "claim-temporal-old-005",
+    "review_status": "REVIEWED",
+    "rationale": "Later claim supersedes the previous temporal assertion without rewriting it."
+  }
+]
