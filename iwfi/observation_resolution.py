@@ -395,8 +395,10 @@ def resolve_observations(observations, supersedes_decision_id=None):
         quality_status = quality.get("status")
         if quality_status not in ALLOWED_QUALITY:
             errors.append(f"invalid quality status: {identifier}")
+        duplicate_of = quality.get("duplicate_of")
+        if quality_status != "DUPLICATE" and duplicate_of is not None:
+            errors.append(f"duplicate_of requires DUPLICATE quality status: {identifier}")
         if quality_status == "DUPLICATE":
-            duplicate_of = quality.get("duplicate_of")
             if not isinstance(duplicate_of, str) or not duplicate_of.strip():
                 errors.append(f"duplicate observation missing duplicate_of: {identifier}")
             elif duplicate_of == identifier:
