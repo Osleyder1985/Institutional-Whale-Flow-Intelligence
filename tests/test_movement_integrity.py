@@ -203,6 +203,7 @@ class MovementIntegrityTests(unittest.TestCase):
         source = next(item for item in observations if item["observation_id"] == source_id)
         source["quality"]["status"] = "DELAYED"
         self.assertEqual(validate_movement_integrity(movement, observations, self.claims), [])
+        self.assertEqual(source["quality"]["status"], "DELAYED")
 
     def test_duplicate_observation_cannot_be_a_movement_source(self):
         movement = copy.deepcopy(self.movements[0])
