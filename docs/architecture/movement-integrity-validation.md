@@ -2,6 +2,8 @@
 
 Status: first deterministic validator; synthetic fixtures only.
 
+The repository contract-test workflow runs for every pull request without path-based filtering. A change to shared contracts or validation code must therefore be checked even when it does not modify a schema or test directory.
+
 ## Input contract
 
 `validate_movement_integrity(movement, observations, claims, known_claim_ids=())` receives one normalized movement, a collection of source-observation records and a collection of attribution claims. It returns a list of integrity errors and does not mutate any input. Claims are checked with `validate_claim_collection` before their attribution data is used. For a partial claim batch, `known_claim_ids` identifies superseded claims already resolved in persistent history.
