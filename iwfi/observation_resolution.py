@@ -8,7 +8,7 @@ import re
 from datetime import datetime
 
 
-POLICY_VERSION = "1.2.0"
+POLICY_VERSION = "1.3.0"
 TRANSFER_FIELDS = (
     "asset_id",
     "network_id",
