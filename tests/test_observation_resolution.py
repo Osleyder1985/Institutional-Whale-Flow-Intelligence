@@ -38,6 +38,7 @@ class ObservationResolutionTests(unittest.TestCase):
         self.assertIn("quality.duplicate_of", document)
         self.assertIn("RESOLVED_WITH_RELATION_CONFLICTS", document)
         self.assertIn("It never overrides transaction/event identity.", document)
+        self.assertNotIn("\\n-", document)
 
     def by_id(self, identifier):
         return copy.deepcopy(next(item for item in self.fixtures if item["observation_id"] == identifier))
