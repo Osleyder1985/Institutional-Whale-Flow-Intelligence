@@ -37,11 +37,11 @@ A token on Ethereum is not ETH. Token contracts and token identifiers require a 
 
 ## Observation semantics
 
-Version 1 allows ON_CHAIN_TRANSACTION, ADDRESS_LABEL, EXCHANGE_FLOW_METRIC, and ETF_FLOW_METRIC. The type describes the source observation, not inferred intention.
+Version 1 allows ON_CHAIN_TRANSACTION, ADDRESS_LABEL, EXCHANGE_FLOW_METRIC, and ETF_FLOW_METRIC. Flow/ETF metrics use a separate measurement object (metric name, decimal-text value, unit, and direction); the type describes the source observation, not inferred intention.
 
 A TRANSFER movement records observed on-chain movement between addresses. It does not establish an executed spot trade, beneficial ownership change, purchase, sale, accumulation, or distribution.
 
-Exchange flow metrics are aggregate measurements reported by a source. Inflow is not a sale; outflow is not a purchase. Do not manufacture a trade record from either.
+Exchange flow metrics are aggregate measurements reported by a source and are represented under measurement, not movement. Inflow is not a sale; outflow is not a purchase. Do not manufacture a trade record from either.
 
 ## Attribution model
 
