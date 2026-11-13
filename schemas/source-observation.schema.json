@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://iwfi.invalid/schemas/source-observation.schema.json",
+  "title": "IWFI Source Observation",
+  "description": "Provider-neutral evidence envelope. A transfer observation is not a trade.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "observation_id", "source", "asset", "event_time_utc", "retrieved_at_utc", "observation_type", "attributions", "quality", "retention"],
+  "properties": {
+    "contract_version": {"const": "1.0.0"},
+    "observation_id": {"type": "string", "minLength": 1},
+    "source": {"type": "object", "additionalProperties": false, "required": ["provider", "endpoint", "record_id", "payload_sha256", "schema_version"], "properties": {
+      "provider": {"type": "string", "minLength": 1},
+      "endpoint": {"type": "string", "minLength": 1},
+      "record_id": {"type": ["string", "null"]},
+      "payload_sha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+      "schema_version": {"type": ["string", "null"]}
+    }},
+    "asset": {"type": "object", "additionalProperties": false, "required": ["asset_id", "symbol", "network_id"], "properties": {
+      "asset_id": {"enum": ["bitcoin:btc", "ethereum:eth"]},
+      "symbol": {"enum": ["BTC", "ETH"]},
+      "network_id": {"enum": ["bitcoin-mainnet", "eip155:1"]}
+    }},
+    "event_time_utc": {"type": ["string", "null"], "format": "date-time"},
+    "retrieved_at_utc": {"type": "string", "format": "date-time"},
+    "observation_type": {"enum": ["ON_CHAIN_TRANSACTION", "ADDRESS_LABEL", "EXCHANGE_FLOW_METRIC", "ETF_FLOW_METRIC"]},
+    "movement": {"type": ["object", "null"], "additionalProperties": false, "required": ["movement_type", "amount", "unit", "from_address", "to_address", "transaction_id", "confirmation_status"], "properties": {
+      "movement_type": {"const": "TRANSFER"},
+      "amount": {"type": ["string", "null"], "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$"},
+      "unit": {"enum": ["BTC", "ETH"]},
+      "from_address": {"type": ["string", "null"]},
+      "to_address": {"type": ["string", "null"]},
+      "transaction_id": {"type": ["string", "null"]},
+      "confirmation_status": {"enum": ["CONFIRMED", "PENDING", "UNKNOWN"]}
+    }},
+    "attributions": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["subject", "claim", "status", "claim_source", "valid_from_utc", "valid_to_utc"], "properties": {
+      "subject": {"type": "string", "minLength": 1},
+      "claim": {"type": ["string", "null"]},
+      "status": {"enum": ["VERIFIED", "PROVIDER_LABELLED", "INFERRED", "UNKNOWN", "DISPUTED"]},
+      "claim_source": {"type": "string", "minLength": 1},
+      "valid_from_utc": {"type": ["string", "null"], "format": "date-time"},
+      "valid_to_utc": {"type": ["string", "null"], "format": "date-time"}
+    }}},
+    "quality": {"type": "object", "additionalProperties": false, "required": ["status", "notes", "duplicate_of"], "properties": {
+      "status": {"enum": ["VALID", "PARTIAL", "DELAYED", "DUPLICATE", "INVALID", "QUARANTINED"]},
+      "notes": {"type": "array", "items": {"type": "string"}},
+      "duplicate_of": {"type": ["string", "null"]}
+    }},
+    "retention": {"type": "object", "additionalProperties": false, "required": ["retention_classification", "raw_payload_retained"], "properties": {
+      "retention_classification": {"enum": ["RAW_ALLOWED", "NORMALIZED_ONLY", "HASH_ONLY", "UNKNOWN_PENDING_TERMS"]},
+      "raw_payload_retained": {"type": "boolean"}
+    }}
+  },
+  "allOf": [
+    {"if": {"properties": {"observation_type": {"const": "ON_CHAIN_TRANSACTION"}}, "required": ["observation_type"]}, "then": {"required": ["movement"], "properties": {"movement": {"type": "object"}}}},
+    {"if": {"properties": {"quality": {"properties": {"status": {"const": "DUPLICATE"}}, "required": ["status"]}}, "required": ["quality"]}, "then": {"properties": {"quality": {"properties": {"duplicate_of": {"type": "string", "minLength": 1}}}}}}
+  ]
+}
