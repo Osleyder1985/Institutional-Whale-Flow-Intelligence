@@ -3,7 +3,6 @@
 Status: prioritized proposal; no production integration or data capture is authorized by this roadmap.
 
 ## Product boundary
-
 Initial pilot: native BTC on Bitcoin mainnet and native ETH on Ethereum mainnet. Tokens, other chains, automated trading, autonomous market evaluation, and unapproved provider polling remain out of scope.
 
 Execution is dependency-driven, not calendar-driven. No dates, durations, budgets, or performance targets are invented before access, workload, and evidence are measured.
@@ -110,3 +109,52 @@ Implementation and CI evidence exist in the open PRs, but Phase 2 remains incomp
 | Address/entity claims | #8 | #9 | CI 52 tests passed; PR open |
 | Movement Ledger | #10 | #11 | CI 101 tests passed; PR Draft |
 | Observation resolution | #12 | #13 | CI 177 tests passed; PR Draft |
+
+## Phase 7 — Predictive product definition (P0; newly prioritized)
+
+**Objective:** make the price forecast, rather than whale-transaction monitoring, the central product output.
+
+- [x] Record the owner's approved product direction: predict direction, magnitude, target price/range, probable price zones, and time-to-target — Issue #23.
+- [x] Create the initial predictive requirements register covering functional, non-functional, validation, audit, and acceptance requirements — Issue #23.
+- [x] Add the official product objective and predictive architecture boundary to repository documentation — PR for Issue #23 in progress.
+- [ ] Define versioned Forecast and ForecastOutcome contracts, including abstention and uncalibrated states.
+- [ ] Define target construction, price-zone semantics, horizon semantics, and time-to-target/censoring rules.
+- [ ] Define point-in-time feature snapshots and data-leakage controls.
+- [ ] Define baseline suite, walk-forward protocol, calibration procedure, and frozen acceptance gates.
+
+**Exit gate:** forecast outputs and evaluation can be reproduced from point-in-time inputs; no model is described as predictive until it demonstrates out-of-sample value against baselines.
+
+## Phase 8 — Predictive research and model validation (P1; blocked by prior phases)
+
+**Objective:** establish whether available evidence supports useful price forecasts before selecting a production model.
+
+- [ ] Build permission-compliant, quality-assessed historical datasets for BTC and ETH.
+- [ ] Establish simple no-change and statistical baselines by asset and horizon.
+- [ ] Evaluate candidate features from price, liquidity, derivatives, on-chain, institutional flows, and events without assuming any feature family is useful.
+- [ ] Run chronological walk-forward/out-of-sample experiments with leakage prevention.
+- [ ] Evaluate direction, magnitude, price intervals, probability calibration, zones, and time-to-target separately.
+- [ ] Report results by asset, horizon, market regime, and test window, including sample sizes and uncertainty.
+- [ ] Separate predictive metrics from any simulated strategy return; include trading costs only for strategy evaluation.
+
+**Exit gate:** model selection is supported by frozen, reproducible tests and documented limitations; no invented accuracy or performance thresholds.
+
+## Phase 9 — Forecast delivery and outcome tracking (P2; blocked by validated models)
+
+**Objective:** deliver useful, auditable forecasts and measure their realized outcomes.
+
+- [ ] Generate forecasts only on explicit user request.
+- [ ] Present direction, magnitude, target/range, zones, time estimate, uncertainty, evidence, counterevidence, and invalidation conditions.
+- [ ] Store each forecast immutably with model, feature, data, code, and protocol versions.
+- [ ] Evaluate expired forecasts against observed paths without mutating original predictions.
+- [ ] Monitor data/model drift and report degraded or unsupported conditions.
+- [ ] Add optional alerts only after separate user authorization and defined delivery semantics.
+
+**Exit gate:** every published forecast is traceable, its outcome can be evaluated, and unsupported predictions are withheld or explicitly marked uncertain.
+
+## Predictive delivery constraints
+
+- Whale and institutional activity are candidate explanatory/predictive inputs, not the sole signal and not the final product objective.
+- No predictive probability is published as calibrated without calibration evidence.
+- No time-to-target estimate is invented when the event is not estimable; use an explicit unknown/not-estimable state.
+- No forecast is a guarantee, investment instruction, or automated trade.
+- The owner explicitly initiates market evaluations; this roadmap does not enable background prediction, polling, or scheduled analysis.
