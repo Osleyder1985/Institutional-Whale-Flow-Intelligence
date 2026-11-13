@@ -79,3 +79,8 @@ Reprocessing identical inputs is idempotent. Policy changes require a policy-ver
 ## 9. Scope and limitations
 
 This implementation is an in-memory policy engine and test suite only. It does not persist observations or decisions, assign a canonical event in a database, implement provider adapters, resolve chain reorganizations/finality, infer common control, group transfers economically, or generate whale metrics/signals. Unsupported or absent event locators remain unresolved candidates rather than being guessed.
+
+
+## 10. Cross-contract normalization
+
+The movement integrity validator compares transaction IDs case-insensitively, normalizes EVM addresses case-insensitively, and canonicalizes numeric protocol locator components. This allows equivalent provider encodings (for example, vout `00` versus `0`) to be validated without weakening network or event identity. Invalid or network-incompatible locators do not compare as equal.
