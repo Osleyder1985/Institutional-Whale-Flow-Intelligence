@@ -114,11 +114,29 @@ class ForecastContractTests(unittest.TestCase):
         item["data_quality"] = {"status": "PASS", "coverage_ratio": 1, "missing_intervals": []}
         self.assertEqual(validate_forecast_outcome(item, self.forecast), [])
 
-    def test_gap_crossing_must_be_explicit(self):
+    def test_gap_crossing_requires_interval_and_cannot_claim_exact_touch(self):
         item = copy.deepcopy(self.outcome)
-        item["target_events"][0]["result"] = "CROSSED_BY_GAP"
-        item["target_events"][0]["gap_crossed"] = False
-        self.assertTrue(any("requires gap_crossed=true" in error for error in validate_forecast_outcome(item, self.forecast)))
+        event = item["target_events"][0]
+        event["result"] = "CROSSED_BY_GAP"
+        event["gap_crossed"] = True
+        event["first_observed_at"] = None
+        event["first_observed_price"] = None
+        event["crossing_interval"] = {
+            "last_observed_before": {"observed_at": "2026-01-01T11:55:00Z", "price": 100100},
+            "first_observed_after": {"observed_at": "2026-01-01T12:05:00Z", "price": 100600}
+        }
+        item["observation_window"]["end"] = "2026-01-01T12:05:00Z"
+        item["data_quality"]["missing_intervals"] = [
+            {"start": "2026-01-01T11:55:00Z", "end": "2026-01-01T12:05:00Z"}
+        ]
+        self.assertEqual(validate_forecast_outcome(item, self.forecast), [])
+        event["crossing_interval"] = None
+        self.assertTrue(any("requires a gap flag and crossing interval" in error for error in validate_forecast_outcome(item, self.forecast)))
+
+    def test_not_reached_requires_fully_observed_horizon(self):
+        item = copy.deepcopy(self.outcome)
+        item["target_events"][0]["result"] = "NOT_REACHED"
+        self.assertTrue(any("fully observed horizon" in error for error in validate_forecast_outcome(item, self.forecast)))
 
 
 if __name__ == "__main__":
