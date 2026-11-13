@@ -1,6 +1,7 @@
 """Deterministic, provider-neutral resolution of on-chain observations."""
 from collections import defaultdict
 from decimal import Decimal, InvalidOperation
+from itertools import combinations
 import hashlib
 import json
 
@@ -18,6 +19,7 @@ TRANSFER_FIELDS = (
     "confirmation_status",
     "event_locator",
 )
+CANDIDATE_FIELDS = ("asset_id", "amount", "unit", "from_address", "to_address", "event_time_utc")
 REQUIRED_ANALYTICAL_FIELDS = (
     "asset_id",
     "network_id",
@@ -136,6 +138,34 @@ def _event_key(observation):
     if not isinstance(normalized, tuple) or len(normalized) != 2 or normalized[0] == "INVALID_LOCATOR":
         return None
     return (network_id, tx_key[1], normalized[0], normalized[1])
+
+
+def _candidate_signature_keys(observation):
+    """Return deterministic three-field blocking keys for partial observations."""
+    asset = observation.get("asset") or {}
+    network_id = asset.get("network_id")
+    if not isinstance(network_id, str) or not network_id:
+        return []
+    known = []
+    for field in CANDIDATE_FIELDS:
+        value = _field_value(observation, field)
+        if value is not None:
+            normalized = _normalized_field(field, value, network_id)
+            known.append((field, _canonical_json(normalized)))
+    if len(known) < 3:
+        return []
+    return [
+        (network_id, tuple(selection))
+        for selection in combinations(known, 3)
+    ]
+
+
+def _source_record_key(observation):
+    source = observation.get("source") or {}
+    parts = (source.get("provider"), source.get("endpoint"), source.get("record_id"))
+    if all(isinstance(part, str) and part for part in parts):
+        return parts
+    return None
 
 
 def _source_record_relation(left, right):
@@ -329,10 +359,47 @@ def resolve_observations(observations, supersedes_decision_id=None):
             "events": [],
         }
 
+    # Build only plausible comparison buckets. Do not materialize the global
+    # O(n^2) cross-product of unrelated observations.
+    event_buckets = defaultdict(list)
+    transaction_buckets = defaultdict(list)
+    source_buckets = defaultdict(list)
+    partial_buckets = defaultdict(list)
+    for index, item in enumerate(canonical_items):
+        event_key = _event_key(item)
+        transaction_key = _transaction_key(item)
+        if event_key is not None:
+            event_buckets[event_key].append(index)
+        if transaction_key is not None:
+            transaction_buckets[transaction_key].append((index, event_key is not None))
+        source_key = _source_record_key(item)
+        if source_key is not None:
+            source_buckets[source_key].append(index)
+        for signature in _candidate_signature_keys(item):
+            partial_buckets[signature].append(index)
+
+    pair_indexes = set()
+
+    def add_pairs(indexes):
+        for left_index, right_index in combinations(sorted(set(indexes)), 2):
+            pair_indexes.add((left_index, right_index))
+
+    for indexes in event_buckets.values():
+        add_pairs(indexes)
+    for bucket in transaction_buckets.values():
+        for (left_index, left_has_event), (right_index, right_has_event) in combinations(bucket, 2):
+            if not (left_has_event and right_has_event):
+                pair_indexes.add(tuple(sorted((left_index, right_index))))
+    for indexes in source_buckets.values():
+        add_pairs(indexes)
+    for indexes in partial_buckets.values():
+        add_pairs(indexes)
+
     links = []
-    for index, left in enumerate(canonical_items):
-        for right in canonical_items[index + 1:]:
-            links.append(classify_observation_pair(left, right))
+    for left_index, right_index in sorted(pair_indexes):
+        link = classify_observation_pair(canonical_items[left_index], canonical_items[right_index])
+        if link["match_class"] != "NO_MATCH" or link["source_record_relation"] != "NONE":
+            links.append(link)
     links.sort(key=lambda link: (link["observation_ids"], link["match_class"]))
 
     grouped = defaultdict(list)
