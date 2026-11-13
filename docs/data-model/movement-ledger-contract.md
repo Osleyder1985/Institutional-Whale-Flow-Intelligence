@@ -15,7 +15,7 @@ Each record links back to one or more canonical source observation IDs. Source o
 - From/to addresses and transaction ID may be null when the source does not provide them.
 - Asset, symbol, network and unit must agree for the supported BTC and Ethereum mainnet records.
 - Confirmation state is descriptive; pending or unknown confirmation is not silently treated as final.
-- `event_locator` identifies the individual transfer within its transaction: Bitcoin output index, or Ethereum log index, trace path, or transaction native-value event.
+- `event_locator` is required and identifies the individual transfer within its transaction: Bitcoin output index, or Ethereum log index, trace path, or transaction native-value event.
 
 A transfer alone does not prove a trade, exchange deposit/withdrawal, common control, ownership, or intent.
 
