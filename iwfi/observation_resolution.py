@@ -49,7 +49,9 @@ def _decimal_key(value):
         return ("INVALID_DECIMAL", str(value))
     if not number.is_finite():
         return ("INVALID_DECIMAL", str(value))
-    normalized = format(number.normalize(), "f")
+    if number < 0:
+        return ("INVALID_DECIMAL", str(value))
+    normalized = format(number, "f")
     if "." in normalized:
         normalized = normalized.rstrip("0").rstrip(".")
     return normalized or "0"
@@ -271,6 +273,24 @@ def resolve_observations(observations, supersedes_decision_id=None):
             ids.append(identifier)
         if not isinstance(item, dict) or item.get("observation_type") != "ON_CHAIN_TRANSACTION":
             errors.append(f"observation is not ON_CHAIN_TRANSACTION: {identifier}")
+            continue
+        asset = item.get("asset") or {}
+        movement = item.get("movement") or {}
+        network_id = asset.get("network_id")
+        if not isinstance(network_id, str) or not network_id:
+            errors.append(f"missing network_id: {identifier}")
+        if not isinstance(movement, dict) or movement.get("movement_type") != "TRANSFER":
+            errors.append(f"observation has no TRANSFER movement: {identifier}")
+        locator = movement.get("event_locator") if isinstance(movement, dict) else None
+        if locator is not None:
+            normalized_locator = _normalized_field("event_locator", locator, network_id)
+            if (
+                not isinstance(locator, dict)
+                or locator.get("kind") not in LOCATOR_KINDS.get(network_id, set())
+                or not isinstance(normalized_locator, tuple)
+                or normalized_locator[0] == "INVALID_LOCATOR"
+            ):
+                errors.append(f"invalid event_locator for observation: {identifier}")
     duplicate_ids = sorted(identifier for identifier in set(ids) if ids.count(identifier) > 1)
     errors.extend(f"duplicate observation_id: {identifier}" for identifier in duplicate_ids)
 
@@ -316,9 +336,18 @@ def resolve_observations(observations, supersedes_decision_id=None):
         group.sort(key=lambda item: item["observation_id"])
         field_evidence = {field: _field_evidence(group, field) for field in TRANSFER_FIELDS}
         conflicts = sorted(field for field, evidence in field_evidence.items() if len(evidence) > 1)
+        invalid_fields = sorted(
+            field for field, evidence in field_evidence.items()
+            if any(
+                isinstance(entry["normalized"], tuple)
+                and entry["normalized"]
+                and entry["normalized"][0] in {"INVALID_DECIMAL", "INVALID_LOCATOR"}
+                for entry in evidence
+            )
+        )
         resolved_fields = {}
         for field, evidence in field_evidence.items():
-            if len(evidence) != 1:
+            if len(evidence) != 1 or field in invalid_fields:
                 resolved_fields[field] = None
                 continue
             normalized = evidence[0]["normalized"]
@@ -339,8 +368,10 @@ def resolve_observations(observations, supersedes_decision_id=None):
             for item in group
             if (item.get("quality") or {}).get("status") in INVALID_QUALITY
         })
-        if conflicts or invalid_quality:
-            resolution_status = "CONTRADICTORY" if conflicts else "INVALID"
+        if invalid_fields or invalid_quality:
+            resolution_status = "INVALID"
+        elif conflicts:
+            resolution_status = "CONTRADICTORY"
         elif missing:
             resolution_status = "PARTIAL"
         else:
@@ -348,6 +379,7 @@ def resolve_observations(observations, supersedes_decision_id=None):
         eligibility_reasons = []
         if conflicts:
             eligibility_reasons.append("MATERIAL_FIELD_CONFLICT")
+        eligibility_reasons.extend(f"INVALID_FIELD_VALUE:{field}" for field in invalid_fields)
         if missing:
             eligibility_reasons.extend(f"MISSING_REQUIRED_FIELD:{field}" for field in missing)
         if invalid_quality:
