@@ -28,12 +28,15 @@ REQUIRED_ANALYTICAL_FIELDS = (
     "to_address",
     "transaction_id",
     "event_locator",
+    "confirmation_status",
 )
 LOCATOR_KINDS = {
     "bitcoin-mainnet": {"UTXO_VOUT"},
     "eip155:1": {"EVM_LOG_INDEX", "EVM_TRACE_PATH", "EVM_TX_VALUE"},
 }
 INVALID_QUALITY = {"INVALID", "QUARANTINED"}
+ALLOWED_QUALITY = {"VALID", "PARTIAL", "DELAYED", "DUPLICATE", "INVALID", "QUARANTINED"}
+ASSET_NETWORKS = {"bitcoin:btc": "bitcoin-mainnet", "ethereum:eth": "eip155:1"}
 
 
 def _canonical_json(value):
@@ -43,8 +46,10 @@ def _canonical_json(value):
 def _decimal_key(value):
     if value is None:
         return None
+    if not isinstance(value, str):
+        return ("INVALID_DECIMAL", str(value))
     try:
-        number = Decimal(str(value))
+        number = Decimal(value)
     except (InvalidOperation, TypeError, ValueError):
         return ("INVALID_DECIMAL", str(value))
     if not number.is_finite():
@@ -277,8 +282,14 @@ def resolve_observations(observations, supersedes_decision_id=None):
         asset = item.get("asset") or {}
         movement = item.get("movement") or {}
         network_id = asset.get("network_id")
+        asset_id = asset.get("asset_id")
         if not isinstance(network_id, str) or not network_id:
             errors.append(f"missing network_id: {identifier}")
+        if asset_id not in ASSET_NETWORKS or ASSET_NETWORKS.get(asset_id) != network_id:
+            errors.append(f"invalid asset/network identity: {identifier}")
+        quality_status = (item.get("quality") or {}).get("status")
+        if quality_status not in ALLOWED_QUALITY:
+            errors.append(f"invalid quality status: {identifier}")
         if not isinstance(movement, dict) or movement.get("movement_type") != "TRANSFER":
             errors.append(f"observation has no TRANSFER movement: {identifier}")
         locator = movement.get("event_locator") if isinstance(movement, dict) else None
@@ -384,7 +395,10 @@ def resolve_observations(observations, supersedes_decision_id=None):
             eligibility_reasons.extend(f"MISSING_REQUIRED_FIELD:{field}" for field in missing)
         if invalid_quality:
             eligibility_reasons.append("INVALID_OR_QUARANTINED_SOURCE_QUALITY")
-        eligible = resolution_status == "COMPLETE"
+        confirmation_status = resolved_fields.get("confirmation_status")
+        if confirmation_status != "CONFIRMED":
+            eligibility_reasons.append("CONFIRMATION_NOT_CONFIRMED")
+        eligible = resolution_status == "COMPLETE" and confirmation_status == "CONFIRMED"
         event_identity = _canonical_json(key)
         event_id = "event-" + hashlib.sha256(event_identity.encode("utf-8")).hexdigest()[:32]
         events.append({
