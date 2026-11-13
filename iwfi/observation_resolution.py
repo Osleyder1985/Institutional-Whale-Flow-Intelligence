@@ -642,7 +642,7 @@ def resolve_observations(observations, supersedes_decision_id=None):
             "eligibility_reasons": sorted(eligibility_reasons),
             "transaction_identity": {"network_id": key[0], "transaction_id": key[1]},
             "event_locator": {"kind": key[2], "value": key[3]},
-            "observation_ids": [item["observation_id"] for item in group],
+            "observation_ids": [item["observation_id"] for item in evidence_group],
             "excluded_observation_ids": excluded_observation_ids,
             "relationship_conflicts": relationship_conflicts,
             "resolved_fields": resolved_fields,
