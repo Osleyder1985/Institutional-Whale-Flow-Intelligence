@@ -187,4 +187,7 @@ class MovementIntegrityTests(unittest.TestCase):
         )
         self.assertEqual(errors, [])
 
+
+
+if __name__ == "__main__":
     unittest.main()
