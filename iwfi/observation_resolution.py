@@ -1,5 +1,5 @@
 """Deterministic, provider-neutral resolution of on-chain observations."""
-from collections import defaultdict
+from collections import Counter, defaultdict
 from decimal import Decimal, InvalidOperation
 from itertools import combinations
 import hashlib
@@ -44,6 +44,7 @@ INVALID_QUALITY = {"INVALID", "QUARANTINED"}
 EXCLUDED_FROM_EVENT_EVIDENCE = {"DUPLICATE"}
 ALLOWED_QUALITY = {"VALID", "PARTIAL", "DELAYED", "DUPLICATE", "INVALID", "QUARANTINED"}
 ASSET_NETWORKS = {"bitcoin:btc": "bitcoin-mainnet", "ethereum:eth": "eip155:1"}
+ASSET_SYMBOLS = {"bitcoin:btc": "BTC", "ethereum:eth": "ETH"}
 
 
 def _canonical_json(value):
@@ -54,6 +55,8 @@ def _decimal_key(value):
     if value is None:
         return None
     if not isinstance(value, str):
+        return ("INVALID_DECIMAL", str(value))
+    if re.fullmatch(r"(?:0|[1-9][0-9]*)(?:\.[0-9]+)?", value) is None:
         return ("INVALID_DECIMAL", str(value))
     try:
         number = Decimal(value)
@@ -233,7 +236,14 @@ def _candidate_field_matches(left, right):
         lv = _field_value(left, field)
         rv = _field_value(right, field)
         if lv is not None and rv is not None:
-            if _normalized_field(field, lv, network) == _normalized_field(field, rv, network):
+            left_normalized = _normalized_field(field, lv, network)
+            right_normalized = _normalized_field(field, rv, network)
+            if any(
+                isinstance(value, tuple) and value and value[0].startswith("INVALID_")
+                for value in (left_normalized, right_normalized)
+            ):
+                continue
+            if left_normalized == right_normalized:
                 matches += 1
     return matches
 
@@ -390,6 +400,11 @@ def resolve_observations(observations, supersedes_decision_id=None):
             errors.append(f"missing network_id: {identifier}")
         if asset_id not in ASSET_NETWORKS or ASSET_NETWORKS.get(asset_id) != network_id:
             errors.append(f"invalid asset/network identity: {identifier}")
+        expected_symbol = ASSET_SYMBOLS.get(asset_id)
+        if expected_symbol is not None and asset.get("symbol") != expected_symbol:
+            errors.append(f"invalid asset symbol for network: {identifier}")
+        if isinstance(movement, dict) and movement.get("unit") is not None and movement.get("unit") != expected_symbol:
+            errors.append(f"invalid movement unit for asset: {identifier}")
         quality = item.get("quality") or {}
         quality_status = quality.get("status")
         if quality_status not in ALLOWED_QUALITY:
@@ -426,7 +441,7 @@ def resolve_observations(observations, supersedes_decision_id=None):
                 or normalized_locator[0] == "INVALID_LOCATOR"
             ):
                 errors.append(f"invalid event_locator for observation: {identifier}")
-    duplicate_ids = sorted(identifier for identifier in set(ids) if ids.count(identifier) > 1)
+    duplicate_ids = sorted(identifier for identifier, count in Counter(ids).items() if count > 1)
     errors.extend(f"duplicate observation_id: {identifier}" for identifier in duplicate_ids)
     if supersedes_decision_id is not None and (
         not isinstance(supersedes_decision_id, str) or not supersedes_decision_id.strip()

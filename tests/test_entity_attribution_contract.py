@@ -6,7 +6,10 @@ from pathlib import Path
 
 from jsonschema import Draft202012Validator, FormatChecker
 
-from iwfi.attribution_integrity import validate_claim_validity_interval
+from iwfi.attribution_integrity import (
+    validate_claim_collection,
+    validate_claim_validity_interval,
+)
 
 ROOT = Path(__file__).resolve().parent
 FIXTURE_PATH = ROOT / "fixtures" / "entity-attribution-claims.json"
@@ -129,7 +132,6 @@ class EntityAttributionContractTests(unittest.TestCase):
         claim["cluster_id"] = "auto-cluster-1"
         self.assertFalse(self.validator.is_valid(claim))
 
-
     def test_validity_interval_rejects_timestamp_without_seconds(self):
         claim = copy.deepcopy(self.claims[0])
         claim["valid_from_utc"] = "2026-01-01T00:00Z"
@@ -145,6 +147,54 @@ class EntityAttributionContractTests(unittest.TestCase):
             validate_claim_validity_interval(claim),
             ["valid_from_utc must be a valid UTC timestamp ending in Z"],
         )
+
+    def test_claim_collection_accepts_fixture_history(self):
+        self.assertEqual(validate_claim_collection(self.claims), [])
+
+    def test_claim_collection_rejects_duplicate_claim_ids(self):
+        claims = copy.deepcopy(self.claims)
+        claims.append(copy.deepcopy(claims[0]))
+        self.assertIn(
+            "duplicate claim_id: claim-provider-label-001",
+            validate_claim_collection(claims),
+        )
+
+    def test_claim_collection_rejects_unresolved_supersession(self):
+        claims = copy.deepcopy(self.claims)
+        claims[-1]["supersedes_claim_id"] = "missing-claim"
+        self.assertTrue(any(
+            "references unresolved supersedes_claim_id: missing-claim" in error
+            for error in validate_claim_collection(claims)
+        ))
+
+    def test_claim_collection_accepts_supersession_resolved_in_prior_history(self):
+        claims = [copy.deepcopy(self.claims[-1])]
+        self.assertEqual(
+            validate_claim_collection(claims, known_claim_ids={"claim-temporal-old-005"}),
+            [],
+        )
+
+    def test_claim_collection_rejects_self_supersession(self):
+        claims = [copy.deepcopy(self.claims[0])]
+        claims[0]["supersedes_claim_id"] = claims[0]["claim_id"]
+        self.assertIn(
+            "claim claim-provider-label-001 cannot supersede itself",
+            validate_claim_collection(claims),
+        )
+
+    def test_claim_collection_rejects_supersession_cycles(self):
+        claims = copy.deepcopy(self.claims[-2:])
+        claims[0]["supersedes_claim_id"] = claims[1]["claim_id"]
+        errors = validate_claim_collection(claims)
+        self.assertTrue(any("supersession cycle detected" in error for error in errors))
+
+    def test_claim_collection_rejects_successor_recorded_before_predecessor(self):
+        claims = copy.deepcopy(self.claims[-2:])
+        claims[1]["recorded_at_utc"] = "2023-01-01T00:00:00Z"
+        self.assertTrue(any(
+            "is recorded before superseded claim" in error
+            for error in validate_claim_collection(claims)
+        ))
 
 
 if __name__ == "__main__":

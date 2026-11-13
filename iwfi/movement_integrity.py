@@ -3,12 +3,15 @@ from datetime import datetime
 from decimal import Decimal, InvalidOperation
 import re
 
+from iwfi.attribution_integrity import validate_claim_collection
+
 
 TRANSFER_FIELDS = ("amount", "unit", "from_address", "to_address", "transaction_id", "confirmation_status", "event_locator")
+UTC_TIMESTAMP_PATTERN = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z")
 
 
 def _utc_datetime(value):
-    if not isinstance(value, str) or re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z", value) is None:
+    if not isinstance(value, str) or UTC_TIMESTAMP_PATTERN.fullmatch(value) is None:
         return None
     try:
         parsed = datetime.fromisoformat(value[:-1] + "+00:00")
@@ -43,6 +46,16 @@ def resolve_temporal_status(event_time_utc, valid_from_utc, valid_to_utc, claim_
     return "VALID_AT_EVENT_TIME"
 
 
+def _same_amount(left, right):
+    if left is None or right is None:
+        return left is right
+    try:
+        return Decimal(left) == Decimal(right)
+    except (InvalidOperation, TypeError, ValueError):
+        return False
+
+
+
 def _normalized_transaction_id(network_id, value):
     if not isinstance(value, str):
         return None
@@ -52,15 +65,6 @@ def _normalized_transaction_id(network_id, value):
         raw = value[2:] if value[:2].lower() == "0x" else value
         return raw.lower() if re.fullmatch(r"[0-9a-fA-F]{64}", raw) else None
     return None
-
-
-def _same_amount(left, right):
-    if left is None or right is None:
-        return left is right
-    try:
-        return Decimal(left) == Decimal(right)
-    except (InvalidOperation, TypeError, ValueError):
-        return False
 
 
 def _normalized_event_locator(value, network_id):
@@ -108,15 +112,20 @@ def _same_transfer_field(field, left, right, network_id):
     return left == right
 
 
-def validate_movement_integrity(movement, observations, claims):
+def validate_movement_integrity(movement, observations, claims, known_claim_ids=()):
     """Return deterministic integrity errors; never infer missing source facts.
 
-    observations and claims are iterables of canonical source/claim dictionaries.
-    This function validates references and consistency only; it does not mutate data.
+    VALID and PARTIAL observations are admissible as source evidence. DELAYED is
+    also admissible for historical reconstruction; this validator does not assess
+    freshness or real-time eligibility. INVALID, QUARANTINED, DUPLICATE and
+    unknown quality states are not admissible.
+
+    Claims are collection-validated before they are used. For partial claim batches,
+    known_claim_ids identifies superseded claims resolved in persistent history.
     """
     errors = []
 
-    def _unique_index(items, id_field):
+    def _unique_index(items, id_field, report_duplicates=True):
         counts = {}
         for item in items:
             identifier = item.get(id_field)
@@ -125,8 +134,9 @@ def validate_movement_integrity(movement, observations, claims):
                 continue
             counts[identifier] = counts.get(identifier, 0) + 1
         duplicates = sorted(identifier for identifier, count in counts.items() if count > 1)
-        for identifier in duplicates:
-            errors.append(f"duplicate {id_field}: {identifier}")
+        if report_duplicates:
+            for identifier in duplicates:
+                errors.append(f"duplicate {id_field}: {identifier}")
         duplicate_set = set(duplicates)
         return {
             item[id_field]: item
@@ -139,7 +149,8 @@ def validate_movement_integrity(movement, observations, claims):
     observations = list(observations)
     claims = list(claims)
     observation_index = _unique_index(observations, "observation_id")
-    claim_index = _unique_index(claims, "claim_id")
+    errors.extend(validate_claim_collection(claims, known_claim_ids=known_claim_ids))
+    claim_index = _unique_index(claims, "claim_id", report_duplicates=False)
     referenced = movement.get("source_observation_ids", [])
     if not referenced:
         errors.append("source_observation_ids must not be empty")
@@ -186,7 +197,9 @@ def validate_movement_integrity(movement, observations, claims):
             source_value = source_transfer.get(field)
             movement_value = movement.get("transfer", {}).get(field)
             equal = _same_transfer_field(
-                field, source_value, movement_value,
+                field,
+                source_value,
+                movement_value,
                 movement.get("asset", {}).get("network_id"),
             )
             if source_value is not None and movement_value is not None and not equal:
@@ -199,8 +212,11 @@ def validate_movement_integrity(movement, observations, claims):
     if resolved_observations:
         for field in TRANSFER_FIELDS:
             movement_value = movement.get("transfer", {}).get(field)
-            known_values = [item.get("movement", {}).get(field) for item in resolved_observations
-                            if item.get("movement", {}).get(field) is not None]
+            known_values = [
+                item.get("movement", {}).get(field)
+                for item in resolved_observations
+                if item.get("movement", {}).get(field) is not None
+            ]
             if not known_values and movement_value is not None:
                 errors.append(f"movement {field} has no supporting source value")
 
@@ -209,7 +225,10 @@ def validate_movement_integrity(movement, observations, claims):
         if all(item.get("event_time_utc") is None for item in resolved_observations):
             errors.append("movement event_time has no supporting source observation")
 
-    endpoints = {movement.get("transfer", {}).get("from_address"), movement.get("transfer", {}).get("to_address")}
+    endpoints = {
+        movement.get("transfer", {}).get("from_address"),
+        movement.get("transfer", {}).get("to_address"),
+    }
     for resolution in movement.get("attribution_resolutions", []):
         claim_id = resolution.get("claim_id")
         claim = claim_index.get(claim_id)

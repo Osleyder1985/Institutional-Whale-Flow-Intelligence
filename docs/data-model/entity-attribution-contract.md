@@ -53,9 +53,13 @@ A transaction observation may support the existence of a transfer. It does not, 
 
 The JSON Schema and `iwfi.attribution_integrity.validate_claim_validity_interval` require the canonical UTC form `YYYY-MM-DDTHH:MM:SSZ` and a valid calendar timestamp. The application validator also checks that a supplied start does not occur after a supplied end. A null bound remains unknown and is not treated as an infinite timestamp.
 
-## Append-only corrections
+## Append-only corrections and collection integrity
 
 A new claim can reference a previous one through `supersedes_claim_id`. This does not delete or rewrite the earlier claim. The claim history must preserve both the old and new assertion and their separate evidence.
+
+JSON Schema validates one claim at a time and therefore cannot guarantee uniqueness of `claim_id`, resolve `supersedes_claim_id`, or detect cycles across a collection. Before accepting a complete history, callers must run `iwfi.attribution_integrity.validate_claim_collection` over the collection. It checks duplicate IDs, unresolved predecessor references, self-supersession, cycles among included claims, and a successor recorded earlier than its included predecessor.
+
+For a partial batch, pass `known_claim_ids` containing predecessor IDs already resolved in persistent history but not included in that batch. This resolves external references; cycle detection is limited to the claims supplied in the batch. A complete-history validation should not use this escape hatch.
 
 ## Explicit non-goals
 

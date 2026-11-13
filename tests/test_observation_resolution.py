@@ -603,5 +603,46 @@ class ObservationResolutionTests(unittest.TestCase):
             {"VALID", "DELAYED"},
         )
 
+    def test_noncanonical_decimal_amount_is_invalid_and_ineligible(self):
+        observation = self.by_id("btc-vout-provider-a")
+        observation["movement"]["amount"] = "1e3"
+        event = resolve_observations([observation])["events"][0]
+        self.assertEqual(event["resolution_status"], "INVALID")
+        self.assertIsNone(event["resolved_fields"]["amount"])
+        self.assertEqual(event["analytical_eligibility"], "INELIGIBLE")
+
+    def test_invalid_decimal_does_not_count_toward_candidate_threshold(self):
+        first = self.by_id("btc-vout-provider-a")
+        second = copy.deepcopy(first)
+        second["observation_id"] = "partial-invalid-decimal"
+        first["movement"]["transaction_id"] = None
+        second["movement"]["transaction_id"] = None
+        first["movement"].pop("event_locator")
+        second["movement"].pop("event_locator")
+        first["movement"]["amount"] = "1e3"
+        second["movement"]["amount"] = "1e3"
+        second["movement"]["from_address"] = "bc1qdifferent-source"
+        second["movement"]["to_address"] = "bc1qdifferent-destination"
+        second["event_time_utc"] = "2026-11-10T11:00:00Z"
+        result = resolve_observations([first, second])
+        self.assertEqual(result["links"], [])
+        self.assertEqual(result["events"], [])
+        self.assertEqual(result["status"], "INSUFFICIENT_EVIDENCE")
+
+    def test_asset_symbol_mismatch_fails_closed(self):
+        observation = self.by_id("btc-vout-provider-a")
+        observation["asset"]["symbol"] = "ETH"
+        result = resolve_observations([observation])
+        self.assertEqual(result["status"], "INVALID")
+        self.assertIn("invalid asset symbol for network: btc-vout-provider-a", result["errors"])
+
+    def test_transfer_unit_mismatch_fails_closed(self):
+        observation = self.by_id("btc-vout-provider-a")
+        observation["movement"]["unit"] = "ETH"
+        result = resolve_observations([observation])
+        self.assertEqual(result["status"], "INVALID")
+        self.assertIn("invalid movement unit for asset: btc-vout-provider-a", result["errors"])
+
+
 if __name__ == "__main__":
     unittest.main()

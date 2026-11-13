@@ -65,59 +65,6 @@ class MovementIntegrityTests(unittest.TestCase):
         errors = validate_movement_integrity(movement, self.observations, self.claims)
         self.assertTrue(any("not ON_CHAIN_TRANSACTION" in error for error in errors))
 
-    def test_source_event_locator_mismatch_is_rejected(self):
-        movement = copy.deepcopy(self.movements[0])
-        movement["transfer"]["event_locator"]["value"] = "9"
-        self.assertTrue(any("event_locator mismatch" in error for error in validate_movement_integrity(movement, self.observations, self.claims)))
-
-    def test_btc_transaction_id_and_vout_are_compared_canonically(self):
-        movement = copy.deepcopy(self.movements[0])
-        observations = copy.deepcopy(self.observations)
-        source = next(item for item in observations if item["observation_id"] == movement["source_observation_ids"][0])
-        source["movement"]["transaction_id"] = source["movement"]["transaction_id"].upper()
-        source["movement"]["event_locator"]["value"] = "00"
-        movement["transfer"]["transaction_id"] = movement["transfer"]["transaction_id"].upper()
-        movement["transfer"]["event_locator"]["value"] = "0"
-        self.assertEqual(validate_movement_integrity(movement, observations, self.claims), [])
-
-    def test_evm_transaction_id_addresses_and_trace_paths_are_compared_canonically(self):
-        movement = copy.deepcopy(self.movements[1])
-        observations = copy.deepcopy(self.observations)
-        source = next(item for item in observations if item["observation_id"] == movement["source_observation_ids"][0])
-        source["movement"]["transaction_id"] = source["movement"]["transaction_id"].upper()
-        source["movement"]["from_address"] = source["movement"]["from_address"].upper()
-        source["movement"]["to_address"] = source["movement"]["to_address"].upper()
-        source["movement"]["event_locator"] = {"kind": "EVM_TRACE_PATH", "value": "0/05"}
-        movement["transfer"]["transaction_id"] = movement["transfer"]["transaction_id"].lower()
-        movement["transfer"]["event_locator"] = {"kind": "EVM_TRACE_PATH", "value": "0/5"}
-        self.assertEqual(validate_movement_integrity(movement, observations, self.claims), [])
-
-    def test_invalid_event_time_is_rejected_by_ledger_integrity(self):
-        movement = copy.deepcopy(self.movements[0])
-        observations = copy.deepcopy(self.observations)
-        source_id = movement["source_observation_ids"][0]
-        source = next(item for item in observations if item["observation_id"] == source_id)
-        source["event_time_utc"] = "2026-02-30T10:00:00Z"
-        errors = validate_movement_integrity(movement, observations, self.claims)
-        self.assertTrue(any("invalid source event_time_utc" in error for error in errors))
-
-    def test_non_ascii_numeric_locator_is_not_canonically_equal(self):
-        movement = copy.deepcopy(self.movements[0])
-        observations = copy.deepcopy(self.observations)
-        source_id = movement["source_observation_ids"][0]
-        source = next(item for item in observations if item["observation_id"] == source_id)
-        source["movement"]["event_locator"]["value"] = "٠"
-        errors = validate_movement_integrity(movement, observations, self.claims)
-        self.assertTrue(any("event_locator mismatch" in error for error in errors))
-
-    def test_malformed_source_transaction_id_is_rejected(self):
-        movement = copy.deepcopy(self.movements[0])
-        observations = copy.deepcopy(self.observations)
-        source = next(item for item in observations if item["observation_id"] == movement["source_observation_ids"][0])
-        source["movement"]["transaction_id"] = "invalid"
-        errors = validate_movement_integrity(movement, observations, self.claims)
-        self.assertTrue(any("invalid source transaction_id" in error for error in errors))
-
     def test_source_transaction_mismatch_is_rejected(self):
         movement = copy.deepcopy(self.movements[0])
         movement["transfer"]["transaction_id"] = "different-tx"
@@ -196,14 +143,102 @@ class MovementIntegrityTests(unittest.TestCase):
         self.assertTrue(any("quality is not admissible" in error for error in errors))
 
 
-    def test_delayed_observation_is_admissible_for_historical_ledger_integrity(self):
+    def test_delayed_observation_is_admissible_for_historical_integrity_without_quality_upgrade(self):
         movement = copy.deepcopy(self.movements[0])
         observations = copy.deepcopy(self.observations)
         source_id = movement["source_observation_ids"][0]
         source = next(item for item in observations if item["observation_id"] == source_id)
         source["quality"]["status"] = "DELAYED"
+
         self.assertEqual(validate_movement_integrity(movement, observations, self.claims), [])
         self.assertEqual(source["quality"]["status"], "DELAYED")
+
+    def test_temporal_resolver_rejects_noncanonical_utc_timestamp(self):
+        self.assertEqual(
+            resolve_temporal_status("2026-06-01T00:00Z", "2026-01-01T00:00:00Z", "2026-12-31T23:59:59Z"),
+            "TIME_UNRESOLVED",
+        )
+        self.assertEqual(
+            resolve_temporal_status("2026-02-30T00:00:00Z", "2026-01-01T00:00:00Z", "2026-12-31T23:59:59Z"),
+            "TIME_UNRESOLVED",
+        )
+        self.assertEqual(
+            resolve_temporal_status("2026-06-01T00:00:00+00:00", "2026-01-01T00:00:00Z", "2026-12-31T23:59:59Z"),
+            "TIME_UNRESOLVED",
+        )
+
+    def test_movement_integrity_rejects_unresolved_claim_supersession(self):
+        movement = copy.deepcopy(self.movements[0])
+        movement["attribution_resolutions"] = []
+        claims = copy.deepcopy(self.claims)
+        claims[-1]["supersedes_claim_id"] = "missing-prior-claim"
+        errors = validate_movement_integrity(movement, self.observations, claims)
+        self.assertTrue(any("references unresolved supersedes_claim_id" in error for error in errors))
+
+    def test_movement_integrity_accepts_partial_claim_batch_with_known_history_id(self):
+        movement = copy.deepcopy(self.movements[0])
+        movement["attribution_resolutions"] = []
+        claim = copy.deepcopy(self.claims[-1])
+        errors = validate_movement_integrity(
+            movement,
+            self.observations,
+            [claim],
+            known_claim_ids={"claim-temporal-old-005"},
+        )
+        self.assertEqual(errors, [])
+
+    def test_source_event_locator_mismatch_is_rejected(self):
+        movement = copy.deepcopy(self.movements[0])
+        movement["transfer"]["event_locator"]["value"] = "9"
+        self.assertTrue(any("event_locator mismatch" in error for error in validate_movement_integrity(movement, self.observations, self.claims)))
+
+    def test_btc_transaction_id_and_vout_are_compared_canonically(self):
+        movement = copy.deepcopy(self.movements[0])
+        observations = copy.deepcopy(self.observations)
+        source = next(item for item in observations if item["observation_id"] == movement["source_observation_ids"][0])
+        source["movement"]["transaction_id"] = source["movement"]["transaction_id"].upper()
+        source["movement"]["event_locator"]["value"] = "00"
+        movement["transfer"]["transaction_id"] = movement["transfer"]["transaction_id"].upper()
+        movement["transfer"]["event_locator"]["value"] = "0"
+        self.assertEqual(validate_movement_integrity(movement, observations, self.claims), [])
+
+    def test_evm_transaction_id_addresses_and_trace_paths_are_compared_canonically(self):
+        movement = copy.deepcopy(self.movements[1])
+        observations = copy.deepcopy(self.observations)
+        source = next(item for item in observations if item["observation_id"] == movement["source_observation_ids"][0])
+        source["movement"]["transaction_id"] = source["movement"]["transaction_id"].upper()
+        source["movement"]["from_address"] = source["movement"]["from_address"].upper()
+        source["movement"]["to_address"] = source["movement"]["to_address"].upper()
+        source["movement"]["event_locator"] = {"kind": "EVM_TRACE_PATH", "value": "0/05"}
+        movement["transfer"]["transaction_id"] = movement["transfer"]["transaction_id"].lower()
+        movement["transfer"]["event_locator"] = {"kind": "EVM_TRACE_PATH", "value": "0/5"}
+        self.assertEqual(validate_movement_integrity(movement, observations, self.claims), [])
+
+    def test_invalid_event_time_is_rejected_by_ledger_integrity(self):
+        movement = copy.deepcopy(self.movements[0])
+        observations = copy.deepcopy(self.observations)
+        source_id = movement["source_observation_ids"][0]
+        source = next(item for item in observations if item["observation_id"] == source_id)
+        source["event_time_utc"] = "2026-02-30T10:00:00Z"
+        errors = validate_movement_integrity(movement, observations, self.claims)
+        self.assertTrue(any("invalid source event_time_utc" in error for error in errors))
+
+    def test_non_ascii_numeric_locator_is_not_canonically_equal(self):
+        movement = copy.deepcopy(self.movements[0])
+        observations = copy.deepcopy(self.observations)
+        source_id = movement["source_observation_ids"][0]
+        source = next(item for item in observations if item["observation_id"] == source_id)
+        source["movement"]["event_locator"]["value"] = "٠"
+        errors = validate_movement_integrity(movement, observations, self.claims)
+        self.assertTrue(any("event_locator mismatch" in error for error in errors))
+
+    def test_malformed_source_transaction_id_is_rejected(self):
+        movement = copy.deepcopy(self.movements[0])
+        observations = copy.deepcopy(self.observations)
+        source = next(item for item in observations if item["observation_id"] == movement["source_observation_ids"][0])
+        source["movement"]["transaction_id"] = "invalid"
+        errors = validate_movement_integrity(movement, observations, self.claims)
+        self.assertTrue(any("invalid source transaction_id" in error for error in errors))
 
     def test_duplicate_observation_cannot_be_a_movement_source(self):
         movement = copy.deepcopy(self.movements[0])

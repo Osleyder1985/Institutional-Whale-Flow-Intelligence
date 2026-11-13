@@ -93,11 +93,6 @@ class MovementLedgerContractTests(unittest.TestCase):
         item["transfer"].pop("event_locator")
         self.assertFalse(self.validator.is_valid(item))
 
-    def test_schema_requires_event_locator_for_canonical_movement(self):
-        item = copy.deepcopy(self.fixtures[0])
-        item["transfer"].pop("event_locator")
-        self.assertFalse(self.validator.is_valid(item))
-
     def test_schema_rejects_malformed_network_transaction_hash(self):
         item = copy.deepcopy(self.fixtures[0])
         item["transfer"]["transaction_id"] = "not-a-hash"
