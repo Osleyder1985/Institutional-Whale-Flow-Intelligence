@@ -4,6 +4,8 @@ import json
 import unittest
 from pathlib import Path
 
+from jsonschema import Draft202012Validator, FormatChecker
+
 from iwfi.observation_resolution import (
     classify_observation_pair,
     resolve_observations,
@@ -18,6 +20,12 @@ class ObservationResolutionTests(unittest.TestCase):
         cls.fixtures = json.loads(
             (ROOT / "fixtures" / "observation-resolution.json").read_text(encoding="utf-8")
         )
+
+    def test_resolution_fixtures_validate_against_source_observation_schema(self):
+        schema = json.loads((ROOT.parent / "schemas" / "source-observation.schema.json").read_text(encoding="utf-8"))
+        validator = Draft202012Validator(schema, format_checker=FormatChecker())
+        for fixture in self.fixtures:
+            self.assertEqual(list(validator.iter_errors(fixture)), [])
 
     def by_id(self, identifier):
         return copy.deepcopy(next(item for item in self.fixtures if item["observation_id"] == identifier))
@@ -87,9 +95,15 @@ class ObservationResolutionTests(unittest.TestCase):
         first["movement"]["amount"] = None
         result = resolve_observations([first, second])
         event = result["events"][0]
-        self.assertEqual(event["resolved_fields"]["amount"], "1.000")
+        self.assertEqual(event["resolved_fields"]["amount"], "1")
         self.assertNotIn("amount", event["missing_required_fields"])
         self.assertEqual(event["analytical_eligibility"], "ELIGIBLE")
+
+    def test_event_locator_numeric_values_are_canonicalized(self):
+        first = self.by_id("btc-vout-provider-a")
+        second = self.by_id("btc-vout-provider-b")
+        event = resolve_observations([first, second])["events"][0]
+        self.assertEqual(event["resolved_fields"]["event_locator"], {"kind": "UTXO_VOUT", "value": "0"})
 
     def test_decimal_formatting_differences_are_not_conflicts(self):
         first = self.by_id("btc-vout-provider-a")
@@ -150,8 +164,17 @@ class ObservationResolutionTests(unittest.TestCase):
         second = resolve_observations(corrected, supersedes_decision_id=first["decision_id"])
         self.assertNotEqual(first["decision_id"], second["decision_id"])
         self.assertEqual(second["supersedes_decision_id"], first["decision_id"])
-        self.assertEqual(first["events"][0]["resolved_fields"]["amount"], "1.000")
+        self.assertEqual(first["events"][0]["resolved_fields"]["amount"], "1")
         self.assertEqual(second["events"][0]["resolved_fields"]["amount"], "1.25")
+
+    def test_invalid_duplicate_input_fingerprint_is_order_independent(self):
+        first = self.by_id("btc-vout-provider-a")
+        second = copy.deepcopy(first)
+        second["movement"]["amount"] = "2"
+        forward = resolve_observations([first, second])
+        reverse = resolve_observations([second, first])
+        self.assertEqual(forward["input_fingerprint"], reverse["input_fingerprint"])
+        self.assertEqual(forward["decision_id"], reverse["decision_id"])
 
     def test_duplicate_observation_ids_fail_closed(self):
         first = self.by_id("btc-vout-provider-a")
