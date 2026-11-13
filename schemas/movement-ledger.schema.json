@@ -123,7 +123,10 @@
           ]
         },
         "event_locator": {
-          "type": "object",
+          "type": [
+            "object",
+            "null"
+          ],
           "additionalProperties": false,
           "required": [
             "kind",
@@ -283,6 +286,9 @@
                   "kind",
                   "value"
                 ]
+              },
+              "transaction_id": {
+                "pattern": "^[0-9a-fA-F]{64}$"
               }
             }
           }
@@ -358,6 +364,9 @@
                     ]
                   }
                 ]
+              },
+              "transaction_id": {
+                "pattern": "^(0x)?[0-9a-fA-F]{64}$"
               }
             }
           }

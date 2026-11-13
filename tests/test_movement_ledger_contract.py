@@ -96,6 +96,16 @@ class MovementLedgerContractTests(unittest.TestCase):
         eth["transfer"]["event_locator"] = {"kind": "UTXO_VOUT", "value": "0"}
         self.assertFalse(self.validator.is_valid(eth))
 
+    def test_schema_allows_explicit_unknown_event_locator(self):
+        item = copy.deepcopy(self.fixtures[0])
+        item["transfer"]["event_locator"] = None
+        self.assertTrue(self.validator.is_valid(item))
+
+    def test_schema_rejects_malformed_network_transaction_hash(self):
+        item = copy.deepcopy(self.fixtures[0])
+        item["transfer"]["transaction_id"] = "btc-tx-id"
+        self.assertFalse(self.validator.is_valid(item))
+
     def test_schema_rejects_noncanonical_bitcoin_output_index(self):
         item = copy.deepcopy(self.fixtures[0])
         item["transfer"]["event_locator"]["value"] = "00"
