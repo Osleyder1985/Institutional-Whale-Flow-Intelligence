@@ -68,7 +68,7 @@ Only `COMPLETE` events with `confirmation_status=CONFIRMED` and no material conf
 ## 8. Determinism and audit
 
 The resolver:
-- sorts observations, links, evidence and events deterministically;
+- sorts observations, links, evidence and events deterministically;\n- indexes candidate comparisons by event identity, transaction identity, source record and shared partial-field keys instead of generating a global all-pairs matrix;\n- materializes strong/candidate links and relevant source-record revisions; NO_MATCH remains available through pair classification rather than an exhaustive quadratic list;
 - derives a SHA-256 input fingerprint and decision ID from canonical JSON and the policy version;
 - produces the same result for the same inputs regardless of input order;
 - performs no I/O, persistence, provider calls, wallet clustering or probabilistic inference;
@@ -78,7 +78,7 @@ Reprocessing identical inputs is idempotent. Policy changes require a policy-ver
 
 ## 9. Scope and limitations
 
-This implementation is an in-memory policy engine and test suite only. It does not persist observations or decisions, assign a canonical event in a database, implement provider adapters, resolve chain reorganizations/finality, infer common control, group transfers economically, or generate whale metrics/signals. Unsupported or absent event locators remain unresolved candidates rather than being guessed.
+This implementation is an in-memory policy engine and test suite only. Pairwise work can still grow inside a large same-transaction or same-candidate bucket; production-scale performance has not been benchmarked. It does not persist observations or decisions, assign a canonical event in a database, implement provider adapters, resolve chain reorganizations/finality, infer common control, group transfers economically, or generate whale metrics/signals. Unsupported or absent event locators remain unresolved candidates rather than being guessed.
 
 
 ## 10. Cross-contract normalization
