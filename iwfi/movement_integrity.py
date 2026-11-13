@@ -8,7 +8,7 @@ from iwfi.attribution_integrity import validate_claim_collection
 
 TRANSFER_FIELDS = ("amount", "unit", "from_address", "to_address", "transaction_id", "confirmation_status")
 UTC_TIMESTAMP_PATTERN = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z")
-DECIMAL_AMOUNT_PATTERN = re.compile(r"(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?")
+DECIMAL_AMOUNT_PATTERN = re.compile(r"(?:0|[1-9][0-9]*)(?:\.[0-9]+)?")
 
 
 def _utc_datetime(value):
