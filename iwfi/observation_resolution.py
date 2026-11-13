@@ -426,7 +426,7 @@ def resolve_observations(observations, supersedes_decision_id=None):
             "RESOLVED_WITH_CANDIDATES"
             if events and any(link["match_class"] == "CANDIDATE" for link in links)
             else "RESOLVED" if events
-            else "CANDIDATES_ONLY" if links
+            else "CANDIDATES_ONLY" if any(link["match_class"] == "CANDIDATE" for link in links)
             else "INSUFFICIENT_EVIDENCE"
         ),
         "errors": [],
