@@ -8,7 +8,7 @@ import re
 from datetime import datetime
 
 
-POLICY_VERSION = "1.3.0"
+POLICY_VERSION = "1.3.1"
 TRANSFER_FIELDS = (
     "asset_id",
     "network_id",
@@ -368,19 +368,35 @@ def resolve_observations(observations, supersedes_decision_id=None):
     establish a strong transfer-event identity. Candidate links are never
     merged into an event. The function is pure and performs no persistence.
     """
-    items = list(observations)
     errors = []
+    if isinstance(observations, (str, bytes)):
+        items = []
+        errors.append("observations must be an iterable of objects")
+    else:
+        try:
+            items = list(observations)
+        except TypeError:
+            items = []
+            errors.append("observations must be an iterable of objects")
+
     ids = []
-    for item in items:
-        identifier = item.get("observation_id") if isinstance(item, dict) else None
+    for index, item in enumerate(items):
+        if not isinstance(item, dict):
+            errors.append(f"observation[{index}] must be an object")
+            continue
+        identifier = item.get("observation_id")
         if not isinstance(identifier, str) or not identifier:
             errors.append("observation_id must be a non-empty string")
         else:
             ids.append(identifier)
-        if not isinstance(item, dict) or item.get("observation_type") != "ON_CHAIN_TRANSACTION":
+        if item.get("observation_type") != "ON_CHAIN_TRANSACTION":
             errors.append(f"observation is not ON_CHAIN_TRANSACTION: {identifier}")
             continue
-        source = item.get("source") or {}
+
+        source = item.get("source")
+        if not isinstance(source, dict):
+            errors.append(f"invalid source object: {identifier}")
+            source = {}
         if not isinstance(source.get("provider"), str) or not source["provider"].strip():
             errors.append(f"invalid source provider: {identifier}")
         if not isinstance(source.get("endpoint"), str) or not source["endpoint"].strip():
@@ -392,22 +408,36 @@ def resolve_observations(observations, supersedes_decision_id=None):
             or any(character not in "0123456789abcdef" for character in payload_hash)
         ):
             errors.append(f"invalid source payload_sha256: {identifier}")
-        asset = item.get("asset") or {}
-        movement = item.get("movement") or {}
+
+        asset = item.get("asset")
+        if not isinstance(asset, dict):
+            errors.append(f"invalid asset object: {identifier}")
+            asset = {}
+        movement = item.get("movement")
+        if not isinstance(movement, dict):
+            errors.append(f"invalid movement object: {identifier}")
+            movement = {}
+        quality = item.get("quality")
+        if not isinstance(quality, dict):
+            errors.append(f"invalid quality object: {identifier}")
+            quality = {}
+
         network_id = asset.get("network_id")
         asset_id = asset.get("asset_id")
-        if not isinstance(network_id, str) or not network_id:
-            errors.append(f"missing network_id: {identifier}")
-        if asset_id not in ASSET_NETWORKS or ASSET_NETWORKS.get(asset_id) != network_id:
+        if (
+            not isinstance(network_id, str)
+            or not isinstance(asset_id, str)
+            or ASSET_NETWORKS.get(asset_id) != network_id
+        ):
             errors.append(f"invalid asset/network identity: {identifier}")
-        expected_symbol = ASSET_SYMBOLS.get(asset_id)
+        expected_symbol = ASSET_SYMBOLS.get(asset_id) if isinstance(asset_id, str) else None
         if expected_symbol is not None and asset.get("symbol") != expected_symbol:
             errors.append(f"invalid asset symbol for network: {identifier}")
-        if isinstance(movement, dict) and movement.get("unit") is not None and movement.get("unit") != expected_symbol:
+        if movement.get("unit") is not None and movement.get("unit") != expected_symbol:
             errors.append(f"invalid movement unit for asset: {identifier}")
-        quality = item.get("quality") or {}
+
         quality_status = quality.get("status")
-        if quality_status not in ALLOWED_QUALITY:
+        if not isinstance(quality_status, str) or quality_status not in ALLOWED_QUALITY:
             errors.append(f"invalid quality status: {identifier}")
         duplicate_of = quality.get("duplicate_of")
         if quality_status != "DUPLICATE" and duplicate_of is not None:
@@ -417,6 +447,7 @@ def resolve_observations(observations, supersedes_decision_id=None):
                 errors.append(f"duplicate observation missing duplicate_of: {identifier}")
             elif duplicate_of == identifier:
                 errors.append(f"observation cannot be duplicate of itself: {identifier}")
+
         event_time = item.get("event_time_utc")
         if event_time is not None:
             if not isinstance(event_time, str) or re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z", event_time) is None:
@@ -426,17 +457,20 @@ def resolve_observations(observations, supersedes_decision_id=None):
                     datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%SZ")
                 except ValueError:
                     errors.append(f"invalid event_time_utc: {identifier}")
-        transaction_id = movement.get("transaction_id") if isinstance(movement, dict) else None
+
+        transaction_id = movement.get("transaction_id")
         if transaction_id is not None and _normalized_transaction_id(network_id, transaction_id) is None:
             errors.append(f"invalid transaction_id for network: {identifier}")
-        if not isinstance(movement, dict) or movement.get("movement_type") != "TRANSFER":
+        if movement.get("movement_type") != "TRANSFER":
             errors.append(f"observation has no TRANSFER movement: {identifier}")
-        locator = movement.get("event_locator") if isinstance(movement, dict) else None
+        locator = movement.get("event_locator")
         if locator is not None:
+            locator_kind = locator.get("kind") if isinstance(locator, dict) else None
             normalized_locator = _normalized_field("event_locator", locator, network_id)
             if (
                 not isinstance(locator, dict)
-                or locator.get("kind") not in LOCATOR_KINDS.get(network_id, set())
+                or not isinstance(locator_kind, str)
+                or locator_kind not in LOCATOR_KINDS.get(network_id, set())
                 or not isinstance(normalized_locator, tuple)
                 or normalized_locator[0] == "INVALID_LOCATOR"
             ):
