@@ -272,19 +272,26 @@
                 "const": "BTC"
               },
               "event_locator": {
-                "type": "object",
-                "properties": {
-                  "kind": {
-                    "const": "UTXO_VOUT"
+                "oneOf": [
+                  {
+                    "type": "null"
                   },
-                  "value": {
-                    "type": "string",
-                    "pattern": "^(0|[1-9][0-9]*)$"
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "const": "UTXO_VOUT"
+                      },
+                      "value": {
+                        "type": "string",
+                        "pattern": "^(0|[1-9][0-9]*)$"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "value"
+                    ]
                   }
-                },
-                "required": [
-                  "kind",
-                  "value"
                 ]
               },
               "transaction_id": {
@@ -333,34 +340,41 @@
               "event_locator": {
                 "oneOf": [
                   {
-                    "type": "object",
-                    "properties": {
-                      "kind": {
-                        "const": "EVM_TRACE_PATH"
-                      },
-                      "value": {
-                        "type": "string",
-                        "pattern": "^(0|[1-9][0-9]*)(/(0|[1-9][0-9]*))*$"
-                      }
-                    },
-                    "required": [
-                      "kind",
-                      "value"
-                    ]
+                    "type": "null"
                   },
                   {
-                    "type": "object",
-                    "properties": {
-                      "kind": {
-                        "const": "EVM_TX_VALUE"
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "const": "EVM_TRACE_PATH"
+                          },
+                          "value": {
+                            "type": "string",
+                            "pattern": "^(0|[1-9][0-9]*)(/(0|[1-9][0-9]*))*$"
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "value"
+                        ]
                       },
-                      "value": {
-                        "const": "transaction-value"
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "const": "EVM_TX_VALUE"
+                          },
+                          "value": {
+                            "const": "transaction-value"
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "value"
+                        ]
                       }
-                    },
-                    "required": [
-                      "kind",
-                      "value"
                     ]
                   }
                 ]
