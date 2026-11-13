@@ -16,6 +16,20 @@ class MovementIntegrityTests(unittest.TestCase):
         cls.observations = json.loads((ROOT / "fixtures" / "movement-integrity-source-observations.json").read_text(encoding="utf-8"))
         cls.claims = json.loads((ROOT / "fixtures" / "entity-attribution-claims.json").read_text(encoding="utf-8"))
 
+    def test_integrity_source_fixtures_validate_against_canonical_schema(self):
+        from jsonschema import Draft202012Validator, FormatChecker
+        schema = json.loads((ROOT.parent / "schemas" / "source-observation.schema.json").read_text(encoding="utf-8"))
+        validator = Draft202012Validator(schema, format_checker=FormatChecker())
+        for observation in self.observations:
+            self.assertEqual(list(validator.iter_errors(observation)), [])
+
+    def test_claim_fixtures_validate_against_canonical_schema(self):
+        from jsonschema import Draft202012Validator, FormatChecker
+        schema = json.loads((ROOT.parent / "schemas" / "entity-attribution-claim.schema.json").read_text(encoding="utf-8"))
+        validator = Draft202012Validator(schema, format_checker=FormatChecker())
+        for claim in self.claims:
+            self.assertEqual(list(validator.iter_errors(claim)), [])
+
     def test_btc_and_eth_movements_resolve_against_source_observations(self):
         for movement in self.movements:
             self.assertEqual(validate_movement_integrity(movement, self.observations, self.claims), [])
