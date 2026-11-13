@@ -197,8 +197,8 @@ class ObservationResolutionTests(unittest.TestCase):
 
     def test_conflicting_origin_destination_and_event_time_are_reported_by_field(self):
         mutations = (
-            ("from_address", lambda item: item["movement"].__setitem__("from_address", "bc1qother-source"), "movement"),
-            ("to_address", lambda item: item["movement"].__setitem__("to_address", "bc1qother-destination"), "movement"),
+            ("from_address", lambda item: item["movement"].__setitem__("from_address", "bc1qother-source")),
+            ("to_address", lambda item: item["movement"].__setitem__("to_address", "bc1qother-destination")),
             ("event_time_utc", lambda item: item.__setitem__("event_time_utc", "2026-11-10T10:00:01Z")),
         )
         for field, mutate in mutations:
