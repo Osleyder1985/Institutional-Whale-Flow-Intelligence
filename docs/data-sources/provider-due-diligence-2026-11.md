@@ -103,7 +103,7 @@ Do not build all five integrations.
 - CryptoQuant Basic account-level sample for market-data API mechanics only; no claim that it validates whale/on-chain data.
 - Request Arkham API access and current endpoint/terms documentation.
 - Check whether Glassnode Advanced Light API gives required BTC/ETH metrics before considering Professional.
-- Evaluate Nansen only for Ethereum Smart Trader, and Fund Holdings separately.
+- Evaluate Nansen only for Ethereum Smart Money endpoints after separating provider-labelled `Fund` and `Smart Trader` cohorts; do not treat either label as independently verified institutional identity. Bitcoin Profiler support remains a separate, narrower capability.
 - Consider CoinGlass Hobbyist only if Bitcoin ETF flow and derivatives data are required in the personal-research pilot; Startup is not justified until Spot CVD is a confirmed requirement.
 
 No paid plan is approved by this document. No API calls, polling, or backfill are authorized.
@@ -132,11 +132,8 @@ No paid plan is approved by this document. No API calls, polling, or backfill ar
 - CoinGlass API plans and permissions: https://docs.coinglass.com/reference/plans-and-permissions
 - Arkham API announcement (2026-04-15): https://arkm.com/announcements/the-new-arkham-api
 - Arkham real-time address-intelligence update (2026-09-08): https://arkm.com/announcements/arkham-api-upgrade-real-time-intel
-- Nansen Smart Money labels and endpoint scope: https://docs.nansen.ai/api/smart-money
-- Nansen Smart Money netflows: https://docs.nansen.ai/api/smart-money/netflows
 - Nansen Smart Money holdings: https://docs.nansen.ai/api/smart-money/holdings
 - Nansen endpoint credit overview: https://docs.nansen.ai/api/overview
-- Nansen chain support by endpoint: https://docs.nansen.ai/reference/chains
 - Glassnode current plan/API access: https://studio.glassnode.com/pricing
 
 ## 8. Audit status
@@ -150,17 +147,6 @@ Sample-response validation: **not performed**.
 Account-specific entitlement and terms verification: **pending**.
 
 Paid access, continuous polling, production ingestion and historical backfill: **not authorized**.
-
-
-## Revisión de cambios documentales — 2026-11-13
-
-Se revalidaron las páginas oficiales consultadas. CryptoQuant mantiene los límites documentados de Basic/Advanced/Professional/Premium y el acceso on-chain desde Professional. Glassnode confirma la Light API de Advanced (14 días, diario, 50 llamadas/día, sin bulk) y el consumo de créditos por combinaciones en endpoints bulk. CoinGlass mantiene en su tabla oficial los precios mensuales y los derechos personales/comerciales ya registrados.
-
-Se incorporan dos precisiones:
-- Nansen: `Fund` sigue apareciendo como filtro temporalmente aceptado, pero está deprecado y ya no devuelve wallets en Smart Money; los fondos se consultan mediante Fund Holdings. Bitcoin sigue sin soporte en Smart Money, aunque determinados endpoints de Profiler sí lo cubren.
-- Arkham: el feed de actualizaciones de inteligencia de direcciones pasó a tiempo real el 2026-09-08; además, se retiraron métricas de balance/volumen/transferencias y `orderBy` de ese endpoint. No se presume que esos campos existan en el feed actual.
-
-La revisión documental no equivale a validar acceso de cuenta, muestras, términos particulares ni retención. Ningún proveedor queda aprobado.
 
 
 ## Revalidación de fuentes oficiales — 2026-11-13
