@@ -57,13 +57,13 @@ def validate_claim_collection(claims, known_claim_ids=()):
             known_values = []
     invalid_known_ids = [
         value for value in known_values
-        if not isinstance(value, str) or not value
+        if not isinstance(value, str) or not value.strip()
     ]
     if invalid_known_ids:
         errors.append("known_claim_ids must contain only non-empty strings")
     known_ids = {
         value for value in known_values
-        if isinstance(value, str) and value
+        if isinstance(value, str) and value.strip()
     }
 
     if isinstance(claims, (str, bytes)):
@@ -80,7 +80,7 @@ def validate_claim_collection(claims, known_claim_ids=()):
             errors.append(f"claims[{index}] must be an object")
             continue
         claim_id = claim.get("claim_id")
-        if not isinstance(claim_id, str) or not claim_id:
+        if not isinstance(claim_id, str) or not claim_id.strip():
             errors.append(f"claims[{index}] has an invalid claim_id")
             continue
         id_counts[claim_id] = id_counts.get(claim_id, 0) + 1
@@ -108,7 +108,7 @@ def validate_claim_collection(claims, known_claim_ids=()):
         predecessor_id = claim.get("supersedes_claim_id")
         if predecessor_id is None:
             continue
-        if not isinstance(predecessor_id, str) or not predecessor_id:
+        if not isinstance(predecessor_id, str) or not predecessor_id.strip():
             errors.append(f"claim {claim_id} has an invalid supersedes_claim_id")
             continue
         if predecessor_id == claim_id:

@@ -57,7 +57,7 @@ The JSON Schema and `iwfi.attribution_integrity.validate_claim_validity_interval
 
 A new claim can reference a previous one through `supersedes_claim_id`. This does not delete or rewrite the earlier claim. The claim history must preserve both the old and new assertion and their separate evidence.
 
-JSON Schema validates one claim at a time and therefore cannot guarantee uniqueness of `claim_id`, resolve `supersedes_claim_id`, or detect cycles across a collection. Before accepting a complete history, callers must run `iwfi.attribution_integrity.validate_claim_collection` over the collection. It checks invalid and duplicate claim IDs, unresolved or ambiguous predecessor references, invalid `known_claim_ids` collections, self-supersession, cycles among included claims, and a successor recorded earlier than its included predecessor. Duplicate IDs are excluded from graph construction so input order cannot select an arbitrary version as canonical. Cycle detection is iterative to avoid recursion-depth failures on long histories.
+JSON Schema validates one claim at a time and therefore cannot guarantee uniqueness of `claim_id`, resolve `supersedes_claim_id`, or detect cycles across a collection. Before accepting a complete history, callers must run `iwfi.attribution_integrity.validate_claim_collection` over the collection. It checks invalid and duplicate claim IDs (including whitespace-only identifiers), unresolved or ambiguous predecessor references, invalid `known_claim_ids` collections, self-supersession, cycles among included claims, and a successor recorded earlier than its included predecessor. Duplicate IDs are excluded from graph construction so input order cannot select an arbitrary version as canonical. Cycle detection is iterative to avoid recursion-depth failures on long histories.
 
 For a partial batch, pass `known_claim_ids` containing predecessor IDs already resolved in persistent history but not included in that batch. This resolves external references; cycle detection is limited to the claims supplied in the batch. A complete-history validation should not use this escape hatch.
 
@@ -69,3 +69,6 @@ For a partial batch, pass `known_claim_ids` containing predecessor IDs already r
 - No causal attribution of price movements.
 - No buy/sell signals.
 - No live provider integration, polling, backfills, or real wallet data.
+
+
+Claim and supersession identifiers must contain at least one non-whitespace character. The schema and collection validator reject whitespace-only `claim_id`, `supersedes_claim_id`, and external history IDs.
