@@ -3,7 +3,7 @@ from datetime import datetime
 from decimal import Decimal, InvalidOperation
 
 
-TRANSFER_FIELDS = ("amount", "from_address", "to_address", "transaction_id")
+TRANSFER_FIELDS = ("amount", "unit", "from_address", "to_address", "transaction_id", "confirmation_status")
 
 
 def _utc_datetime(value):
@@ -75,7 +75,7 @@ def validate_movement_integrity(movement, observations, claims):
             errors.append(f"source observation is not ON_CHAIN_TRANSACTION: {observation_id}")
             continue
         source_quality = observation.get("quality", {}).get("status")
-        if source_quality in {"INVALID", "QUARANTINED", "DUPLICATE"}:
+        if source_quality not in {"VALID", "PARTIAL"}:
             errors.append(f"source observation quality is not admissible: {observation_id}")
             continue
         source_asset = observation.get("asset", {})
@@ -88,7 +88,9 @@ def validate_movement_integrity(movement, observations, claims):
             continue
         source_time = observation.get("event_time_utc")
         movement_time = movement.get("event_time_utc")
-        if source_time is not None and movement_time is not None and source_time != movement_time:
+        if source_time is not None and movement_time is None:
+            errors.append(f"known source event_time omitted from movement: {observation_id}")
+        elif source_time is not None and movement_time is not None and source_time != movement_time:
             errors.append(f"event_time mismatch for source observation: {observation_id}")
         for field in TRANSFER_FIELDS:
             source_value = source_transfer.get(field)
