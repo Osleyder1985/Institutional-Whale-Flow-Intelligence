@@ -50,6 +50,14 @@ class ObservationResolutionTests(unittest.TestCase):
         self.assertIn("observations must be an iterable of objects", result["errors"])
         self.assertEqual(result["events"], [])
 
+    def test_whitespace_only_observation_id_fails_closed(self):
+        observation = self.by_id("btc-vout-provider-a")
+        observation["observation_id"] = "   "
+        result = resolve_observations([observation])
+        self.assertEqual(result["status"], "INVALID")
+        self.assertIn("observation_id must be a non-empty string", result["errors"])
+        self.assertEqual(result["events"], [])
+
     def test_malformed_nested_observation_objects_fail_closed(self):
         mutations = (
             ("source", []),
