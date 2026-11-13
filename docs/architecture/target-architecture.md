@@ -175,8 +175,19 @@ The engine must report these caveats alongside any interpretation they materiall
 
 No language, framework, database, hosting service, or provider is mandated by this proposal.
 
-## 9. Product specification and roadmap
+## 9. Versioned forecast contracts
 
-The official product objective is maintained in [Predictive Product Objective](../product/predictive-objective.md). Detailed functional, non-functional, validation, and acceptance requirements are tracked in [Issue #23](https://github.com/Osleyder1985/Institutional-Whale-Flow-Intelligence/issues/23). The dependency-driven delivery sequence and current engineering work register remain in [the IWFI implementation roadmap](../roadmap/implementation-roadmap.md).
+The first versioned data contracts are maintained under `schemas/forecast/v1/`:
+
+- `forecast.schema.json`: immutable prediction record, including direction, magnitude, targets, zones, time-to-target, uncertainty, evidence and provenance.
+- `forecast-outcome.schema.json`: separate append-only observation/evaluation record.
+- `examples/`: synthetic fixtures only; never treat them as market evidence or model results.
+- `docs/contracts/forecast-v1-semantics.md`: cross-field, temporal, probability, interval, gap and censoring semantics that JSON Schema alone cannot enforce.
+
+A JSON Schema pass is necessary but not sufficient. Runtime validation must enforce UTC timestamps, temporal cutoffs, ordered ranges, calibrated probability sums, estimability states, references and forecast/outcome consistency. These contracts do not imply that production persistence or inference has been implemented.
+
+## 10. Product specification and roadmap
+
+The official product objective is maintained in [Predictive Product Objective](../product/predictive-objective.md). Detailed functional, non-functional, validation, and acceptance requirements are tracked in [Issue #23](https://github.com/Osleyder1985/Institutional-Whale-Flow-Intelligence/issues/23). Forecast data contracts and their acceptance criteria are tracked in [Issue #25](https://github.com/Osleyder1985/Institutional-Whale-Flow-Intelligence/issues/25). The dependency-driven delivery sequence and current engineering work register remain in [the IWFI implementation roadmap](../roadmap/implementation-roadmap.md).
 
 The objective does not authorize provider access, polling, backfill, persistence, scheduled forecasts, or automatic market analysis.
