@@ -29,7 +29,7 @@ A transaction hash alone is not a transfer-event identity. If the hash matches b
 ## 3. Candidate and no-match rules
 
 - Same transaction, missing/invalid locator: `CANDIDATE`; never merged.
-- Missing transaction ID: compatible partial facts may produce a `CANDIDATE`, never a merge.
+- Missing transaction ID: a `CANDIDATE` is emitted only when the network matches and at least three exact, non-null values match among `asset_id`, `amount`, `unit`, `from_address`, `to_address`, and `event_time_utc`. This three-field rule is a deterministic review-candidate blocking rule, not a confidence score or event identity; it never authorizes a merge. With fewer than three shared fields, evidence remains insufficient.
 - Different network IDs: `NO_MATCH`.
 - Different transaction IDs on the same network: `NO_MATCH`.
 - Different event locators in the same transaction: `NO_MATCH`.
