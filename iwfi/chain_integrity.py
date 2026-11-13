@@ -112,10 +112,15 @@ def assess_chain_observations(observations):
             item for item in block_records
             if item.get("source_asserted_chain_status") == "ACTIVE"
         ]
-        has_ordered_reinclusion = (
-            old_not_active and later_active
-            and max(item.get("observed_at_utc", "") for item in later_active)
-            > min(item.get("observed_at_utc", "") for item in old_not_active)
+        has_ordered_reinclusion = any(
+            old_item.get("source", {}).get("source_id")
+            == active_item.get("source", {}).get("source_id")
+            and isinstance(old_item.get("source"), dict)
+            and isinstance(active_item.get("source"), dict)
+            and bool(old_item.get("source", {}).get("source_id"))
+            and active_item.get("observed_at_utc", "") > old_item.get("observed_at_utc", "")
+            for old_item in old_not_active
+            for active_item in later_active
         )
         if has_ordered_reinclusion and not contradictory_same_block:
             return result("REOBSERVED", "PRIOR_NONCANONICAL_BLOCK_AND_LATER_ACTIVE_INCLUSION")

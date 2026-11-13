@@ -160,5 +160,25 @@ class ChainIntegrityContractTests(unittest.TestCase):
         self.assertEqual(records, before)
 
 
+    def test_different_sources_cannot_establish_reinclusion_sequence_alone(self):
+        from iwfi.chain_integrity import assess_chain_observations
+        old = self._record("old", "BLOCK_INCLUDED", block="b" * 64, status="NOT_ACTIVE", source="provider-a")
+        new = self._record("new", "BLOCK_INCLUDED", block="c" * 64, status="ACTIVE", source="provider-b")
+        new["observed_at_utc"] = "2026-11-13T12:01:00Z"
+        self.assertEqual(assess_chain_observations([old, new])["status"], "CANONICALITY_UNRESOLVED")
+
+    def test_later_evidence_does_not_mutate_prior_assessment_snapshot(self):
+        from iwfi.chain_integrity import assess_chain_observations
+        original = self._record("included", "BLOCK_INCLUDED", status="UNKNOWN")
+        historical_result = assess_chain_observations([original])
+        later = self._record("status", "BLOCK_STATUS", status="NOT_ACTIVE")
+        later["inclusion"] = dict(original["inclusion"])
+        later["observed_at_utc"] = "2026-11-13T12:01:00Z"
+        new_result = assess_chain_observations([original, later])
+        self.assertEqual(historical_result["status"], "INCLUDED")
+        self.assertEqual(new_result["status"], "NOT_CANONICAL")
+        self.assertEqual(historical_result["evidence_observation_ids"], ["included"])
+
+
 if __name__ == "__main__":
     unittest.main()
