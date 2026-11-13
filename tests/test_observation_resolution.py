@@ -74,6 +74,30 @@ class ObservationResolutionTests(unittest.TestCase):
             result["links"][0]["reasons"],
         )
 
+    def test_duplicate_same_event_with_conflicting_fields_blocks_eligibility(self):
+        original = self.by_id("btc-vout-provider-a")
+        duplicate = copy.deepcopy(original)
+        duplicate["observation_id"] = "btc-duplicate-conflicting-amount"
+        duplicate["quality"] = {"status": "DUPLICATE", "duplicate_of": original["observation_id"]}
+        duplicate["movement"]["amount"] = "2"
+        result = resolve_observations([original, duplicate])
+        event = result["events"][0]
+        self.assertEqual(event["resolution_status"], "CONTRADICTORY")
+        self.assertEqual(event["analytical_eligibility"], "INELIGIBLE")
+        self.assertEqual(event["relationship_conflicts"][0]["field_conflicts"], ["amount"])
+        self.assertIn("CONTRADICTORY_DUPLICATE_OR_SOURCE_REPEAT_RELATION", event["eligibility_reasons"])
+        self.assertEqual(result["status"], "RESOLVED_WITH_RELATION_CONFLICTS")
+
+    def test_exact_provider_repeat_with_conflicting_fields_is_a_relation_conflict(self):
+        original = self.by_id("btc-vout-provider-a")
+        repeated = copy.deepcopy(original)
+        repeated["observation_id"] = "btc-same-record-conflicting-amount"
+        repeated["movement"]["amount"] = "2"
+        result = resolve_observations([original, repeated])
+        self.assertEqual(result["events"][0]["resolution_status"], "CONTRADICTORY")
+        self.assertIn("SOURCE_RECORD_REPEAT_CONTRADICTS_EVENT_FIELDS", result["links"][0]["reasons"])
+        self.assertEqual(result["status"], "RESOLVED_WITH_RELATION_CONFLICTS")
+
     def test_provider_duplicate_claim_cannot_override_distinct_event_identity(self):
         original = self.by_id("btc-vout-provider-a")
         duplicate = copy.deepcopy(original)
