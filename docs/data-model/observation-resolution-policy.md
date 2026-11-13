@@ -51,6 +51,8 @@ Original observations are never modified. No missing field is converted to zero.
 
 A repeat from the same provider, endpoint and record ID with the same payload hash is reported as `EXACT_REPEAT`. The same provider record ID with a different payload hash is reported as `SAME_RECORD_DIFFERENT_PAYLOAD`, not silently deduplicated; it may represent a provider correction or revision. These source-record relations are independent of event identity.
 
+If an exact repeat of the same provider record and payload claims two different strong event identities, both events remain separate and the decision is marked `RESOLVED_WITH_RELATION_CONFLICTS` with reason `SOURCE_RECORD_REPEAT_CONTRADICTS_EVENT_IDENTITY`. This surfaces a source/parser integrity contradiction instead of silently accepting either identity.
+
 ## 6. Provider-declared duplicate references
 
 The observation-level `quality.duplicate_of` field is preserved as an explicit provider/ingestion assertion and emitted as a separate observation link when its target is present in the resolution input. It never overrides transaction/event identity.
