@@ -47,6 +47,15 @@ class MovementIntegrityTests(unittest.TestCase):
         self.assertTrue(any("observations[0] must be an object" in error for error in errors))
         self.assertTrue(any("source observation not found" in error for error in errors))
 
+    def test_duplicate_source_observation_references_are_rejected(self):
+        movement = copy.deepcopy(self.movements[0])
+        movement["source_observation_ids"] = [
+            movement["source_observation_ids"][0],
+            movement["source_observation_ids"][0],
+        ]
+        errors = validate_movement_integrity(movement, self.observations, self.claims)
+        self.assertIn("source_observation_ids must be unique", errors)
+
     def test_whitespace_only_source_observation_id_is_rejected(self):
         movement = copy.deepcopy(self.movements[0])
         movement["source_observation_ids"] = ["   "]
