@@ -13,9 +13,9 @@ Recommended next step: implement and test only the provider-neutral observation 
 | Provider | BTC coverage | ETH coverage | Relevant documented capabilities | Access / price evidence | Main limitation | Decision |
 |---|---|---|---|---|---|---|
 | Arkham Intel API | API announcement describes entity labels and fund-flow data; address-intelligence updates feed is documented as real-time since 2026-09-08; endpoint-level BTC coverage still requires account verification | Same | Entity labels, fund-flow data, intelligence API | New API announced 2026-04-15; access, price and quota not published in the announcement | Need API access, endpoint docs, attribution methodology, plan, terms and retention confirmation | CONDITIONAL_CANDIDATE |
-| CryptoQuant | Explicitly lists BTC | Explicitly lists ETH | Exchange/miner/entity flows, market indicators, Fund & ETF data, network and flow indicators | Basic free: 10,000 credits/month, 10 req/min, 30 days, market data only. Professional: 500,000 credits/month, 120 req/min, one year, on-chain included. Premium: full history and unlimited credits. Price must be checked in current account/pricing page | Core whale/on-chain metrics are not included in free Basic; must validate exact BTC/ETH endpoint entitlements and methodology | BEST_DOCUMENTED_ONCHAIN_CANDIDATE; NOT_APPROVED |
-| Glassnode | Broad metric platform; confirm each metric's asset coverage | Broad metric platform; confirm each metric's asset coverage | On-chain and crypto-financial metrics, cohort and holder analysis | Advanced Light API: 14 days, daily resolution, 50 calls/day. Full API requires Professional subscription. Data credits consumed per request | Higher access barrier; exact plan price and each needed metric/asset must be confirmed | CONDITIONAL_CANDIDATE |
-| Nansen | Bitcoin is supported only by selected Profiler endpoints; no Smart Money netflow/holdings on Bitcoin | Smart Money endpoints support Ethereum | Smart Trader netflows, DEX trades, holdings, historical holdings; separate Fund Holdings API | Current official API help says credits are purchased; current credit prices/plan entitlements must be reconciled against account and docs | Smart Money is not an institutional-fund proxy; funds were removed from Smart Money on 2026-09-09. Bitcoin is not supported by Smart Money endpoints | ETH_ONLY_CANDIDATE_FOR_SMART_TRADER; NOT_BTC_SMART_MONEY |
+| CryptoQuant | Explicitly lists BTC | Explicitly lists ETH | Exchange/miner/entity flows, market indicators, Fund & ETF data, network and flow indicators | Basic free: 10,000 credits/month, 10 req/min, 30 days, market data only. Professional: 500,000 credits/month, 120 req/min, one year, on-chain included at daily resolution. Premium: full history, 800 req/min and hourly/per-block on-chain resolution. Price must be checked in current account/pricing page | Core whale/on-chain metrics are not included in Basic or Advanced; validate exact BTC/ETH endpoint entitlements, credits and methodology | BEST_DOCUMENTED_ONCHAIN_CANDIDATE; NOT_APPROVED |
+| Glassnode | Broad metric platform; confirm each metric's asset coverage | Broad metric platform; confirm each metric's asset coverage | On-chain and crypto-financial metrics, cohort and holder analysis | Current pricing page lists Advanced at $49/month billed annually with API Light (14 days, daily resolution, 50 calls/downloads per day); Professional API matches Studio access (up to 15+ years and 10-minute resolution) with credit-based usage. The API introduction page separately describes Professional API access as an add-on; account entitlement must be reconciled before purchase | Exact metric/asset entitlements and API add-on terms require account verification; credit cost depends on endpoint and bulk parameter combinations | CONDITIONAL_CANDIDATE |
+| Nansen | Bitcoin is supported only by selected Profiler endpoints; no Smart Money netflow/holdings on Bitcoin | Smart Money endpoints support Ethereum | Smart Money netflows, DEX trades, holdings and historical holdings; current docs list both `Fund` and `Smart Trader` labels | Official endpoint overview lists 5 credits for Smart Money netflows/holdings and 1 credit for selected Profiler endpoints; confirm current account credit balance and any endpoint-specific changes | `Fund` is a provider label, not independently verified legal identity. Smart Money does not support Bitcoin; overall Bitcoin support is limited to selected Profiler endpoints (balance and transactions) | ETH_ONLY_CANDIDATE_FOR_SMART_MONEY; NOT_BTC_SMART_MONEY |
 | CoinGlass | Bitcoin ETF flows, derivatives and market endpoints are documented; verify exact ETH endpoint permissions individually | Derivatives/market coverage; verify exact endpoint permissions | Open interest, funding, liquidations, ETF flows; Startup adds Spot CVD and Coin Flows; whale alerts/positions shown for Hyperliquid | Hobbyist $35/mo; Startup $95/mo; Standard $379/mo; Professional $879/mo (monthly rates shown in official docs, checked 2026-11-04). Hobbyist/Startup personal use; Standard+ commercial use | Hyperliquid whale endpoints do not equal BTC/ETH chain whale tracking. Hobbyist lacks Spot CVD. Plan terms and endpoint access must be checked before purchase | PERSONAL_MARKET_DATA_CANDIDATE; NOT_GENERAL_WHALE_SOURCE |
 
 ## 3. Provider-specific findings
@@ -44,29 +44,26 @@ The official Data API page documents:
 - BTC and ETH are explicitly listed among covered assets.
 - On-chain families include exchange flows, miner flows, entity/inter-entity flows, network/flow indicators, Fund & ETF data, and ETH2 staking.
 
-The free tier can support a low-cost API-contract experiment for market data but cannot validate the core on-chain whale-flow use case. Professional is the first documented tier that includes on-chain data. Exact price and endpoint-specific credit costs must be verified before approval.
+The free Basic tier can support a low-cost API-contract experiment for market data but cannot validate the core on-chain whale-flow use case. Professional is the first tier that includes on-chain API data, at daily resolution; Premium adds hourly and per-block on-chain windows and full history. Exact price and endpoint-specific credit costs must be verified before approval.
 
 ### 3.3 Glassnode
 
-The current API setup documentation states:
-- Professional subscribers have access to the full API within their plan.
-- Advanced subscribers have a Light API limited to 14 days, daily resolution, 50 calls/day, and no bulk endpoints.
-- API usage consumes data credits; bulk requests can consume multiple credits according to the number of asset/parameter combinations, so the number of HTTP requests alone is not a sufficient cost estimate.
-- The credit documentation currently lists BTC at 1 credit/request and other assets, including ETH, at 2 credits/request.
+The current official pricing page and API documentation indicate:
+- Advanced is displayed at $49/month when billed annually and includes API Light: 14 days of history, daily resolution, and 50 calls/downloads per day.
+- Professional provides API access matching Studio entitlements, up to 15+ years of history and 10-minute resolution, with credit-based usage. The API introduction page separately describes Professional API as an add-on, so the exact account entitlement and checkout terms must be confirmed.
+- A standard API call typically consumes one credit. Bulk requests consume credits per asset/parameter combination; the current public credit guide does not establish a fixed BTC-versus-ETH credit multiplier. The prior assertion of BTC=1 and ETH=2 credits is therefore removed as unverified.
 
-This makes Advanced Light API a possible constrained evaluation route if the account's metric entitlements include the required BTC/ETH metrics. It is not a substitute for verifying the metric catalog, data finalization, timestamps, and historical availability. Exact subscription cost remains unverified here.
+Advanced Light API may support a constrained evaluation if the required BTC/ETH metrics are included in the account's metric tiers. It is not a substitute for verifying the metric catalog, data finalization, timestamps, and historical availability.
 
 ### 3.4 Nansen
 
-The current Smart Money documentation states:
-- Smart Money is based on historically profitable traders (Smart Traders), not institutional funds.
-- Fund wallets stopped being part of Smart Money on 2026-09-09. The current API docs still accept the `Fund` filter temporarily but mark it deprecated; including it matches no wallets on the affected Smart Money endpoints, and future rejection dates differ by endpoint. Current fund holdings are a separate Fund Holdings API product.
-- Netflow, DEX Trades, and Holdings support Ethereum and selected EVM chains.
-- Bitcoin is not listed among Smart Money-supported chains.
-- Bitcoin support is limited to selected Profiler endpoints; this is not Smart Money netflow/holdings.
-- Fund Holdings is a separate product/API area and must be evaluated independently.
+The current official Smart Money and chain-support pages state:
+- Smart Money endpoints provide netflows, DEX trades and holdings, and the current docs list both `Fund` and `Smart Trader` labels. I found no current official evidence on those pages that the `Fund` label was removed on 2026-09-09; that earlier assertion is withdrawn.
+- Smart Money supports Ethereum and selected other chains, but Bitcoin is not in its endpoint-specific support matrix.
+- The general Nansen chain catalog does include Bitcoin for selected Profiler endpoints: current balance and transactions are listed, while PnL and related-wallet endpoints are not listed for Bitcoin.
+- The endpoint overview lists 5 credits for Smart Money netflows/holdings and 1 credit for selected Profiler endpoints. The endpoint-specific catalog and account credit terms must still be checked before use.
 
-Therefore, Nansen must not be described as a unified BTC+ETH institutional-fund flow source. It may be considered for Ethereum Smart Trader activity, with the label methodology and API credit costs validated separately.
+Therefore, Nansen may be evaluated for Ethereum Smart Money flows, including provider-labelled `Fund` activity, but this label is not proof of legal identity or institutional status. Bitcoin Profiler support is not equivalent to Bitcoin Smart Money netflows or holdings. Do not describe Nansen as a unified BTC+ETH institutional-fund flow source.
 
 ### 3.5 CoinGlass
 
@@ -135,8 +132,12 @@ No paid plan is approved by this document. No API calls, polling, or backfill ar
 - CoinGlass API plans and permissions: https://docs.coinglass.com/reference/plans-and-permissions
 - Arkham API announcement (2026-04-15): https://arkm.com/announcements/the-new-arkham-api
 - Arkham real-time address-intelligence update (2026-09-08): https://arkm.com/announcements/arkham-api-upgrade-real-time-intel
-- Nansen Smart Money API and Fund-label deprecation: https://docs.nansen.ai/api/smart-money
+- Nansen Smart Money labels and endpoint scope: https://docs.nansen.ai/api/smart-money
+- Nansen Smart Money netflows: https://docs.nansen.ai/api/smart-money/netflows
+- Nansen Smart Money holdings: https://docs.nansen.ai/api/smart-money/holdings
+- Nansen endpoint credit overview: https://docs.nansen.ai/api/overview
 - Nansen chain support by endpoint: https://docs.nansen.ai/reference/chains
+- Glassnode current plan/API access: https://studio.glassnode.com/pricing
 
 ## 8. Audit status
 
@@ -160,3 +161,14 @@ Se incorporan dos precisiones:
 - Arkham: el feed de actualizaciones de inteligencia de direcciones pasó a tiempo real el 2026-09-08; además, se retiraron métricas de balance/volumen/transferencias y `orderBy` de ese endpoint. No se presume que esos campos existan en el feed actual.
 
 La revisión documental no equivale a validar acceso de cuenta, muestras, términos particulares ni retención. Ningún proveedor queda aprobado.
+
+
+## Revalidación de fuentes oficiales — 2026-11-13
+
+- CryptoQuant: Professional incluye API on-chain a resolución diaria; Premium añade ventanas horarias y por bloque y acceso a historial completo. Basic y Advanced no incluyen endpoints on-chain.
+- Glassnode: la página de precios actual describe API Light en Advanced y API profesional basada en créditos. La guía de créditos indica un crédito típico por llamada y consumo por combinación en bulk; no se conserva ninguna tarifa BTC/ETH fija sin evidencia pública vigente.
+- Nansen: la documentación actual enumera `Fund` y `Smart Trader` como etiquetas de Smart Money. Se retira la afirmación anterior de que `Fund` fue eliminado el 2026-09-09 porque no está respaldada por las páginas oficiales vigentes consultadas. Bitcoin figura en la matriz general solo para determinados endpoints Profiler, no para Smart Money.
+- CoinGlass: la tabla oficial mantiene las tarifas mensuales, límites, permisos personales/comerciales y endpoints por plan documentados en esta evaluación.
+- Arkham: el anuncio del 2026-09-08 confirma el feed de inteligencia en tiempo real y la retirada del objeto metrics y de `orderBy` en ese endpoint.
+
+Esta revalidación corrige afirmaciones que ya no estaban sustentadas. No sustituye el acceso de cuenta, la prueba de respuestas reales ni la revisión contractual y de retención. **Ningún proveedor queda aprobado.**
