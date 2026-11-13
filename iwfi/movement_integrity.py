@@ -135,6 +135,8 @@ def validate_movement_integrity(movement, observations, claims, known_claim_ids=
     ):
         errors.append("source_observation_ids must be a list of non-empty strings")
         return errors
+    if len(referenced) != len(set(referenced)):
+        errors.append("source_observation_ids must be unique")
     attribution_resolutions = movement.get("attribution_resolutions", [])
     if not isinstance(attribution_resolutions, list):
         errors.append("attribution_resolutions must be a list")
