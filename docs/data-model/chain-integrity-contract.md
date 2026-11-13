@@ -77,3 +77,12 @@ Do not select a winner by provider count or arbitrary priority. Preserve each so
 ## 8. Non-goals and release gate
 
 No automatic chain watcher, polling, mempool subscription, RPC credentials, provider activation, raw-payload retention, historical backfill, production persistence, economic intent classification, purchase/sale inference, or market-impact claim is authorized. The next implementation step after contract acceptance is a separate, explicitly scoped design for ingestion and persistence that satisfies provider terms and Issue #16.
+
+## 9. Official protocol and RPC references
+
+- Bitcoin Developer Reference — getblock: https://developer.bitcoin.org/reference/rpc/getblock.html
+- Bitcoin Developer Reference — getrawtransaction: https://developer.bitcoin.org/reference/rpc/getrawtransaction.html
+- Ethereum Execution APIs — JSON-RPC methods and block tags: https://ethereum.github.io/execution-apis/api/methods/eth_getBlockReceipts/
+- ethereum.org — Proof-of-stake finality: https://ethereum.org/developers/docs/consensus-mechanisms/pos/
+
+These references support the RPC fields and protocol distinctions above. Provider-specific support, retention, and implementation behavior must still be verified per provider and client version.
