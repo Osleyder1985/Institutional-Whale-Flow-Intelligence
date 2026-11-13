@@ -228,6 +228,8 @@ def classify_observation_pair(left, right):
     right_asset = right.get("asset") or {}
     left_network = left_asset.get("network_id")
     right_network = right_asset.get("network_id")
+    left_event = _event_key(left)
+    right_event = _event_key(right)
     reasons = []
     conflicts = []
 
@@ -237,8 +239,6 @@ def classify_observation_pair(left, right):
     else:
         left_tx = _transaction_key(left)
         right_tx = _transaction_key(right)
-        left_event = _event_key(left)
-        right_event = _event_key(right)
         if left_tx and right_tx and left_tx != right_tx:
             match_class = "NO_MATCH"
             reasons.append("DIFFERENT_TRANSACTION_IDENTITY")
