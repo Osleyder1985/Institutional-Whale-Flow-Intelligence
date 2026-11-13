@@ -1,6 +1,6 @@
 {
   "$schema":"https://json-schema.org/draft/2020-12/schema",
-  "$id":"https://iwfi.example/schemas/forecast/v1/forecast-outcome.schema.json",
+  "$id":"https://iwfi.invalid/schemas/forecast/v1/forecast-outcome.schema.json",
   "title":"IWFI ForecastOutcome v1",
   "description":"Append-only evaluation of a Forecast. It never mutates the original forecast.",
   "type":"object",
