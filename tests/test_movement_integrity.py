@@ -153,6 +153,38 @@ class MovementIntegrityTests(unittest.TestCase):
         self.assertEqual(validate_movement_integrity(movement, observations, self.claims), [])
         self.assertEqual(source["quality"]["status"], "DELAYED")
 
+    def test_temporal_resolver_rejects_noncanonical_utc_timestamp(self):
+        self.assertEqual(
+            resolve_temporal_status("2026-06-01T00:00Z", "2026-01-01T00:00:00Z", "2026-12-31T23:59:59Z"),
+            "TIME_UNRESOLVED",
+        )
+        self.assertEqual(
+            resolve_temporal_status("2026-02-30T00:00:00Z", "2026-01-01T00:00:00Z", "2026-12-31T23:59:59Z"),
+            "TIME_UNRESOLVED",
+        )
+        self.assertEqual(
+            resolve_temporal_status("2026-06-01T00:00:00+00:00", "2026-01-01T00:00:00Z", "2026-12-31T23:59:59Z"),
+            "TIME_UNRESOLVED",
+        )
 
-if __name__ == "__main__":
+    def test_movement_integrity_rejects_unresolved_claim_supersession(self):
+        movement = copy.deepcopy(self.movements[0])
+        movement["attribution_resolutions"] = []
+        claims = copy.deepcopy(self.claims)
+        claims[-1]["supersedes_claim_id"] = "missing-prior-claim"
+        errors = validate_movement_integrity(movement, self.observations, claims)
+        self.assertTrue(any("references unresolved supersedes_claim_id" in error for error in errors))
+
+    def test_movement_integrity_accepts_partial_claim_batch_with_known_history_id(self):
+        movement = copy.deepcopy(self.movements[0])
+        movement["attribution_resolutions"] = []
+        claim = copy.deepcopy(self.claims[-1])
+        errors = validate_movement_integrity(
+            movement,
+            self.observations,
+            [claim],
+            known_claim_ids={"claim-temporal-old-005"},
+        )
+        self.assertEqual(errors, [])
+
     unittest.main()
