@@ -1,0 +1,435 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://iwfi.invalid/schemas/movement-ledger.schema.json",
+  "title": "IWFI Normalized On-chain Movement",
+  "description": "Provider-neutral ledger record for an observed on-chain transfer. It is not a trade or proof of ownership.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "movement_id",
+    "asset",
+    "event_time_utc",
+    "recorded_at_utc",
+    "transfer",
+    "source_observation_ids",
+    "attribution_resolutions",
+    "quality_status",
+    "limitations"
+  ],
+  "properties": {
+    "contract_version": {
+      "const": "1.0.0"
+    },
+    "movement_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "asset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "asset_id",
+        "symbol",
+        "network_id"
+      ],
+      "properties": {
+        "asset_id": {
+          "enum": [
+            "bitcoin:btc",
+            "ethereum:eth"
+          ]
+        },
+        "symbol": {
+          "enum": [
+            "BTC",
+            "ETH"
+          ]
+        },
+        "network_id": {
+          "enum": [
+            "bitcoin-mainnet",
+            "eip155:1"
+          ]
+        }
+      }
+    },
+    "event_time_utc": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+    },
+    "recorded_at_utc": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+    },
+    "transfer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "movement_type",
+        "amount",
+        "unit",
+        "from_address",
+        "to_address",
+        "transaction_id",
+        "confirmation_status",
+        "event_locator"
+      ],
+      "properties": {
+        "movement_type": {
+          "const": "TRANSFER"
+        },
+        "amount": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+        },
+        "unit": {
+          "enum": [
+            "BTC",
+            "ETH"
+          ]
+        },
+        "from_address": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "to_address": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "transaction_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "confirmation_status": {
+          "enum": [
+            "CONFIRMED",
+            "PENDING",
+            "UNKNOWN"
+          ]
+        },
+        "event_locator": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "value"
+          ],
+          "properties": {
+            "kind": {
+              "enum": [
+                "UTXO_VOUT",
+                "EVM_TRACE_PATH",
+                "EVM_TX_VALUE"
+              ]
+            },
+            "value": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    },
+    "source_observation_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "attribution_resolutions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "claim_id",
+          "address",
+          "predicate",
+          "object_type",
+          "object_id",
+          "epistemic_status",
+          "temporal_status"
+        ],
+        "properties": {
+          "claim_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "address": {
+            "type": "string",
+            "minLength": 1
+          },
+          "predicate": {
+            "enum": [
+              "LABELLED_AS",
+              "CONTROLLED_BY",
+              "OPERATED_BY",
+              "ASSOCIATED_WITH",
+              "MEMBER_OF",
+              "CUSTODIED_BY"
+            ]
+          },
+          "object_type": {
+            "enum": [
+              "ENTITY",
+              "CLASSIFICATION"
+            ]
+          },
+          "object_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "epistemic_status": {
+            "enum": [
+              "VERIFIED",
+              "PROVIDER_LABELLED",
+              "INFERRED",
+              "UNKNOWN",
+              "DISPUTED"
+            ]
+          },
+          "temporal_status": {
+            "enum": [
+              "VALID_AT_EVENT_TIME",
+              "NOT_YET_VALID",
+              "EXPIRED_AT_EVENT_TIME",
+              "TIME_UNRESOLVED",
+              "CLAIM_NOT_FOUND"
+            ]
+          }
+        }
+      }
+    },
+    "quality_status": {
+      "enum": [
+        "VALID",
+        "PARTIAL",
+        "QUARANTINED"
+      ]
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "asset": {
+            "properties": {
+              "asset_id": {
+                "const": "bitcoin:btc"
+              }
+            },
+            "required": [
+              "asset_id"
+            ]
+          }
+        },
+        "required": [
+          "asset"
+        ]
+      },
+      "then": {
+        "properties": {
+          "asset": {
+            "properties": {
+              "symbol": {
+                "const": "BTC"
+              },
+              "network_id": {
+                "const": "bitcoin-mainnet"
+              }
+            }
+          },
+          "transfer": {
+            "properties": {
+              "unit": {
+                "const": "BTC"
+              },
+              "event_locator": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "const": "UTXO_VOUT"
+                      },
+                      "value": {
+                        "type": "string",
+                        "pattern": "^(0|[1-9][0-9]*)$"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "value"
+                    ]
+                  }
+                ]
+              },
+              "transaction_id": {
+                "pattern": "^[0-9a-fA-F]{64}$"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "asset": {
+            "properties": {
+              "asset_id": {
+                "const": "ethereum:eth"
+              }
+            },
+            "required": [
+              "asset_id"
+            ]
+          }
+        },
+        "required": [
+          "asset"
+        ]
+      },
+      "then": {
+        "properties": {
+          "asset": {
+            "properties": {
+              "symbol": {
+                "const": "ETH"
+              },
+              "network_id": {
+                "const": "eip155:1"
+              }
+            }
+          },
+          "transfer": {
+            "properties": {
+              "unit": {
+                "const": "ETH"
+              },
+              "event_locator": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "const": "EVM_TRACE_PATH"
+                          },
+                          "value": {
+                            "type": "string",
+                            "pattern": "^(0|[1-9][0-9]*)(/(0|[1-9][0-9]*))*$"
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "value"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "const": "EVM_TX_VALUE"
+                          },
+                          "value": {
+                            "const": "transaction-value"
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "value"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              "transaction_id": {
+                "pattern": "^(0x)?[0-9a-fA-F]{64}$"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_time_utc": {
+            "type": "null"
+          }
+        },
+        "required": [
+          "event_time_utc"
+        ]
+      },
+      "then": {
+        "properties": {
+          "attribution_resolutions": {
+            "items": {
+              "properties": {
+                "temporal_status": {
+                  "const": "TIME_UNRESOLVED"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "quality_status": {
+            "const": "QUARANTINED"
+          }
+        },
+        "required": [
+          "quality_status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "limitations": {
+            "minItems": 1
+          }
+        }
+      }
+    }
+  ]
+}

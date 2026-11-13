@@ -1,0 +1,123 @@
+[
+  {
+    "contract_version": "1.1.0",
+    "observation_id": "movement-source-btc-001",
+    "source": {
+      "provider": "fixture-chain-indexer",
+      "endpoint": "transactions",
+      "record_id": "btc-tx-001",
+      "payload_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "schema_version": "fixture-1"
+    },
+    "asset": {
+      "asset_id": "bitcoin:btc",
+      "symbol": "BTC",
+      "network_id": "bitcoin-mainnet"
+    },
+    "event_time_utc": "2026-11-10T12:00:00Z",
+    "retrieved_at_utc": "2026-11-11T10:00:03Z",
+    "observation_type": "ON_CHAIN_TRANSACTION",
+    "movement": {
+      "movement_type": "TRANSFER",
+      "amount": "1.25000000",
+      "unit": "BTC",
+      "from_address": "bc1qsource",
+      "to_address": "bc1qexchangeexample",
+      "transaction_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "confirmation_status": "CONFIRMED",
+      "event_locator": {
+        "kind": "UTXO_VOUT",
+        "value": "0"
+      }
+    },
+    "attributions": [],
+    "quality": {
+      "status": "VALID",
+      "notes": [],
+      "duplicate_of": null
+    },
+    "retention": {
+      "retention_classification": "HASH_ONLY",
+      "raw_payload_retained": false
+    }
+  },
+  {
+    "contract_version": "1.1.0",
+    "observation_id": "movement-source-eth-002",
+    "source": {
+      "provider": "fixture-chain-indexer",
+      "endpoint": "transactions",
+      "record_id": "eth-tx-001",
+      "payload_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "schema_version": "fixture-1"
+    },
+    "asset": {
+      "asset_id": "ethereum:eth",
+      "symbol": "ETH",
+      "network_id": "eip155:1"
+    },
+    "event_time_utc": "2026-11-11T09:30:00Z",
+    "retrieved_at_utc": "2026-11-11T11:00:02Z",
+    "observation_type": "ON_CHAIN_TRANSACTION",
+    "movement": {
+      "movement_type": "TRANSFER",
+      "amount": null,
+      "unit": "ETH",
+      "from_address": "0xfrom",
+      "to_address": "0xto",
+      "transaction_id": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "confirmation_status": "UNKNOWN",
+      "event_locator": {
+        "kind": "EVM_TX_VALUE",
+        "value": "transaction-value"
+      }
+    },
+    "attributions": [],
+    "quality": {
+      "status": "VALID",
+      "notes": [],
+      "duplicate_of": null
+    },
+    "retention": {
+      "retention_classification": "HASH_ONLY",
+      "raw_payload_retained": false
+    }
+  },
+  {
+    "contract_version": "1.1.0",
+    "observation_id": "fixture-exchange-inflow",
+    "source": {
+      "provider": "vendor-flow",
+      "endpoint": "exchange-flows",
+      "record_id": "flow-001",
+      "payload_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+      "schema_version": "2026-11"
+    },
+    "asset": {
+      "asset_id": "bitcoin:btc",
+      "symbol": "BTC",
+      "network_id": "bitcoin-mainnet"
+    },
+    "event_time_utc": "2026-11-11T13:00:00Z",
+    "retrieved_at_utc": "2026-11-11T13:02:00Z",
+    "observation_type": "EXCHANGE_FLOW_METRIC",
+    "measurement": {
+      "metric_name": "exchange_inflow",
+      "value": "42.75",
+      "unit": "BTC",
+      "direction": "IN"
+    },
+    "attributions": [],
+    "quality": {
+      "status": "VALID",
+      "notes": [
+        "aggregate_provider_metric"
+      ],
+      "duplicate_of": null
+    },
+    "retention": {
+      "retention_classification": "UNKNOWN_PENDING_TERMS",
+      "raw_payload_retained": false
+    }
+  }
+]
