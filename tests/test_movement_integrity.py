@@ -126,6 +126,49 @@ class MovementIntegrityTests(unittest.TestCase):
         errors = validate_movement_integrity(movement, self.observations, self.claims)
         self.assertTrue(any("not ON_CHAIN_TRANSACTION" in error for error in errors))
 
+    def test_source_event_locator_mismatch_is_rejected(self):
+        movement = copy.deepcopy(self.movements[0])
+        movement["transfer"]["event_locator"]["value"] = "1"
+        errors = validate_movement_integrity(movement, self.observations, self.claims)
+        source_id = movement["source_observation_ids"][0]
+        self.assertIn(f"event_locator mismatch for source observation: {source_id}", errors)
+
+    def test_equivalent_numeric_event_locators_are_compared_canonically(self):
+        movement = copy.deepcopy(self.movements[0])
+        observations = copy.deepcopy(self.observations)
+        for source_id in movement["source_observation_ids"]:
+            source = next(item for item in observations if item["observation_id"] == source_id)
+            source["movement"]["event_locator"]["value"] = "00"
+        movement["transfer"]["event_locator"]["value"] = "0"
+        self.assertEqual(validate_movement_integrity(movement, observations, self.claims), [])
+
+    def test_event_locator_cannot_be_invented_without_source_support(self):
+        movement = copy.deepcopy(self.movements[0])
+        observations = copy.deepcopy(self.observations)
+        for source_id in movement["source_observation_ids"]:
+            source = next(item for item in observations if item["observation_id"] == source_id)
+            source["movement"]["event_locator"] = None
+        errors = validate_movement_integrity(movement, observations, self.claims)
+        self.assertIn("movement event_locator has no supporting source value", errors)
+
+    def test_event_locator_cannot_be_dropped_from_movement(self):
+        movement = copy.deepcopy(self.movements[0])
+        movement["transfer"]["event_locator"] = None
+        errors = validate_movement_integrity(movement, self.observations, self.claims)
+        self.assertIn("movement event_locator is required", errors)
+        self.assertTrue(any("known source event_locator omitted" in error for error in errors))
+
+    def test_invalid_event_locator_format_is_rejected(self):
+        movement = copy.deepcopy(self.movements[0])
+        observations = copy.deepcopy(self.observations)
+        source_id = movement["source_observation_ids"][0]
+        source = next(item for item in observations if item["observation_id"] == source_id)
+        source["movement"]["event_locator"]["value"] = "vout-zero"
+        movement["transfer"]["event_locator"]["value"] = "vout-zero"
+        errors = validate_movement_integrity(movement, observations, self.claims)
+        self.assertIn(f"invalid source event_locator format: {source_id}", errors)
+        self.assertIn("invalid movement event_locator format", errors)
+
     def test_source_transaction_mismatch_is_rejected(self):
         movement = copy.deepcopy(self.movements[0])
         movement["transfer"]["transaction_id"] = "different-tx"
