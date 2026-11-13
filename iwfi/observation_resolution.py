@@ -16,6 +16,7 @@ TRANSFER_FIELDS = (
     "to_address",
     "transaction_id",
     "confirmation_status",
+    "event_locator",
 )
 REQUIRED_ANALYTICAL_FIELDS = (
     "asset_id",
@@ -273,7 +274,13 @@ def resolve_observations(observations, supersedes_decision_id=None):
     duplicate_ids = sorted(identifier for identifier in set(ids) if ids.count(identifier) > 1)
     errors.extend(f"duplicate observation_id: {identifier}" for identifier in duplicate_ids)
 
-    canonical_items = sorted(items, key=lambda item: str(item.get("observation_id", "")) if isinstance(item, dict) else "")
+    canonical_items = sorted(
+        items,
+        key=lambda item: (
+            str(item.get("observation_id", "")) if isinstance(item, dict) else "",
+            _canonical_json(item),
+        ),
+    )
     fingerprint = hashlib.sha256(_canonical_json(canonical_items).encode("utf-8")).hexdigest()
     decision_id = "decision-" + hashlib.sha256(
         f"{POLICY_VERSION}:{fingerprint}".encode("utf-8")
@@ -311,17 +318,22 @@ def resolve_observations(observations, supersedes_decision_id=None):
         conflicts = sorted(field for field, evidence in field_evidence.items() if len(evidence) > 1)
         resolved_fields = {}
         for field, evidence in field_evidence.items():
-            if len(evidence) == 1:
-                resolved_fields[field] = evidence[0]["evidence"][0]["value"]
-            else:
+            if len(evidence) != 1:
                 resolved_fields[field] = None
-        resolved_fields["event_locator"] = group[0]["movement"]["event_locator"]
-        missing = []
-        for field in REQUIRED_ANALYTICAL_FIELDS:
-            if field == "event_locator":
                 continue
-            if resolved_fields.get(field) is None:
-                missing.append(field)
+            normalized = evidence[0]["normalized"]
+            if field == "event_locator":
+                resolved_fields[field] = {"kind": normalized[0], "value": normalized[1]}
+            elif field in {"amount", "transaction_id"}:
+                resolved_fields[field] = normalized
+            elif field in {"from_address", "to_address"} and key[0] == "eip155:1":
+                resolved_fields[field] = normalized
+            else:
+                resolved_fields[field] = evidence[0]["evidence"][0]["value"]
+        missing = [
+            field for field in REQUIRED_ANALYTICAL_FIELDS
+            if resolved_fields.get(field) is None
+        ]
         invalid_quality = sorted({
             (item.get("quality") or {}).get("status")
             for item in group
@@ -364,7 +376,13 @@ def resolve_observations(observations, supersedes_decision_id=None):
         "policy_version": POLICY_VERSION,
         "input_fingerprint": fingerprint,
         "supersedes_decision_id": supersedes_decision_id,
-        "status": "RESOLVED" if events else ("CANDIDATES_ONLY" if links else "INSUFFICIENT_EVIDENCE"),
+        "status": (
+            "RESOLVED_WITH_CANDIDATES"
+            if events and any(link["match_class"] == "CANDIDATE" for link in links)
+            else "RESOLVED" if events
+            else "CANDIDATES_ONLY" if links
+            else "INSUFFICIENT_EVIDENCE"
+        ),
         "errors": [],
         "links": links,
         "events": events,
