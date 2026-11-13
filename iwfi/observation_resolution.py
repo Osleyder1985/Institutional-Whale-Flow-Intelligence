@@ -297,6 +297,8 @@ def classify_observation_pair(left, right):
     provider_duplicate_relation = _provider_duplicate_relation(left, right)
     if provider_duplicate_relation != "NONE":
         reasons.append("PROVIDER_DECLARED_DUPLICATE_RELATION")
+        if match_class == "STRONG_MATCH" and conflicts:
+            reasons.append("PROVIDER_DUPLICATE_CONTRADICTS_EVENT_FIELDS")
         if left_event is not None and right_event is not None:
             if left_event == right_event:
                 reasons.append("PROVIDER_DUPLICATE_CONSISTENT_WITH_EVENT_IDENTITY")
@@ -308,6 +310,8 @@ def classify_observation_pair(left, right):
     source_relation = _source_record_relation(left, right)
     if source_relation == "EXACT_REPEAT":
         reasons.append("SAME_PROVIDER_RECORD_AND_PAYLOAD")
+        if match_class == "STRONG_MATCH" and conflicts:
+            reasons.append("SOURCE_RECORD_REPEAT_CONTRADICTS_EVENT_FIELDS")
         if left_event is not None and right_event is not None and left_event != right_event:
             reasons.append("SOURCE_RECORD_REPEAT_CONTRADICTS_EVENT_IDENTITY")
     elif source_relation == "SAME_RECORD_DIFFERENT_PAYLOAD":
@@ -561,6 +565,21 @@ def resolve_observations(observations, supersedes_decision_id=None):
             field for field in REQUIRED_ANALYTICAL_FIELDS
             if resolved_fields.get(field) is None
         ]
+        group_ids = {item["observation_id"] for item in group}
+        relationship_conflicts = [
+            {
+                "observation_ids": link["observation_ids"],
+                "reason": reason,
+                "field_conflicts": link["field_conflicts"],
+            }
+            for link in links
+            for reason in (
+                "PROVIDER_DUPLICATE_CONTRADICTS_EVENT_FIELDS",
+                "SOURCE_RECORD_REPEAT_CONTRADICTS_EVENT_FIELDS",
+            )
+            if reason in link["reasons"]
+            and group_ids.intersection(link["observation_ids"])
+        ]
         invalid_quality = sorted({
             (item.get("quality") or {}).get("status")
             for item in group
@@ -568,7 +587,7 @@ def resolve_observations(observations, supersedes_decision_id=None):
         })
         if invalid_fields or invalid_quality:
             resolution_status = "INVALID"
-        elif conflicts:
+        elif conflicts or relationship_conflicts:
             resolution_status = "CONTRADICTORY"
         elif missing:
             resolution_status = "PARTIAL"
@@ -577,6 +596,8 @@ def resolve_observations(observations, supersedes_decision_id=None):
         eligibility_reasons = []
         if conflicts:
             eligibility_reasons.append("MATERIAL_FIELD_CONFLICT")
+        if relationship_conflicts:
+            eligibility_reasons.append("CONTRADICTORY_DUPLICATE_OR_SOURCE_REPEAT_RELATION")
         eligibility_reasons.extend(f"INVALID_FIELD_VALUE:{field}" for field in invalid_fields)
         if missing:
             eligibility_reasons.extend(f"MISSING_REQUIRED_FIELD:{field}" for field in missing)
@@ -598,6 +619,7 @@ def resolve_observations(observations, supersedes_decision_id=None):
             "event_locator": {"kind": key[2], "value": key[3]},
             "observation_ids": [item["observation_id"] for item in group],
             "excluded_observation_ids": excluded_observation_ids,
+            "relationship_conflicts": relationship_conflicts,
             "resolved_fields": resolved_fields,
             "field_evidence": field_evidence,
             "field_conflicts": conflicts,
@@ -619,6 +641,8 @@ def resolve_observations(observations, supersedes_decision_id=None):
                 for reason in (
                     "PROVIDER_DUPLICATE_CONTRADICTS_EVENT_IDENTITY",
                     "SOURCE_RECORD_REPEAT_CONTRADICTS_EVENT_IDENTITY",
+                    "PROVIDER_DUPLICATE_CONTRADICTS_EVENT_FIELDS",
+                    "SOURCE_RECORD_REPEAT_CONTRADICTS_EVENT_FIELDS",
                 )
             )
             else "RESOLVED_WITH_CANDIDATES"
