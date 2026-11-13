@@ -115,19 +115,50 @@ def _same_transfer_field(field, left, right, network_id):
 def validate_movement_integrity(movement, observations, claims, known_claim_ids=()):
     """Return deterministic integrity errors; never infer missing source facts.
 
-    VALID and PARTIAL observations are admissible as source evidence. DELAYED is
-    also admissible for historical reconstruction; this validator does not assess
-    freshness or real-time eligibility. INVALID, QUARANTINED, DUPLICATE and
-    unknown quality states are not admissible.
-
-    Claims are collection-validated before they are used. For partial claim batches,
-    known_claim_ids identifies superseded claims resolved in persistent history.
+    VALID, PARTIAL and DELAYED observations may support historical integrity.
+    DELAYED remains unchanged and does not establish real-time availability.
+    Claims are collection-validated before attribution data is used.
     """
+    if not isinstance(movement, dict):
+        return ["movement must be an object"]
+    try:
+        observations = list(observations)
+    except TypeError:
+        return ["observations must be an iterable of objects"]
+    try:
+        claims = list(claims)
+    except TypeError:
+        return ["claims must be an iterable of objects"]
+
     errors = []
+    movement_asset = movement.get("asset")
+    if not isinstance(movement_asset, dict):
+        errors.append("movement asset must be an object")
+        movement_asset = {}
+    movement_transfer = movement.get("transfer")
+    if not isinstance(movement_transfer, dict):
+        errors.append("movement transfer must be an object")
+        movement_transfer = {}
+
+    referenced = movement.get("source_observation_ids", [])
+    if not isinstance(referenced, (list, tuple)) or any(
+        not isinstance(identifier, str) or not identifier for identifier in referenced
+    ):
+        errors.append("source_observation_ids must be a list of non-empty strings")
+        return errors
+
+    attribution_resolutions = movement.get("attribution_resolutions", [])
+    if not isinstance(attribution_resolutions, list):
+        errors.append("attribution_resolutions must be a list")
+        attribution_resolutions = []
 
     def _unique_index(items, id_field, report_duplicates=True):
         counts = {}
-        for item in items:
+        for index, item in enumerate(items):
+            if not isinstance(item, dict):
+                if id_field == "observation_id":
+                    errors.append(f"observations[{index}] must be an object")
+                continue
             identifier = item.get(id_field)
             if not isinstance(identifier, str) or not identifier:
                 errors.append(f"invalid {id_field} in evidence collection")
@@ -141,17 +172,15 @@ def validate_movement_integrity(movement, observations, claims, known_claim_ids=
         return {
             item[id_field]: item
             for item in items
-            if isinstance(item.get(id_field), str)
+            if isinstance(item, dict)
+            and isinstance(item.get(id_field), str)
             and item[id_field]
             and item[id_field] not in duplicate_set
         }
 
-    observations = list(observations)
-    claims = list(claims)
     observation_index = _unique_index(observations, "observation_id")
     errors.extend(validate_claim_collection(claims, known_claim_ids=known_claim_ids))
     claim_index = _unique_index(claims, "claim_id", report_duplicates=False)
-    referenced = movement.get("source_observation_ids", [])
     if not referenced:
         errors.append("source_observation_ids must not be empty")
         return errors
@@ -165,24 +194,31 @@ def validate_movement_integrity(movement, observations, claims, known_claim_ids=
         if observation.get("observation_type") != "ON_CHAIN_TRANSACTION":
             errors.append(f"source observation is not ON_CHAIN_TRANSACTION: {observation_id}")
             continue
-        source_quality = observation.get("quality", {}).get("status")
+
+        quality = observation.get("quality")
+        source_quality = quality.get("status") if isinstance(quality, dict) else None
         if source_quality not in {"VALID", "PARTIAL", "DELAYED"}:
             errors.append(f"source observation quality is not admissible: {observation_id}")
             continue
-        source_asset = observation.get("asset", {})
-        if source_asset != movement.get("asset", {}):
+
+        source_asset = observation.get("asset")
+        if not isinstance(source_asset, dict) or source_asset != movement_asset:
             errors.append(f"asset/network mismatch for source observation: {observation_id}")
             continue
+
         source_transfer = observation.get("movement")
-        source_txid = source_transfer.get("transaction_id") if isinstance(source_transfer, dict) else None
-        if source_txid is not None and _normalized_transaction_id(source_asset.get("network_id"), source_txid) is None:
-            errors.append(f"invalid source transaction_id for observation: {observation_id}")
-        movement_txid = movement.get("transfer", {}).get("transaction_id")
-        if movement_txid is not None and _normalized_transaction_id(movement.get("asset", {}).get("network_id"), movement_txid) is None:
-            errors.append("movement transaction_id has invalid network-specific format")
         if not isinstance(source_transfer, dict) or source_transfer.get("movement_type") != "TRANSFER":
             errors.append(f"source observation has no transfer movement: {observation_id}")
             continue
+
+        source_txid = source_transfer.get("transaction_id")
+        if source_txid is not None and _normalized_transaction_id(source_asset.get("network_id"), source_txid) is None:
+            errors.append(f"invalid source transaction_id for observation: {observation_id}")
+        movement_txid = movement_transfer.get("transaction_id")
+        network_id = movement_asset.get("network_id")
+        if movement_txid is not None and _normalized_transaction_id(network_id, movement_txid) is None:
+            errors.append("movement transaction_id has invalid network-specific format")
+
         source_time = observation.get("event_time_utc")
         movement_time = movement.get("event_time_utc")
         if source_time is not None and _utc_datetime(source_time) is None:
@@ -193,57 +229,64 @@ def validate_movement_integrity(movement, observations, claims, known_claim_ids=
             errors.append(f"known source event_time omitted from movement: {observation_id}")
         elif source_time is not None and movement_time is not None and source_time != movement_time:
             errors.append(f"event_time mismatch for source observation: {observation_id}")
+
         for field in TRANSFER_FIELDS:
             source_value = source_transfer.get(field)
-            movement_value = movement.get("transfer", {}).get(field)
-            equal = _same_transfer_field(
-                field,
-                source_value,
-                movement_value,
-                movement.get("asset", {}).get("network_id"),
-            )
+            movement_value = movement_transfer.get(field)
+            equal = _same_transfer_field(field, source_value, movement_value, network_id)
             if source_value is not None and movement_value is not None and not equal:
                 errors.append(f"{field} mismatch for source observation: {observation_id}")
             elif source_value is not None and movement_value is None:
                 errors.append(f"known source {field} omitted from movement: {observation_id}")
         resolved_observations.append(observation)
 
-    # Do not populate a fact that is absent from every referenced source.
     if resolved_observations:
         for field in TRANSFER_FIELDS:
-            movement_value = movement.get("transfer", {}).get(field)
+            movement_value = movement_transfer.get(field)
             known_values = [
                 item.get("movement", {}).get(field)
                 for item in resolved_observations
-                if item.get("movement", {}).get(field) is not None
+                if isinstance(item.get("movement"), dict)
+                and item["movement"].get(field) is not None
             ]
             if not known_values and movement_value is not None:
                 errors.append(f"movement {field} has no supporting source value")
 
-    # A movement event time cannot be invented if every referenced observation lacks it.
     if movement.get("event_time_utc") is not None and resolved_observations:
         if all(item.get("event_time_utc") is None for item in resolved_observations):
             errors.append("movement event_time has no supporting source observation")
 
-    endpoints = {
-        movement.get("transfer", {}).get("from_address"),
-        movement.get("transfer", {}).get("to_address"),
-    }
-    for resolution in movement.get("attribution_resolutions", []):
+    endpoints = [
+        movement_transfer.get("from_address"),
+        movement_transfer.get("to_address"),
+    ]
+    for resolution in attribution_resolutions:
+        if not isinstance(resolution, dict):
+            errors.append("attribution resolution must be an object")
+            continue
         claim_id = resolution.get("claim_id")
+        if not isinstance(claim_id, str) or not claim_id:
+            errors.append("attribution resolution has an invalid claim_id")
+            continue
         claim = claim_index.get(claim_id)
         if claim is None:
             if resolution.get("temporal_status") != "CLAIM_NOT_FOUND":
                 errors.append(f"missing claim must use CLAIM_NOT_FOUND: {claim_id}")
             continue
-        subject = claim.get("subject", {})
-        target = claim.get("object", {})
-        if subject.get("subject_type") != "ADDRESS" or subject.get("subject_id") != resolution.get("address"):
+
+        subject = claim.get("subject")
+        target = claim.get("object")
+        if not isinstance(subject, dict) or not isinstance(target, dict):
+            errors.append(f"claim subject/object must be objects: {claim_id}")
+            continue
+        address = resolution.get("address")
+        if subject.get("subject_type") != "ADDRESS" or subject.get("subject_id") != address:
             errors.append(f"claim subject/address mismatch: {claim_id}")
-        if subject.get("network_id") != movement.get("asset", {}).get("network_id"):
+        if subject.get("network_id") != movement_asset.get("network_id"):
             errors.append(f"claim network mismatch: {claim_id}")
-        if resolution.get("address") not in endpoints:
+        if not isinstance(address, str) or address not in endpoints:
             errors.append(f"attribution address is not a transfer endpoint: {claim_id}")
+
         expected = {
             "predicate": claim.get("predicate"),
             "object_type": target.get("object_type"),

@@ -16,6 +16,27 @@ class MovementIntegrityTests(unittest.TestCase):
         cls.observations = json.loads((ROOT / "fixtures" / "movement-integrity-source-observations.json").read_text(encoding="utf-8"))
         cls.claims = json.loads((ROOT / "fixtures" / "entity-attribution-claims.json").read_text(encoding="utf-8"))
 
+    def test_non_object_movement_returns_validation_error(self):
+        self.assertEqual(validate_movement_integrity(None, [], []), ["movement must be an object"])
+
+    def test_non_object_source_observation_returns_validation_error(self):
+        movement = copy.deepcopy(self.movements[0])
+        errors = validate_movement_integrity(movement, [None], self.claims)
+        self.assertTrue(any("observations[0] must be an object" in error for error in errors))
+        self.assertTrue(any("source observation not found" in error for error in errors))
+
+    def test_non_object_claim_returns_validation_error(self):
+        movement = copy.deepcopy(self.movements[0])
+        movement["attribution_resolutions"] = []
+        errors = validate_movement_integrity(movement, self.observations, [None])
+        self.assertIn("claims[0] must be an object", errors)
+
+    def test_invalid_source_observation_collection_returns_validation_error(self):
+        self.assertEqual(
+            validate_movement_integrity(self.movements[0], None, self.claims),
+            ["observations must be an iterable of objects"],
+        )
+
     def test_integrity_source_fixtures_validate_against_canonical_schema(self):
         from jsonschema import Draft202012Validator, FormatChecker
         schema = json.loads((ROOT.parent / "schemas" / "source-observation.schema.json").read_text(encoding="utf-8"))

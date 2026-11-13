@@ -40,7 +40,7 @@ Temporal validity does not upgrade epistemic status. A provider-labelled claim r
 
 ## Error semantics and limitations
 
-Errors are returned as deterministic strings suitable for tests and later structured error codes. The component does not auto-correct, discard, merge, or quarantine records; callers must decide how to handle a failed validation without erasing evidence.
+Errors are returned as deterministic strings suitable for tests and later structured error codes. Malformed top-level movement/collection inputs and non-object evidence records return validation errors rather than raising attribute/type errors. The component does not auto-correct, discard, merge, or quarantine records; callers must decide how to handle a failed validation without erasing evidence.
 
 The first version does not:
 - Resolve duplicate transactions across providers.
