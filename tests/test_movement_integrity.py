@@ -46,6 +46,27 @@ class MovementIntegrityTests(unittest.TestCase):
         movement["transfer"]["amount"] = None
         self.assertTrue(any("known source amount omitted" in error for error in validate_movement_integrity(movement, self.observations, self.claims)))
 
+    def test_known_source_event_time_cannot_be_dropped(self):
+        movement = copy.deepcopy(self.movements[0])
+        movement["event_time_utc"] = None
+        self.assertTrue(any("known source event_time omitted" in error for error in validate_movement_integrity(movement, self.observations, self.claims)))
+
+    def test_source_confirmation_status_mismatch_is_rejected(self):
+        movement = copy.deepcopy(self.movements[0])
+        movement["transfer"]["confirmation_status"] = "PENDING"
+        self.assertTrue(any("confirmation_status mismatch" in error for error in validate_movement_integrity(movement, self.observations, self.claims)))
+
+    def test_source_unit_mismatch_is_rejected(self):
+        movement = copy.deepcopy(self.movements[0])
+        movement["transfer"]["unit"] = "ETH"
+        self.assertTrue(any("unit mismatch" in error for error in validate_movement_integrity(movement, self.observations, self.claims)))
+
+    def test_unknown_source_quality_is_rejected_fail_closed(self):
+        observations = copy.deepcopy(self.observations)
+        observations[0]["quality"]["status"] = "UNRECOGNIZED"
+        errors = validate_movement_integrity(self.movements[0], observations, self.claims)
+        self.assertTrue(any("quality is not admissible" in error for error in errors))
+
     def test_claim_subject_and_predicate_must_match(self):
         movement = copy.deepcopy(self.movements[0])
         movement["attribution_resolutions"][0]["address"] = "bc1qsource"
