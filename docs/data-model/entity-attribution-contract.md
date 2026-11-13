@@ -39,6 +39,8 @@ The schema constrains target types for these predicates. A label is not a contro
 
 No numeric confidence score is defined. Do not silently promote `PROVIDER_LABELLED`, `INFERRED`, or `UNKNOWN` to `VERIFIED`.
 
+Every claim also records review provenance. `UNREVIEWED` claims must have null reviewer metadata; `REVIEWED` and `DISPUTED` claims require a reviewer identifier and a UTC review timestamp. `recorded_at_utc` is not a substitute for the time at which a review decision was made.
+
 ## Evidence and provenance
 
 Each claim records source/provider, endpoint, source record ID, and related canonical observation IDs where available. Supporting evidence and counterevidence are separate arrays. Each evidence reference includes a source, evidence type, reference ID, and optional observation ID.
@@ -49,7 +51,7 @@ A transaction observation may support the existence of a transfer. It does not, 
 
 `recorded_at_utc` is when IWFI recorded the claim. `valid_from_utc` and `valid_to_utc` describe the asserted period, not when IWFI learned it. All timestamps use RFC 3339 UTC ending in `Z`. A current provider label must not be projected backwards without historical evidence.
 
-The JSON Schema checks timestamp format and UTC notation. Ordering of the validity interval is checked by tests/ingestion logic because JSON Schema cannot compare arbitrary timestamp values portably.
+The JSON Schema checks timestamp format and UTC notation. `iwfi.attribution_integrity.validate_claim_validity_interval` checks that a supplied start does not occur after a supplied end. A null bound remains unknown and is not treated as an infinite timestamp.
 
 ## Append-only corrections
 

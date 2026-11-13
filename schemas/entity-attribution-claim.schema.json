@@ -20,7 +20,8 @@
     "valid_to_utc",
     "supersedes_claim_id",
     "review_status",
-    "rationale"
+    "rationale",
+    "review"
   ],
   "properties": {
     "contract_version": {
@@ -142,6 +143,33 @@
     "rationale": {
       "type": "string",
       "minLength": 1
+    },
+    "review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reviewer_id",
+        "reviewed_at_utc"
+      ],
+      "properties": {
+        "reviewer_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "reviewed_at_utc": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/utcTimestamp"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
     }
   },
   "$defs": {
@@ -481,6 +509,62 @@
           },
           "counter_evidence": {
             "minItems": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "review_status": {
+            "const": "UNREVIEWED"
+          }
+        },
+        "required": [
+          "review_status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "review": {
+            "properties": {
+              "reviewer_id": {
+                "type": "null"
+              },
+              "reviewed_at_utc": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "review_status": {
+            "enum": [
+              "REVIEWED",
+              "DISPUTED"
+            ]
+          }
+        },
+        "required": [
+          "review_status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "review": {
+            "properties": {
+              "reviewer_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "reviewed_at_utc": {
+                "$ref": "#/$defs/utcTimestamp"
+              }
+            }
           }
         }
       }

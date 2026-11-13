@@ -2,10 +2,11 @@
 import copy
 import json
 import unittest
-from datetime import datetime
 from pathlib import Path
 
 from jsonschema import Draft202012Validator, FormatChecker
+
+from iwfi.attribution_integrity import validate_claim_validity_interval
 
 ROOT = Path(__file__).resolve().parent
 FIXTURE_PATH = ROOT / "fixtures" / "entity-attribution-claims.json"
@@ -69,13 +70,27 @@ class EntityAttributionContractTests(unittest.TestCase):
 
     def test_validity_interval_is_chronologically_ordered(self):
         for claim in self.claims:
-            start = claim["valid_from_utc"]
-            end = claim["valid_to_utc"]
-            if start is not None and end is not None:
-                self.assertLessEqual(
-                    datetime.fromisoformat(start.replace("Z", "+00:00")),
-                    datetime.fromisoformat(end.replace("Z", "+00:00")),
-                )
+            self.assertEqual(validate_claim_validity_interval(claim), [])
+
+    def test_validity_interval_rejects_reversed_bounds(self):
+        claim = copy.deepcopy(self.claims[0])
+        claim["valid_from_utc"] = "2026-12-01T00:00:00Z"
+        claim["valid_to_utc"] = "2026-01-01T00:00:00Z"
+        self.assertEqual(
+            validate_claim_validity_interval(claim),
+            ["valid_from_utc must not be later than valid_to_utc"],
+        )
+
+    def test_reviewed_claim_requires_reviewer_identity_and_timestamp(self):
+        claim = copy.deepcopy(next(x for x in self.claims if x["epistemic_status"] == "VERIFIED"))
+        claim["review"]["reviewer_id"] = None
+        claim["review"]["reviewed_at_utc"] = None
+        self.assertFalse(self.validator.is_valid(claim))
+
+    def test_unreviewed_claim_cannot_claim_review_metadata(self):
+        claim = copy.deepcopy(next(x for x in self.claims if x["review_status"] == "UNREVIEWED"))
+        claim["review"]["reviewer_id"] = "reviewer-should-not-be-here"
+        self.assertFalse(self.validator.is_valid(claim))
 
     def test_schema_rejects_verified_claim_without_support(self):
         claim = copy.deepcopy(next(x for x in self.claims if x["epistemic_status"] == "VERIFIED"))
