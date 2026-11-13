@@ -62,11 +62,9 @@ class ObservationResolutionTests(unittest.TestCase):
         second["movement"]["event_locator"] = {"kind": "EVM_LOG_INDEX", "value": "6"}
         result = resolve_observations([first, second])
         self.assertEqual(len(result["events"]), 2)
-        self.assertEqual(result["links"], [])
-        self.assertEqual(
-            classify_observation_pair(first, second)["match_class"],
-            "NO_MATCH",
-        )
+        self.assertEqual(len(result["links"]), 1)
+        self.assertEqual(result["links"][0]["match_class"], "NO_MATCH")
+        self.assertEqual(result["links"][0]["source_record_relation"], "EXACT_REPEAT")
         self.assertIn("DIFFERENT_EVENT_LOCATOR", result["links"][0]["reasons"])
 
     def test_same_transaction_hash_on_different_networks_is_not_a_match(self):
