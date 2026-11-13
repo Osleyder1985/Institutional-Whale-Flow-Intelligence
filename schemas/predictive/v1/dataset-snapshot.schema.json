@@ -1,0 +1,291 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://iwfi.invalid/schemas/predictive/v1/dataset-snapshot.schema.json",
+  "title": "IWFI DatasetSnapshot v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "dataset_id",
+    "status",
+    "asset",
+    "target_definition",
+    "feature_set_version",
+    "created_at",
+    "split_strategy",
+    "splits",
+    "purging_embargo",
+    "transforms",
+    "holdout",
+    "lineage"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "dataset_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "enum": [
+        "DRAFT",
+        "FROZEN",
+        "INVALIDATED"
+      ]
+    },
+    "asset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "asset_id",
+        "symbol",
+        "network"
+      ],
+      "properties": {
+        "asset_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "symbol": {
+          "type": "string",
+          "minLength": 1
+        },
+        "network": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "target_definition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "target_id",
+        "version"
+      ],
+      "properties": {
+        "target_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "feature_set_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+    },
+    "frozen_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+    },
+    "split_strategy": {
+      "enum": [
+        "WALK_FORWARD",
+        "EXPANDING_WINDOW",
+        "ROLLING_WINDOW"
+      ]
+    },
+    "splits": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "split_id",
+          "role",
+          "order",
+          "start",
+          "end",
+          "sample_count",
+          "sample_manifest_ref"
+        ],
+        "properties": {
+          "split_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "role": {
+            "enum": [
+              "TRAIN",
+              "VALIDATION",
+              "CALIBRATION",
+              "TEST"
+            ]
+          },
+          "order": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "start": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+          },
+          "end": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+          },
+          "sample_count": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "sample_manifest_ref": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "purging_embargo": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "method",
+        "purge_seconds",
+        "embargo_seconds",
+        "rationale"
+      ],
+      "properties": {
+        "method": {
+          "type": "string",
+          "minLength": 1
+        },
+        "purge_seconds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "embargo_seconds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "transforms": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "transform_id",
+          "version",
+          "artifact_ref",
+          "fit_scope"
+        ],
+        "properties": {
+          "transform_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "version": {
+            "type": "string",
+            "minLength": 1
+          },
+          "artifact_ref": {
+            "type": "string",
+            "minLength": 1
+          },
+          "fit_scope": {
+            "enum": [
+              "TRAIN_ONLY",
+              "CALIBRATION_ONLY"
+            ]
+          }
+        }
+      }
+    },
+    "holdout": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "test_split_id",
+        "frozen",
+        "locked_at",
+        "used_for_selection"
+      ],
+      "properties": {
+        "test_split_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "frozen": {
+          "type": "boolean"
+        },
+        "locked_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+        },
+        "used_for_selection": {
+          "const": false
+        }
+      }
+    },
+    "lineage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "feature_snapshot_refs",
+        "label_snapshot_refs",
+        "source_policy_version",
+        "code_version",
+        "environment_ref",
+        "protocol_version"
+      ],
+      "properties": {
+        "feature_snapshot_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "label_snapshot_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "source_policy_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "code_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "environment_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "protocol_version": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}
