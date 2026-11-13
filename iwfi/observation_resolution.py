@@ -399,7 +399,7 @@ def resolve_observations(observations, supersedes_decision_id=None):
                 errors.append(f"observation cannot be duplicate of itself: {identifier}")
         event_time = item.get("event_time_utc")
         if event_time is not None:
-            if not isinstance(event_time, str) or re.fullmatch(r"\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z", event_time) is None:
+            if not isinstance(event_time, str) or re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z", event_time) is None:
                 errors.append(f"invalid event_time_utc: {identifier}")
             else:
                 try:
