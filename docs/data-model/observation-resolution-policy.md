@@ -51,11 +51,22 @@ Original observations are never modified. No missing field is converted to zero.
 
 A repeat from the same provider, endpoint and record ID with the same payload hash is reported as `EXACT_REPEAT`. The same provider record ID with a different payload hash is reported as `SAME_RECORD_DIFFERENT_PAYLOAD`, not silently deduplicated; it may represent a provider correction or revision. These source-record relations are independent of event identity.
 
+## 6. Provider-declared duplicate references
+
+The observation-level `quality.duplicate_of` field is preserved as an explicit provider/ingestion assertion and emitted as a separate observation link when its target is present in the resolution input. It never overrides transaction/event identity.
+
+- If the referenced observation has the same strong event identity, the duplicate assertion is consistent with the on-chain identity.
+- If both observations have strong but different event identities, the resolver retains both events and marks the decision `RESOLVED_WITH_RELATION_CONFLICTS`; it does not merge them.
+- If the target is not part of the current input, the original observation retains the external reference; no identity is inferred.
+- A duplicate observation must reference a non-empty, different observation ID.
+
+This relationship is distinct from provider record ID + payload-hash repeat/revision detection.
+
 ## 6. Transfer fragments and economic relationships
 
 Distinct transaction IDs or distinct event locators remain distinct events even when amounts, endpoints or times are similar. Fan-in, fan-out, batches, parent/child transfers and possible common economic operations are not inferred or aggregated by this policy. They require a separate evidence-backed relationship model.
 
-## 7. Resolution states and analytical eligibility
+## 8. Resolution states and analytical eligibility
 
 Each strong event receives:
 - `COMPLETE`: all required analytical fields, including confirmation status, have one unambiguous value.
@@ -65,7 +76,7 @@ Each strong event receives:
 
 Only `COMPLETE` events with `confirmation_status=CONFIRMED` and no material conflicts are `ELIGIBLE`. `PENDING` or `UNKNOWN` confirmation is `INELIGIBLE` with an explicit reason. Other states are also `INELIGIBLE`. A candidate link does not create an event and is not eligible for event-level analytics. Eligibility does not establish institutional attribution, trade direction, or buy/sell intent.
 
-## 8. Determinism and audit
+## 9. Determinism and audit
 
 The resolver:
 - sorts observations, links, evidence and events deterministically;\n- indexes candidate comparisons by event identity, transaction identity, source record and shared partial-field keys instead of generating a global all-pairs matrix;\n- materializes strong/candidate links and relevant source-record revisions; NO_MATCH remains available through pair classification rather than an exhaustive quadratic list;
@@ -76,11 +87,11 @@ The resolver:
 
 Reprocessing identical inputs with the same policy version and supersession context is idempotent. Changing the superseded decision reference changes the decision-context fingerprint and decision ID even when the observation input fingerprint is unchanged. Policy changes require a policy-version change and therefore produce a distinct decision ID.
 
-## 9. Scope and limitations
+## 10. Scope and limitations
 
 This implementation is an in-memory policy engine and test suite only. Pairwise work can still grow inside a large same-transaction or same-candidate bucket; production-scale performance has not been benchmarked. It does not persist observations or decisions, assign a canonical event in a database, implement provider adapters, resolve chain reorganizations/finality, infer common control, group transfers economically, or generate whale metrics/signals. Unsupported or absent event locators remain unresolved candidates rather than being guessed.
 
 
-## 10. Cross-contract normalization
+## 11. Cross-contract normalization
 
 The movement integrity validator compares transaction IDs case-insensitively, normalizes EVM addresses case-insensitively, and canonicalizes numeric protocol locator components. This allows equivalent provider encodings (for example, vout `00` versus `0`) to be validated without weakening network or event identity. Invalid or network-incompatible locators do not compare as equal.
