@@ -131,7 +131,7 @@ def validate_movement_integrity(movement, observations, claims, known_claim_ids=
         movement_transfer = {}
     referenced = movement.get("source_observation_ids", [])
     if not isinstance(referenced, (list, tuple)) or any(
-        not isinstance(identifier, str) or not identifier for identifier in referenced
+        not isinstance(identifier, str) or not identifier.strip() for identifier in referenced
     ):
         errors.append("source_observation_ids must be a list of non-empty strings")
         return errors
@@ -148,7 +148,7 @@ def validate_movement_integrity(movement, observations, claims, known_claim_ids=
                     errors.append(f"observations[{index}] must be an object")
                 continue
             identifier = item.get(id_field)
-            if not isinstance(identifier, str) or not identifier:
+            if not isinstance(identifier, str) or not identifier.strip():
                 errors.append(f"invalid {id_field} in evidence collection")
                 continue
             counts[identifier] = counts.get(identifier, 0) + 1
@@ -267,7 +267,7 @@ def validate_movement_integrity(movement, observations, claims, known_claim_ids=
             errors.append("attribution resolution must be an object")
             continue
         claim_id = resolution.get("claim_id")
-        if not isinstance(claim_id, str) or not claim_id:
+        if not isinstance(claim_id, str) or not claim_id.strip():
             errors.append("attribution resolution has an invalid claim_id")
             continue
         claim = claim_index.get(claim_id)
