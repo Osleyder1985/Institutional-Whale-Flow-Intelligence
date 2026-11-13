@@ -54,8 +54,10 @@ def _same_amount(left, right):
 def validate_movement_integrity(movement, observations, claims):
     """Return deterministic integrity errors; never infer missing source facts.
 
-    observations and claims are iterables of canonical source/claim dictionaries.
-    This function validates references and consistency only; it does not mutate data.
+    VALID and PARTIAL observations are admissible as source evidence. DELAYED is
+    also admissible for historical reconstruction; this validator does not assess
+    freshness or real-time eligibility. INVALID, QUARANTINED, DUPLICATE and
+    unknown quality states are not admissible.
     """
     errors = []
 
@@ -98,7 +100,7 @@ def validate_movement_integrity(movement, observations, claims):
             errors.append(f"source observation is not ON_CHAIN_TRANSACTION: {observation_id}")
             continue
         source_quality = observation.get("quality", {}).get("status")
-        if source_quality not in {"VALID", "PARTIAL"}:
+        if source_quality not in {"VALID", "PARTIAL", "DELAYED"}:
             errors.append(f"source observation quality is not admissible: {observation_id}")
             continue
         source_asset = observation.get("asset", {})
