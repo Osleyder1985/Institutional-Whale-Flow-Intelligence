@@ -92,6 +92,14 @@ class MovementIntegrityTests(unittest.TestCase):
         movement["transfer"]["event_locator"] = {"kind": "EVM_TRACE_PATH", "value": "0/5"}
         self.assertEqual(validate_movement_integrity(movement, observations, self.claims), [])
 
+    def test_malformed_source_transaction_id_is_rejected(self):
+        movement = copy.deepcopy(self.movements[0])
+        observations = copy.deepcopy(self.observations)
+        source = next(item for item in observations if item["observation_id"] == movement["source_observation_ids"][0])
+        source["movement"]["transaction_id"] = "invalid"
+        errors = validate_movement_integrity(movement, observations, self.claims)
+        self.assertTrue(any("invalid source transaction_id" in error for error in errors))
+
     def test_source_transaction_mismatch_is_rejected(self):
         movement = copy.deepcopy(self.movements[0])
         movement["transfer"]["transaction_id"] = "different-tx"
