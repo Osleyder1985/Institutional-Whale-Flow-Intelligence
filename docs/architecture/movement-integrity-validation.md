@@ -36,7 +36,7 @@ For each attribution resolution:
 
 All timestamps must use canonical UTC `YYYY-MM-DDTHH:MM:SSZ` with valid calendar dates. Both validity bounds are required for `VALID_AT_EVENT_TIME`. A known start can still prove `NOT_YET_VALID`; a known end can still prove `EXPIRED_AT_EVENT_TIME`. A missing bound is not interpreted as infinite. Reversed, malformed or non-UTC intervals resolve to `TIME_UNRESOLVED`.
 
-Temporal validity does not upgrade epistemic status. A provider-labelled claim remains provider-labelled. Collection validation rejects duplicate claim IDs, unresolved supersession references, self-supersession, cycles in the supplied batch and successors recorded before included predecessors.
+Temporal validity does not upgrade epistemic status. A provider-labelled claim remains provider-labelled. Collection validation rejects invalid and duplicate claim IDs, unresolved or ambiguous supersession references, invalid `known_claim_ids` collections, self-supersession, cycles in the supplied batch and successors recorded before included predecessors. Duplicate IDs are excluded from graph construction so input order cannot select an arbitrary version; cycle detection is iterative.
 
 ## Error semantics and limitations
 
