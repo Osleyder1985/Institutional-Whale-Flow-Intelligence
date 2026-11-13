@@ -116,10 +116,10 @@ class ChainIntegrityContractTests(unittest.TestCase):
 
     def test_old_non_active_then_new_active_inclusion_is_reobserved(self):
         from iwfi.chain_integrity import assess_chain_observations
-        records = [
-            self._record("old", "BLOCK_INCLUDED", block="b" * 64, status="NOT_ACTIVE"),
-            self._record("new", "BLOCK_INCLUDED", block="c" * 64, status="ACTIVE"),
-        ]
+        old = self._record("old", "BLOCK_INCLUDED", block="b" * 64, status="NOT_ACTIVE")
+        new = self._record("new", "BLOCK_INCLUDED", block="c" * 64, status="ACTIVE")
+        new["observed_at_utc"] = "2026-11-13T12:01:00Z"
+        records = [old, new]
         self.assertEqual(assess_chain_observations(records)["status"], "REOBSERVED")
 
     def test_conflicting_sources_for_same_block_remain_unresolved(self):

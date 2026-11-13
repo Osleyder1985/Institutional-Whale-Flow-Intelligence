@@ -87,7 +87,12 @@ def assess_chain_observations(observations):
         return result("UNKNOWN", "NO_BLOCK_OR_MEMPOOL_EVIDENCE")
 
     blocks = {}
-    for item in inclusions:
+    block_records = [
+        item for item in records
+        if item.get("observation_kind") in {"BLOCK_INCLUDED", "BLOCK_STATUS"}
+        and isinstance(item.get("inclusion"), dict)
+    ]
+    for item in block_records:
         block_hash = item["inclusion"].get("block_hash")
         blocks.setdefault(block_hash, []).append(item)
 
@@ -96,24 +101,28 @@ def assess_chain_observations(observations):
             block_hash: {item.get("source_asserted_chain_status") for item in block_items}
             for block_hash, block_items in blocks.items()
         }
-        has_not_active = any("NOT_ACTIVE" in values for values in statuses.values())
-        has_active = any("ACTIVE" in values for values in statuses.values())
         contradictory_same_block = any(
             "ACTIVE" in values and "NOT_ACTIVE" in values for values in statuses.values()
         )
-        if has_not_active and has_active and not contradictory_same_block:
+        old_not_active = [
+            item for item in block_records
+            if item.get("source_asserted_chain_status") == "NOT_ACTIVE"
+        ]
+        later_active = [
+            item for item in block_records
+            if item.get("source_asserted_chain_status") == "ACTIVE"
+        ]
+        has_ordered_reinclusion = (
+            old_not_active and later_active
+            and max(item.get("observed_at_utc", "") for item in later_active)
+            > min(item.get("observed_at_utc", "") for item in old_not_active)
+        )
+        if has_ordered_reinclusion and not contradictory_same_block:
             return result("REOBSERVED", "PRIOR_NONCANONICAL_BLOCK_AND_LATER_ACTIVE_INCLUSION")
         return result("CANONICALITY_UNRESOLVED", "MULTIPLE_BLOCK_INCLUSIONS_WITHOUT_CLEAR_REORG_SEQUENCE")
 
     block_hash, block_items = next(iter(blocks.items()))
     block_statuses = {item.get("source_asserted_chain_status") for item in block_items}
-    status_records = [
-        item for item in records
-        if item.get("observation_kind") == "BLOCK_STATUS"
-        and isinstance(item.get("inclusion"), dict)
-        and item["inclusion"].get("block_hash") == block_hash
-    ]
-    block_statuses.update(item.get("source_asserted_chain_status") for item in status_records)
     if "ACTIVE" in block_statuses and "NOT_ACTIVE" in block_statuses:
         return result("CANONICALITY_UNRESOLVED", "SOURCES_CONFLICT_ON_SAME_BLOCK")
     if "NOT_ACTIVE" in block_statuses:
@@ -123,7 +132,8 @@ def assess_chain_observations(observations):
         inclusion_height = block_items[0]["inclusion"].get("block_height")
         inclusion_sources = {
             item.get("source", {}).get("source_id")
-            for item in block_items if isinstance(item.get("source"), dict)
+            for item in inclusions if item["inclusion"].get("block_hash") == block_hash
+            and isinstance(item.get("source"), dict)
         }
         for checkpoint in records:
             if checkpoint.get("observation_kind") != "FINALITY_CHECKPOINT":
