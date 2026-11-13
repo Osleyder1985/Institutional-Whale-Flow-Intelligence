@@ -158,7 +158,7 @@ class ObservationResolutionTests(unittest.TestCase):
     def test_same_transaction_hash_on_different_networks_is_not_a_match(self):
         btc = self.by_id("btc-vout-provider-a")
         eth = self.by_id("eth-log-provider-a")
-        eth["movement"]["transaction_id"] = btc["movement"]["transaction_id"]
+        eth["movement"]["transaction_id"] = "0x" + btc["movement"]["transaction_id"]
         link = classify_observation_pair(btc, eth)
         self.assertEqual(link["match_class"], "NO_MATCH")
         self.assertIn("DIFFERENT_NETWORK", link["reasons"])
@@ -167,9 +167,23 @@ class ObservationResolutionTests(unittest.TestCase):
         first = self.by_id("btc-vout-provider-a")
         second = copy.deepcopy(first)
         second["observation_id"] = "different-tx-same-facts"
-        second["movement"]["transaction_id"] = "different-transaction"
+        second["movement"]["transaction_id"] = "f" * 64
         self.assertEqual(classify_observation_pair(first, second)["match_class"], "NO_MATCH")
         self.assertEqual(len(resolve_observations([first, second])["events"]), 2)
+
+    def test_invalid_transaction_hash_fails_closed(self):
+        observation = self.by_id("btc-vout-provider-a")
+        observation["movement"]["transaction_id"] = "not-a-real-txid"
+        result = resolve_observations([observation])
+        self.assertEqual(result["status"], "INVALID")
+        self.assertIn("invalid transaction_id for network: btc-vout-provider-a", result["errors"])
+
+    def test_ethereum_transaction_hash_with_or_without_prefix_has_same_identity(self):
+        first = self.by_id("eth-log-provider-a")
+        second = self.by_id("eth-log-provider-b")
+        first["movement"]["transaction_id"] = first["movement"]["transaction_id"][2:]
+        result = resolve_observations([first, second])
+        self.assertEqual(len(result["events"]), 1)
 
     def test_missing_hash_and_locator_produce_candidate_not_merge(self):
         first = self.by_id("btc-vout-provider-a")
@@ -186,7 +200,7 @@ class ObservationResolutionTests(unittest.TestCase):
         second = self.by_id("btc-second-vout")
         first["movement"].pop("event_locator")
         second["movement"].pop("event_locator")
-        second["movement"]["transaction_id"] = "different-transaction-id"
+        second["movement"]["transaction_id"] = "e" * 64
         result = resolve_observations([first, second])
         self.assertEqual(result["status"], "INSUFFICIENT_EVIDENCE")
         self.assertEqual(result["events"], [])
