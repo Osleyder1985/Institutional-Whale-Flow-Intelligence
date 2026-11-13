@@ -1,0 +1,88 @@
+{
+  "schema_version": "1.0.0",
+  "dataset_id": "synthetic-dataset-001",
+  "status": "FROZEN",
+  "asset": {
+    "asset_id": "bitcoin:btc",
+    "symbol": "BTC",
+    "network": "bitcoin-mainnet"
+  },
+  "target_definition": {
+    "target_id": "terminal-return-1d",
+    "version": "0.1.0"
+  },
+  "feature_set_version": "synthetic-feature-set-1",
+  "created_at": "2026-01-01T00:00:00Z",
+  "frozen_at": "2026-01-01T00:00:01Z",
+  "split_strategy": "WALK_FORWARD",
+  "splits": [
+    {
+      "split_id": "train-1",
+      "role": "TRAIN",
+      "order": 1,
+      "start": "2025-01-01T00:00:00Z",
+      "end": "2025-09-30T23:59:59Z",
+      "sample_count": 100,
+      "sample_manifest_ref": "synthetic://samples/train"
+    },
+    {
+      "split_id": "validation-1",
+      "role": "VALIDATION",
+      "order": 2,
+      "start": "2025-10-01T00:00:00Z",
+      "end": "2025-10-31T23:59:59Z",
+      "sample_count": 20,
+      "sample_manifest_ref": "synthetic://samples/validation"
+    },
+    {
+      "split_id": "calibration-1",
+      "role": "CALIBRATION",
+      "order": 3,
+      "start": "2025-11-01T00:00:00Z",
+      "end": "2025-11-30T23:59:59Z",
+      "sample_count": 20,
+      "sample_manifest_ref": "synthetic://samples/calibration"
+    },
+    {
+      "split_id": "test-1",
+      "role": "TEST",
+      "order": 4,
+      "start": "2025-12-01T00:00:00Z",
+      "end": "2025-12-31T23:59:59Z",
+      "sample_count": 20,
+      "sample_manifest_ref": "synthetic://samples/test"
+    }
+  ],
+  "purging_embargo": {
+    "method": "target-window purging plus post-boundary embargo",
+    "purge_seconds": 86400,
+    "embargo_seconds": 86400,
+    "rationale": "Synthetic example only; durations are illustrative, not production values."
+  },
+  "transforms": [
+    {
+      "transform_id": "standard-scaler",
+      "version": "0.1.0",
+      "artifact_ref": "synthetic://transform/scaler",
+      "fit_scope": "TRAIN_ONLY"
+    }
+  ],
+  "holdout": {
+    "test_split_id": "test-1",
+    "frozen": true,
+    "locked_at": "2026-01-01T00:00:01Z",
+    "used_for_selection": false
+  },
+  "lineage": {
+    "feature_snapshot_refs": [
+      "synthetic://feature-snapshots"
+    ],
+    "label_snapshot_refs": [
+      "synthetic://labels"
+    ],
+    "source_policy_version": "synthetic-policy",
+    "code_version": "synthetic-code",
+    "environment_ref": "synthetic-env",
+    "protocol_version": "synthetic-protocol"
+  }
+}
