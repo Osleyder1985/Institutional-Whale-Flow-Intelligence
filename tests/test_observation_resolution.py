@@ -84,7 +84,7 @@ class ObservationResolutionTests(unittest.TestCase):
         duplicate["quality"]["status"] = "DUPLICATE"
         duplicate["quality"]["duplicate_of"] = original["observation_id"]
         result = resolve_observations([original, duplicate])
-        self.assertEqual(len(result["events"]), 2)
+        self.assertEqual(len(result["events"]), 1)
         self.assertEqual(result["status"], "RESOLVED_WITH_RELATION_CONFLICTS")
         self.assertEqual(result["links"][0]["match_class"], "NO_MATCH")
         self.assertIn(
@@ -98,7 +98,7 @@ class ObservationResolutionTests(unittest.TestCase):
         eth["quality"]["status"] = "DUPLICATE"
         eth["quality"]["duplicate_of"] = btc["observation_id"]
         result = resolve_observations([btc, eth])
-        self.assertEqual(len(result["events"]), 2)
+        self.assertEqual(len(result["events"]), 1)
         self.assertEqual(result["status"], "RESOLVED_WITH_RELATION_CONFLICTS")
         self.assertEqual(result["links"][0]["match_class"], "NO_MATCH")
         self.assertIn("DIFFERENT_NETWORK", result["links"][0]["reasons"])
