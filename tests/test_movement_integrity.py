@@ -143,5 +143,16 @@ class MovementIntegrityTests(unittest.TestCase):
         self.assertTrue(any("quality is not admissible" in error for error in errors))
 
 
+    def test_delayed_observation_is_admissible_for_historical_integrity_without_quality_upgrade(self):
+        movement = copy.deepcopy(self.movements[0])
+        observations = copy.deepcopy(self.observations)
+        source_id = movement["source_observation_ids"][0]
+        source = next(item for item in observations if item["observation_id"] == source_id)
+        source["quality"]["status"] = "DELAYED"
+
+        self.assertEqual(validate_movement_integrity(movement, observations, self.claims), [])
+        self.assertEqual(source["quality"]["status"], "DELAYED")
+
+
 if __name__ == "__main__":
     unittest.main()
