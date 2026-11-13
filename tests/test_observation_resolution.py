@@ -199,9 +199,9 @@ class ObservationResolutionTests(unittest.TestCase):
         mutations = (
             ("from_address", lambda item: item["movement"].__setitem__("from_address", "bc1qother-source"), "movement"),
             ("to_address", lambda item: item["movement"].__setitem__("to_address", "bc1qother-destination"), "movement"),
-            ("event_time_utc", lambda item: item.__setitem__("event_time_utc", "2026-11-10T10:00:01Z"), "root"),
+            ("event_time_utc", lambda item: item.__setitem__("event_time_utc", "2026-11-10T10:00:01Z")),
         )
-        for field, mutate, _scope in mutations:
+        for field, mutate in mutations:
             with self.subTest(field=field):
                 first = self.by_id("btc-vout-provider-a")
                 second = self.by_id("btc-vout-provider-b")
