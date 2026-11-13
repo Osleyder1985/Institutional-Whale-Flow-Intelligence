@@ -84,8 +84,13 @@ def validate_forecast(record):
             errors.append("magnitude estimate must lie within its interval")
 
     for index, target in enumerate(prediction["price_targets"]):
-        if target["lower_price"] > target["upper_price"]:
-            errors.append(f"price_targets[{index}] lower_price must be <= upper_price")
+        if target["status"] == "ESTIMATED":
+            if target["lower_price"] is None or target["upper_price"] is None:
+                errors.append(f"price_targets[{index}] estimated bounds must both be present")
+            elif target["lower_price"] > target["upper_price"]:
+                errors.append(f"price_targets[{index}] lower_price must be <= upper_price")
+        elif target["lower_price"] is not None or target["upper_price"] is not None:
+            errors.append(f"price_targets[{index}] NOT_ESTIMABLE bounds must be null")
         if _utc(target["valid_from"]) >= _utc(target["valid_until"]):
             errors.append(f"price_targets[{index}] valid_until must follow valid_from")
 
