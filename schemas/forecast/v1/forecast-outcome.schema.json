@@ -175,8 +175,7 @@
               "REACHED",
               "NOT_REACHED",
               "CROSSED_BY_GAP",
-              "UNASSESSABLE",
-              "CROSSED_BY_GAP"
+              "UNASSESSABLE"
             ]
           },
           "first_observed_at": {
@@ -277,8 +276,7 @@
               "TOUCHED",
               "NOT_TOUCHED",
               "CROSSED_BY_GAP",
-              "UNASSESSABLE",
-              "CROSSED_BY_GAP"
+              "UNASSESSABLE"
             ]
           },
           "first_observed_at": {
