@@ -131,6 +131,16 @@ class ObservationResolutionTests(unittest.TestCase):
             result["links"][0]["reasons"],
         )
 
+    def test_duplicate_reference_requires_duplicate_quality_status(self):
+        observation = self.by_id("btc-vout-provider-a")
+        observation["quality"]["duplicate_of"] = "canonical-observation"
+        result = resolve_observations([observation])
+        self.assertEqual(result["status"], "INVALID")
+        self.assertIn(
+            "duplicate_of requires DUPLICATE quality status: btc-vout-provider-a",
+            result["errors"],
+        )
+
     def test_duplicate_quality_requires_non_self_duplicate_reference(self):
         observation = self.by_id("btc-vout-provider-a")
         observation["quality"]["status"] = "DUPLICATE"
