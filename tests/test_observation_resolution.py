@@ -130,7 +130,7 @@ class ObservationResolutionTests(unittest.TestCase):
         eth["quality"]["status"] = "DUPLICATE"
         eth["quality"]["duplicate_of"] = btc["observation_id"]
         result = resolve_observations([btc, eth])
-        self.assertEqual(len(result["events"]), 1)
+        self.assertEqual(len(result["events"]), 2)
         self.assertEqual(result["status"], "RESOLVED_WITH_RELATION_CONFLICTS")
         self.assertEqual(result["links"][0]["match_class"], "NO_MATCH")
         self.assertIn("DIFFERENT_NETWORK", result["links"][0]["reasons"])
@@ -138,6 +138,8 @@ class ObservationResolutionTests(unittest.TestCase):
             "PROVIDER_DUPLICATE_CONTRADICTS_EVENT_IDENTITY",
             result["links"][0]["reasons"],
         )
+        self.assertTrue(all(event["analytical_eligibility"] == "INELIGIBLE" for event in result["events"]))
+        self.assertTrue(all(event["resolution_status"] == "CONTRADICTORY" for event in result["events"]))
 
     def test_duplicate_reference_requires_duplicate_quality_status(self):
         observation = self.by_id("btc-vout-provider-a")
