@@ -76,6 +76,17 @@ class MovementIntegrityTests(unittest.TestCase):
     def test_temporal_interval_with_reversed_bounds_is_unresolved(self):
         self.assertEqual(resolve_temporal_status("2026-06-01T00:00:00Z", "2026-12-01T00:00:00Z", "2026-01-01T00:00:00Z"), "TIME_UNRESOLVED")
 
+    def test_unsupported_amount_cannot_be_added_when_all_sources_are_missing(self):
+        movement = copy.deepcopy(self.movements[1])
+        movement["transfer"]["amount"] = "0.5"
+        self.assertTrue(any("amount has no supporting source value" in error for error in validate_movement_integrity(movement, self.observations, self.claims)))
+
+    def test_invalid_or_duplicate_source_quality_is_rejected(self):
+        observations = copy.deepcopy(self.observations)
+        observations[0]["quality"]["status"] = "DUPLICATE"
+        errors = validate_movement_integrity(self.movements[0], observations, self.claims)
+        self.assertTrue(any("quality is not admissible" in error for error in errors))
+
 
 if __name__ == "__main__":
     unittest.main()
