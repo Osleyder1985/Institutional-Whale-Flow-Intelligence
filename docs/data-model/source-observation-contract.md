@@ -73,4 +73,4 @@ This contract does not define a trade ledger, buy/sell signals, wallet identity 
 
 ## Test coverage
 
-The fixture set covers confirmed BTC and ETH transactions, provider-labelled exchange address, missing amount, duplicate, delayed retrieval, and conflicting attribution. The standard-library test suite checks core invariants and guards against interpreting transfers or exchange flows as trades. It is a focused contract smoke test, not a full JSON Schema implementation; production schema validation must use a standards-compliant Draft 2020-12 validator once the runtime dependency strategy is selected.
+The fixture set covers confirmed BTC and ETH transactions, provider-labelled exchange address, missing amount, duplicate, delayed retrieval, and conflicting attribution. The test suite uses Python unittest plus the pinned jsonschema Draft 2020-12 validator. It validates the schema definition and every fixture with format checking, and includes negative cases for asset/network mismatch, transfer-unit mismatch, exchange-flow-as-movement, non-UTC timestamps, and raw retention while terms are pending. These are contract tests, not production ingestion tests.
