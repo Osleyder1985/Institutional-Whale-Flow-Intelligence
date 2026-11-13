@@ -44,6 +44,38 @@ class ObservationResolutionTests(unittest.TestCase):
     def by_id(self, identifier):
         return copy.deepcopy(next(item for item in self.fixtures if item["observation_id"] == identifier))
 
+    def test_non_iterable_observation_input_fails_closed(self):
+        result = resolve_observations(None)
+        self.assertEqual(result["status"], "INVALID")
+        self.assertIn("observations must be an iterable of objects", result["errors"])
+        self.assertEqual(result["events"], [])
+
+    def test_malformed_nested_observation_objects_fail_closed(self):
+        mutations = (
+            ("source", []),
+            ("asset", []),
+            ("movement", []),
+            ("quality", []),
+        )
+        for field, value in mutations:
+            with self.subTest(field=field):
+                observation = self.by_id("btc-vout-provider-a")
+                observation[field] = value
+                result = resolve_observations([observation])
+                self.assertEqual(result["status"], "INVALID")
+                self.assertTrue(result["errors"])
+                self.assertEqual(result["events"], [])
+
+    def test_unhashable_locator_kind_fails_closed_without_exception(self):
+        observation = self.by_id("btc-vout-provider-a")
+        observation["movement"]["event_locator"]["kind"] = ["UTXO_VOUT"]
+        result = resolve_observations([observation])
+        self.assertEqual(result["status"], "INVALID")
+        self.assertIn(
+            "invalid event_locator for observation: btc-vout-provider-a",
+            result["errors"],
+        )
+
     def test_same_btc_event_from_two_providers_is_one_strong_event(self):
         result = resolve_observations([self.by_id("btc-vout-provider-a"), self.by_id("btc-vout-provider-b")])
         self.assertEqual(len(result["events"]), 1)
