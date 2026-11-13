@@ -1,0 +1,277 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://iwfi.local/schemas/chain-integrity-observation.schema.json",
+  "title": "IWFI Immutable Chain Integrity Observation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "observation_id",
+    "network_id",
+    "source",
+    "transaction_id",
+    "observation_kind",
+    "observed_at_utc"
+  ],
+  "properties": {
+    "observation_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "network_id": {
+      "enum": [
+        "bitcoin-mainnet",
+        "eip155:1"
+      ]
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "source_id",
+        "method"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "SELF_HOSTED_NODE",
+            "THIRD_PARTY_PROVIDER"
+          ]
+        },
+        "source_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "method": {
+          "type": "string",
+          "minLength": 1
+        },
+        "client_version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "api_version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "transaction_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "observation_kind": {
+      "enum": [
+        "MEMPOOL_SEEN",
+        "BLOCK_INCLUDED",
+        "BLOCK_STATUS",
+        "FINALITY_CHECKPOINT"
+      ]
+    },
+    "observed_at_utc": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "Z$"
+    },
+    "inclusion": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "required": [
+        "block_height",
+        "block_hash"
+      ],
+      "properties": {
+        "block_height": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "block_hash": {
+          "type": "string",
+          "pattern": "^(0x[0-9a-fA-F]{64}|[0-9a-fA-F]{64})$"
+        },
+        "transaction_index": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        }
+      }
+    },
+    "source_asserted_chain_status": {
+      "enum": [
+        "ACTIVE",
+        "NOT_ACTIVE",
+        "UNKNOWN",
+        null
+      ]
+    },
+    "source_asserted_head_tag": {
+      "enum": [
+        "latest",
+        "safe",
+        "finalized",
+        null
+      ]
+    },
+    "event_locator": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "value"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "UTXO_VOUT",
+            "EVM_TRACE_PATH",
+            "EVM_TX_VALUE",
+            "EVM_LOG_INDEX"
+          ]
+        },
+        "value": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "evidence_reference": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "network_id": {
+            "const": "bitcoin-mainnet"
+          }
+        },
+        "required": [
+          "network_id"
+        ]
+      },
+      "then": {
+        "properties": {
+          "transaction_id": {
+            "pattern": "^[0-9a-fA-F]{64}$"
+          },
+          "event_locator": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "properties": {
+                  "kind": {
+                    "const": "UTXO_VOUT"
+                  }
+                },
+                "required": [
+                  "kind"
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "network_id": {
+            "const": "eip155:1"
+          }
+        },
+        "required": [
+          "network_id"
+        ]
+      },
+      "then": {
+        "properties": {
+          "transaction_id": {
+            "pattern": "^0x[0-9a-fA-F]{64}$"
+          },
+          "event_locator": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "EVM_TRACE_PATH",
+                      "EVM_TX_VALUE",
+                      "EVM_LOG_INDEX"
+                    ]
+                  }
+                },
+                "required": [
+                  "kind"
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "observation_kind": {
+            "const": "BLOCK_INCLUDED"
+          }
+        },
+        "required": [
+          "observation_kind"
+        ]
+      },
+      "then": {
+        "required": [
+          "inclusion"
+        ],
+        "properties": {
+          "inclusion": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "observation_kind": {
+            "const": "MEMPOOL_SEEN"
+          }
+        },
+        "required": [
+          "observation_kind"
+        ]
+      },
+      "then": {
+        "properties": {
+          "inclusion": {
+            "type": [
+              "null"
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
