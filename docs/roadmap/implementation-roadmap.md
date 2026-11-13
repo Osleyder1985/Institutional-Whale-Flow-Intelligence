@@ -120,7 +120,8 @@ Implementation and CI evidence exist in the open PRs, but Phase 2 remains incomp
 - [x] Define initial versioned Forecast and ForecastOutcome JSON Schemas, including abstention and uncalibrated states — Issue #25 / PR in progress.
 - [x] Document cross-field semantics for UTC, targets, zones, calibrated probabilities, time-to-target, gaps and censoring — Issue #25 / PR in progress.
 - [x] Add semantic validation code and deterministic schema/contract tests — Issue #25 / PR #26 (CI run #232: 217 tests passed).
-- [ ] Define target construction, price-zone semantics, horizon semantics, and time-to-target/censoring rules.
+- [x] Specify target, horizon, zone, and time-to-target semantics, including right/interval censoring — Issue #27 / PR in progress.
+- [ ] Validate anchor/source and candidate horizon-resolution matrix against authorized BTC/ETH samples; keep unverified combinations disabled.
 - [ ] Define point-in-time feature snapshots and data-leakage controls.
 - [ ] Define baseline suite, walk-forward protocol, calibration procedure, and frozen acceptance gates.
 
