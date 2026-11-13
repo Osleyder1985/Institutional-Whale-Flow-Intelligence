@@ -18,7 +18,7 @@ For every referenced `source_observation_id`, the validator requires:
 - It contains a `TRANSFER` movement.
 - Any source facts that are present (amount, unit, addresses, transaction ID, confirmation status and event time) do not conflict with the normalized movement.
 - A known source fact cannot be dropped, and a movement fact cannot be populated when all referenced sources lack that fact.
-- Only source quality states `VALID` and `PARTIAL` are admissible; unrecognized states fail closed.
+- Source quality states `VALID`, `PARTIAL` and `DELAYED` are admissible for historical integrity/reconstruction; `INVALID`, `QUARANTINED`, `DUPLICATE` and unrecognized states fail closed. `DELAYED` remains `DELAYED` and is not evidence of real-time availability. This validator does not evaluate freshness or real-time eligibility.
 - A non-null movement event time must be supported by at least one referenced observation with a matching event time.
 
 Amounts are compared with decimal arithmetic, never binary floating point. Different textual decimal representations with equal numeric value are accepted; the stored source and ledger strings remain unchanged.
@@ -52,4 +52,4 @@ The first version does not:
 
 ## Tests
 
-Cross-contract tests use isolated synthetic source observations plus the existing synthetic attribution claims. They cover missing references, aggregate metrics used as transfers, source mismatches, unsupported values, inadmissible quality states, attribution mismatch and temporal interval resolution.
+Cross-contract tests use isolated synthetic source observations plus the existing synthetic attribution claims. They cover missing references, aggregate metrics used as transfers, source mismatches, unsupported values, admissible historical `DELAYED` evidence without quality promotion, inadmissible quality states, attribution mismatch and temporal interval resolution.
