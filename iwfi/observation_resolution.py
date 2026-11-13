@@ -8,7 +8,7 @@ import re
 from datetime import datetime
 
 
-POLICY_VERSION = "1.1.0"
+POLICY_VERSION = "1.2.0"
 TRANSFER_FIELDS = (
     "asset_id",
     "network_id",
@@ -327,8 +327,7 @@ def classify_observation_pair(left, right):
     }
 
 
-def _field_evidence(observations, field):
-    network = (observations[0].get("asset") or {}).get("network_id")
+def _field_evidence(observations, field, network):
     values = {}
     for observation in observations:
         value = _field_value(observation, field)
@@ -521,24 +520,44 @@ def resolve_observations(observations, supersedes_decision_id=None):
             links.append(link)
     links.sort(key=lambda link: (link["observation_ids"], link["match_class"]))
 
+    identity_conflict_reasons = {
+        "PROVIDER_DUPLICATE_CONTRADICTS_EVENT_IDENTITY",
+        "SOURCE_RECORD_REPEAT_CONTRADICTS_EVENT_IDENTITY",
+    }
+    identity_conflict_observation_ids = {
+        observation_id
+        for link in links
+        if identity_conflict_reasons.intersection(link["reasons"])
+        for observation_id in link["observation_ids"]
+    }
+
     grouped = defaultdict(list)
     for item in canonical_items:
         key = _event_key(item)
         quality_status = (item.get("quality") or {}).get("status")
-        if key is not None and quality_status not in EXCLUDED_FROM_EVENT_EVIDENCE:
+        if key is not None and (
+            quality_status not in EXCLUDED_FROM_EVENT_EVIDENCE
+            or item["observation_id"] in identity_conflict_observation_ids
+        ):
             grouped[key].append(item)
 
     events = []
     for key in sorted(grouped):
         group = grouped[key]
         group.sort(key=lambda item: item["observation_id"])
+        evidence_group = [
+            item for item in group
+            if (item.get("quality") or {}).get("status") not in EXCLUDED_FROM_EVENT_EVIDENCE
+        ]
         excluded_observation_ids = sorted(
             item["observation_id"]
-            for item in canonical_items
-            if _event_key(item) == key
-            and (item.get("quality") or {}).get("status") in EXCLUDED_FROM_EVENT_EVIDENCE
+            for item in group
+            if (item.get("quality") or {}).get("status") in EXCLUDED_FROM_EVENT_EVIDENCE
         )
-        field_evidence = {field: _field_evidence(group, field) for field in TRANSFER_FIELDS}
+        field_evidence = {
+            field: _field_evidence(evidence_group, field, key[0])
+            for field in TRANSFER_FIELDS
+        }
         conflicts = sorted(field for field, evidence in field_evidence.items() if len(evidence) > 1)
         invalid_fields = sorted(
             field for field, evidence in field_evidence.items()
@@ -578,6 +597,8 @@ def resolve_observations(observations, supersedes_decision_id=None):
             for reason in (
                 "PROVIDER_DUPLICATE_CONTRADICTS_EVENT_FIELDS",
                 "SOURCE_RECORD_REPEAT_CONTRADICTS_EVENT_FIELDS",
+                "PROVIDER_DUPLICATE_CONTRADICTS_EVENT_IDENTITY",
+                "SOURCE_RECORD_REPEAT_CONTRADICTS_EVENT_IDENTITY",
             )
             if reason in link["reasons"]
             and group_ids.intersection(link["observation_ids"])
@@ -600,6 +621,8 @@ def resolve_observations(observations, supersedes_decision_id=None):
             eligibility_reasons.append("MATERIAL_FIELD_CONFLICT")
         if relationship_conflicts:
             eligibility_reasons.append("CONTRADICTORY_DUPLICATE_OR_SOURCE_REPEAT_RELATION")
+        if any(conflict["reason"] in identity_conflict_reasons for conflict in relationship_conflicts):
+            eligibility_reasons.append("CONTRADICTORY_EVENT_IDENTITY_RELATION")
         eligibility_reasons.extend(f"INVALID_FIELD_VALUE:{field}" for field in invalid_fields)
         if missing:
             eligibility_reasons.extend(f"MISSING_REQUIRED_FIELD:{field}" for field in missing)
