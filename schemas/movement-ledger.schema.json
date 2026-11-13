@@ -488,6 +488,66 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "properties": {
+          "asset": {
+            "properties": {
+              "network_id": {
+                "const": "bitcoin-mainnet"
+              }
+            },
+            "required": [
+              "network_id"
+            ]
+          }
+        },
+        "required": [
+          "asset"
+        ]
+      },
+      "then": {
+        "properties": {
+          "transfer": {
+            "properties": {
+              "transaction_id": {
+                "pattern": "^[0-9a-fA-F]{64}$"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "asset": {
+            "properties": {
+              "network_id": {
+                "const": "eip155:1"
+              }
+            },
+            "required": [
+              "network_id"
+            ]
+          }
+        },
+        "required": [
+          "asset"
+        ]
+      },
+      "then": {
+        "properties": {
+          "transfer": {
+            "properties": {
+              "transaction_id": {
+                "pattern": "^(0x)?[0-9a-fA-F]{64}$"
+              }
+            }
+          }
+        }
+      }
     }
   ]
 }
