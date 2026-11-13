@@ -473,10 +473,6 @@ class ObservationResolutionTests(unittest.TestCase):
         self.assertIn("observation is not ON_CHAIN_TRANSACTION: btc-vout-provider-a", result["errors"])
 
 
-if __name__ == "__main__":
-    unittest.main()
-
-
     def test_delayed_observation_is_historical_evidence_not_a_realtime_assertion(self):
         observation = self.by_id("btc-vout-provider-a")
         observation["quality"]["status"] = "DELAYED"
@@ -522,3 +518,6 @@ if __name__ == "__main__":
             {entry["quality_status"] for entry in event["field_evidence"]["amount"][0]["evidence"]},
             {"VALID", "DELAYED"},
         )
+
+if __name__ == "__main__":
+    unittest.main()
