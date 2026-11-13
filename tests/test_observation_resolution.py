@@ -55,6 +55,16 @@ class ObservationResolutionTests(unittest.TestCase):
         self.assertIn("DIFFERENT_EVENT_LOCATOR", link["reasons"])
         self.assertEqual(len(resolve_observations([first, second])["events"]), 2)
 
+    def test_eth_transaction_can_contain_distinct_log_events(self):
+        first = self.by_id("eth-log-provider-a")
+        second = copy.deepcopy(first)
+        second["observation_id"] = "eth-second-log"
+        second["movement"]["event_locator"] = {"kind": "EVM_LOG_INDEX", "value": "6"}
+        result = resolve_observations([first, second])
+        self.assertEqual(len(result["events"]), 2)
+        self.assertEqual(result["links"][0]["match_class"], "NO_MATCH")
+        self.assertIn("DIFFERENT_EVENT_LOCATOR", result["links"][0]["reasons"])
+
     def test_same_transaction_hash_on_different_networks_is_not_a_match(self):
         btc = self.by_id("btc-vout-provider-a")
         eth = self.by_id("eth-log-provider-a")
