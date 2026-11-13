@@ -170,10 +170,6 @@ class MovementIntegrityTests(unittest.TestCase):
         self.assertTrue(any("quality is not admissible" in error for error in errors))
 
 
-if __name__ == "__main__":
-    unittest.main()
-
-
     def test_delayed_observation_is_admissible_for_historical_ledger_integrity(self):
         movement = copy.deepcopy(self.movements[0])
         observations = copy.deepcopy(self.observations)
@@ -190,3 +186,7 @@ if __name__ == "__main__":
         source["quality"] = {"status": "DUPLICATE", "duplicate_of": "another-source"}
         errors = validate_movement_integrity(movement, observations, self.claims)
         self.assertTrue(any("source observation quality is not admissible" in error for error in errors))
+
+
+if __name__ == "__main__":
+    unittest.main()
