@@ -37,6 +37,7 @@ class ObservationResolutionTests(unittest.TestCase):
         self.assertEqual(section_numbers, [str(number) for number in range(1, 12)])
         self.assertIn("quality.duplicate_of", document)
         self.assertIn("RESOLVED_WITH_RELATION_CONFLICTS", document)
+        self.assertIn("SOURCE_RECORD_REPEAT_CONTRADICTS_EVENT_IDENTITY", document)
         self.assertIn("It never overrides transaction/event identity.", document)
         self.assertNotIn("\\n-", document)
 
