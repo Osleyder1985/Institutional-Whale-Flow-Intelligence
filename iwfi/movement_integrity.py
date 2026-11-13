@@ -1,6 +1,7 @@
 """Cross-contract integrity checks for normalized on-chain movements."""
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
+import re
 
 
 TRANSFER_FIELDS = ("amount", "unit", "from_address", "to_address", "transaction_id", "confirmation_status", "event_locator")
@@ -42,6 +43,17 @@ def resolve_temporal_status(event_time_utc, valid_from_utc, valid_to_utc, claim_
     return "VALID_AT_EVENT_TIME"
 
 
+def _normalized_transaction_id(network_id, value):
+    if not isinstance(value, str):
+        return None
+    if network_id == "bitcoin-mainnet":
+        return value.lower() if re.fullmatch(r"[0-9a-fA-F]{64}", value) else None
+    if network_id == "eip155:1":
+        raw = value[2:] if value[:2].lower() == "0x" else value
+        return raw.lower() if re.fullmatch(r"[0-9a-fA-F]{64}", raw) else None
+    return None
+
+
 def _same_amount(left, right):
     if left is None or right is None:
         return left is right
@@ -80,11 +92,9 @@ def _same_transfer_field(field, left, right, network_id):
     if field == "amount":
         return _same_amount(left, right)
     if field == "transaction_id":
-        return (
-            left.casefold() == right.casefold()
-            if isinstance(left, str) and isinstance(right, str)
-            else left == right
-        )
+        left_key = _normalized_transaction_id(network_id, left)
+        right_key = _normalized_transaction_id(network_id, right)
+        return left_key is not None and left_key == right_key
     if field in {"from_address", "to_address"} and network_id == "eip155:1":
         return (
             left.lower() == right.lower()
@@ -153,6 +163,12 @@ def validate_movement_integrity(movement, observations, claims):
             errors.append(f"asset/network mismatch for source observation: {observation_id}")
             continue
         source_transfer = observation.get("movement")
+        source_txid = source_transfer.get("transaction_id") if isinstance(source_transfer, dict) else None
+        if source_txid is not None and _normalized_transaction_id(source_asset.get("network_id"), source_txid) is None:
+            errors.append(f"invalid source transaction_id for observation: {observation_id}")
+        movement_txid = movement.get("transfer", {}).get("transaction_id")
+        if movement_txid is not None and _normalized_transaction_id(movement.get("asset", {}).get("network_id"), movement_txid) is None:
+            errors.append("movement transaction_id has invalid network-specific format")
         if not isinstance(source_transfer, dict) or source_transfer.get("movement_type") != "TRANSFER":
             errors.append(f"source observation has no transfer movement: {observation_id}")
             continue
