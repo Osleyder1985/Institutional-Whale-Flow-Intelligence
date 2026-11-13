@@ -23,7 +23,7 @@
       "unit": "BTC",
       "from_address": "bc1qsource",
       "to_address": "bc1qexchangeexample",
-      "transaction_id": "btc-tx-001",
+      "transaction_id": "0000000000000000000000000000000000000000000000000000000000000002",
       "confirmation_status": "CONFIRMED",
       "event_locator": {
         "kind": "UTXO_VOUT",
@@ -65,7 +65,7 @@
       "unit": "ETH",
       "from_address": "0xfrom",
       "to_address": "0xto",
-      "transaction_id": "0xeth002",
+      "transaction_id": "0x0000000000000000000000000000000000000000000000000000000000000009",
       "confirmation_status": "UNKNOWN",
       "event_locator": {
         "kind": "EVM_TX_VALUE",
