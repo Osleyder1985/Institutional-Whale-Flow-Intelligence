@@ -51,7 +51,7 @@ The following is a logical model, not a committed SQL schema. Physical tables, c
 
 ### 3.1 Relationships
 
-- One SourceObservation may link to zero, one, or multiple candidate/confirmed event relationships only as allowed by the resolution policy.
+- One SourceObservation may be evaluated against multiple candidate movements while identity is unresolved, but may be confirmed as supporting evidence for at most one movement identity. Conflicting identity claims remain explicit conflicts and cannot cause double-counting.
 - One Movement may be supported by multiple SourceObservations only after strong event identity has been established.
 - One ResolutionDecision consumes a deterministic set of observation IDs and produces versioned links, field evidence, conflicts, and eligibility.
 - One AttributionClaim may apply to an address only during its recorded validity interval; the movement event time determines temporal resolution.
