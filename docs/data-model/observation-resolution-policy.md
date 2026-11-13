@@ -69,12 +69,12 @@ Only `COMPLETE` events with `confirmation_status=CONFIRMED` and no material conf
 
 The resolver:
 - sorts observations, links, evidence and events deterministically;\n- indexes candidate comparisons by event identity, transaction identity, source record and shared partial-field keys instead of generating a global all-pairs matrix;\n- materializes strong/candidate links and relevant source-record revisions; NO_MATCH remains available through pair classification rather than an exhaustive quadratic list;
-- derives a SHA-256 input fingerprint and decision ID from canonical JSON and the policy version;
+- derives a SHA-256 input fingerprint from canonical observations and a separate decision-context fingerprint from the policy version, input fingerprint and optional superseded decision ID;
 - produces the same result for the same inputs regardless of input order;
 - performs no I/O, persistence, provider calls, wallet clustering or probabilistic inference;
 - accepts an optional previous decision ID for explicit supersession without overwriting prior output;\n- rejects unknown source-quality states and invalid asset/network combinations.
 
-Reprocessing identical inputs is idempotent. Policy changes require a policy-version change and therefore produce a distinct decision ID.
+Reprocessing identical inputs with the same policy version and supersession context is idempotent. Changing the superseded decision reference changes the decision-context fingerprint and decision ID even when the observation input fingerprint is unchanged. Policy changes require a policy-version change and therefore produce a distinct decision ID.
 
 ## 9. Scope and limitations
 
