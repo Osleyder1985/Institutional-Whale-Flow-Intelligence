@@ -70,6 +70,28 @@ class MovementIntegrityTests(unittest.TestCase):
         movement["transfer"]["event_locator"]["value"] = "9"
         self.assertTrue(any("event_locator mismatch" in error for error in validate_movement_integrity(movement, self.observations, self.claims)))
 
+    def test_btc_transaction_id_and_vout_are_compared_canonically(self):
+        movement = copy.deepcopy(self.movements[0])
+        observations = copy.deepcopy(self.observations)
+        source = next(item for item in observations if item["observation_id"] == movement["source_observation_ids"][0])
+        source["movement"]["transaction_id"] = source["movement"]["transaction_id"].upper()
+        source["movement"]["event_locator"]["value"] = "00"
+        movement["transfer"]["transaction_id"] = movement["transfer"]["transaction_id"].upper()
+        movement["transfer"]["event_locator"]["value"] = "0"
+        self.assertEqual(validate_movement_integrity(movement, observations, self.claims), [])
+
+    def test_evm_transaction_id_addresses_and_log_index_are_compared_canonically(self):
+        movement = copy.deepcopy(self.movements[1])
+        observations = copy.deepcopy(self.observations)
+        source = next(item for item in observations if item["observation_id"] == movement["source_observation_ids"][0])
+        source["movement"]["transaction_id"] = source["movement"]["transaction_id"].upper()
+        source["movement"]["from_address"] = source["movement"]["from_address"].upper()
+        source["movement"]["to_address"] = source["movement"]["to_address"].upper()
+        source["movement"]["event_locator"] = {"kind": "EVM_LOG_INDEX", "value": "05"}
+        movement["transfer"]["transaction_id"] = movement["transfer"]["transaction_id"].lower()
+        movement["transfer"]["event_locator"] = {"kind": "EVM_LOG_INDEX", "value": "5"}
+        self.assertEqual(validate_movement_integrity(movement, observations, self.claims), [])
+
     def test_source_transaction_mismatch_is_rejected(self):
         movement = copy.deepcopy(self.movements[0])
         movement["transfer"]["transaction_id"] = "different-tx"
