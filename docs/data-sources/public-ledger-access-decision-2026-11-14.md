@@ -88,6 +88,7 @@ Validation requirements:
 - Block number/hash and transaction list must be present and well-formed.
 - Transaction hash, block hash and block number must match the selected block and receipt. A null transaction/receipt or mismatch yields `INCOMPLETE_OR_CONFLICTED`; it is not repaired by searching another block.
 - Preserve integer quantities exactly. Convert wei only with exact integer arithmetic; do not use floating point.
+- Count a top-level native-value movement only when the receipt reports `status=0x1`, the transaction has a valid non-null `to` address, and `value` is greater than zero. A reverted transaction (`status=0x0`) contributes no successful movement. Contract-creation transactions (`to=null`) remain transaction observations but are not normalized as address-to-address movements in this first sample.
 - The sample covers only top-level transaction `value`. It does not observe internal contract-call value transfers, ERC-20 transfers, token balances, or beneficial ownership. Do not infer those from logs or top-level calldata.
 - A finalized-tag response is provider-reported execution-layer evidence; it is not an independent consensus proof. Record provider, endpoint, retrieval time, block number/hash, transaction hash, receipt status, and response hashes. If an independent source is unavailable, retain that limitation.
 - This sample plan does not authorize storage of raw responses. Retention classification remains subject to Issue #71 and source-specific terms. Do not place payloads in Git or another cloud service as a workaround.
