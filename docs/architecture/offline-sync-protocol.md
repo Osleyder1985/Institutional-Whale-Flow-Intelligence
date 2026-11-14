@@ -53,7 +53,7 @@ Delivery is at least once. Exactly-once network delivery is not assumed. Exactly
 
 1. Client commits the domain change and outbox envelope in one local transaction.
 2. Client sends a bounded batch with the last server-confirmed cursor and stable operation IDs.
-3. Server authenticates and authorizes the device, validates envelope/payload versions and retention eligibility, then checks idempotency.
+3. Server authenticates and authorizes the device, validates envelope/payload versions and retention eligibility, then checks idempotency. Every receipt echoes operation_id, device_id and stream_id and fingerprints the full immutable envelope; clients validate this binding before accepting its cursor. A receipt from another device or stream cannot advance the local cursor.
 4. Server records the inbox receipt and applies or classifies the operation atomically. Acknowledgement is emitted only after durable commit.
 5. Client verifies the receipt, marks the operation SYNCED, and advances its local cursor only to the server-issued cursor.
 6. If the response is lost after server commit, the client resends the same operation IDs. The server returns the original receipts without duplicate effects.
@@ -147,7 +147,7 @@ Retention is checked before durable inbox or domain persistence.
 - Logout clears access tokens and session material; local data handling follows the explicit user-selected local retention policy. Offline logout cannot be represented as server-confirmed revocation until reconnection.
 - A restored local backup must preserve device identity only if its key remains valid; otherwise it must enroll as a new device and retain the old operation IDs for idempotent recovery.
 
-## 12. Required synthetic test scenarios
+## 12. Required synthetic test scenarios (reference-model tests are contract simulations, not production transport/persistence tests)
 
 1. Same batch delivered repeatedly.
 2. Server commits, response is lost, and the client retries the same IDs.
