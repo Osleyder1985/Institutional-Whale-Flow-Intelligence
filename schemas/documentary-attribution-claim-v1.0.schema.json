@@ -219,5 +219,85 @@
         }
       }
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "expression_type": {
+            "enum": [
+              "VERBATIM",
+              "PARAPHRASE"
+            ]
+          }
+        },
+        "required": [
+          "expression_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "evidence": {
+            "items": {
+              "required": [
+                "extracted_span_sha256"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "expression_type": {
+            "const": "INFERENCE"
+          }
+        },
+        "required": [
+          "expression_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "evidence": {
+            "items": {
+              "not": {
+                "required": [
+                  "extracted_span_sha256"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "review_status": {
+            "const": "REVIEWED"
+          }
+        },
+        "required": [
+          "review_status"
+        ]
+      },
+      "then": {
+        "required": [
+          "reviewer",
+          "reviewed_at_utc"
+        ],
+        "properties": {
+          "reviewer": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reviewed_at_utc": {
+            "$ref": "#/$defs/utc"
+          }
+        }
+      }
+    }
+  ]
 }
