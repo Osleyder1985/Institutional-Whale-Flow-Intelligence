@@ -23,6 +23,7 @@ class TemporalExecutionAttributionTests(unittest.TestCase):
         cls.actors = json.loads((FIXTURES / "actor-registry-execution-v1.1.json").read_text(encoding="utf-8"))
         cls.claims = json.loads((FIXTURES / "execution-participant-role-claims.json").read_text(encoding="utf-8"))
         cls.trade = json.loads((FIXTURES / "trade-execution-v1.1.json").read_text(encoding="utf-8"))
+        cls.trade_btc = json.loads((FIXTURES / "trade-execution-btc-v1.1.json").read_text(encoding="utf-8"))
         cls.schema = json.loads((ROOT.parent / "schemas" / "actor-registry-v1.1.schema.json").read_text(encoding="utf-8"))
         cls.observation_ids = [
             "obs-eth-buyer", "obs-eth-broker", "obs-eth-venue", "obs-eth-custodian",
@@ -89,6 +90,21 @@ class TemporalExecutionAttributionTests(unittest.TestCase):
             registry, actor["actor_id"], "2026-01-01T00:00:00Z", "2021-06-01T00:00:00Z"
         )
         self.assertEqual(result["status"], "ELIGIBLE")
+
+    def test_btc_historical_actor_is_valid_for_its_historical_event(self):
+        result = resolve_actor_identity_as_of(
+            self.actors, "synthetic-btc-historical-whale",
+            "2026-01-10T10:00:10Z", "2021-06-01T00:00:00Z"
+        )
+        self.assertEqual(result["status"], "ELIGIBLE")
+
+    def test_btc_aggressor_side_does_not_create_named_actor(self):
+        result = resolve_execution_participants_as_of(
+            {"contract_version": "1.1.0", "claims": []},
+            self.trade_btc, "2026-01-10T10:00:10Z", self.actors, []
+        )
+        self.assertEqual(result["status"], "RESOLVED")
+        self.assertEqual(result["participants"], [])
 
     def test_actor_not_yet_created_at_event_time_is_not_eligible(self):
         registry = copy.deepcopy(self.actors)
