@@ -1,6 +1,6 @@
 # IWFI Implementation Roadmap
 
-Status: dependency-driven roadmap, updated after merge of PR #52. No production provider integration, capture, polling or backfill is authorized by this document.
+Status: dependency-driven roadmap, updated after merges of PRs #52, #54, #55 and #56. No production provider integration, capture, polling or backfill is authorized by this document.
 
 ## Product boundary
 
@@ -36,12 +36,14 @@ The product's first question is evidence of **who** is acting and **what** they 
 - [x] Native BTC/ETH Movement Ledger — Issue #10 / PR #11.
 - [x] Deterministic observation resolution — Issue #12 / PR #13.
 - [x] Actor Registry and individual Trade Execution contracts — Issue #51 / PR #52.
+- [x] Execution-specific participant attribution claim and point-in-time resolver — Issue #43 / PR #55.
 
 **Exit gate:** observations, attribution claims, transfers, actor identities and individual trade executions remain distinct, versioned and traceable. Unknown identities remain unknown; contradictions remain visible; transfer and aggregate flow evidence cannot be represented as individual trades.
 
 ## Phase 3 — Integrated architecture and authorized read-only vertical slice (P0)
 
-- [ ] Complete the end-to-end integration design and traceability matrix — Issue #50.
+- [x] Complete the end-to-end integration design and traceability matrix — Issue #50 / PR #54.
+- [x] Add deterministic cross-domain boundary tests — Issue #50 / PR #56.
 - [ ] Complete source/account approval — Issue #3.
 - [ ] Select one source only after Phase 1 approval.
 - [ ] Implement one narrowly scoped, read-only adapter for that source and product tier.
@@ -101,8 +103,9 @@ The product's first question is evidence of **who** is acting and **what** they 
 | Movement Ledger | #10 | #11 | Merged |
 | Observation resolution | #12 | #13 | Merged |
 | Actor Registry + Trade Execution | #51 | #52 | Merged; CI success on final HEAD |
-| End-to-end architecture | #50 | — | Open; next integration-design task |
+| Execution participant attribution | #43 | #55 | Contract and point-in-time resolver merged; real source viability pending |
+| Integrated architecture + boundary tests | #50 | #54, #56 | Architecture and synthetic cross-domain tests merged; Issue closed |
 
 ## Immediate next gate
 
-Complete Issue #3's account-level/source-sample checks before selecting an adapter. In parallel, complete Issue #50's integration architecture using the now-merged contracts. Only then begin the first authorized read-only BTC/ETH vertical slice.
+Complete Issue #3's account-level/source-sample checks before selecting an adapter. This is now the critical path: no provider has been approved and no real BTC/ETH sample has been validated. Once a source is authorized, implement the first narrowly scoped read-only vertical slice. The execution-participant claim contract is ready, but real actor attribution still depends on source evidence that names a participant for a specific execution.
