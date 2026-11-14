@@ -7,7 +7,7 @@ or accumulation/distribution.
 from __future__ import annotations
 
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import datetime
 from decimal import Decimal, InvalidOperation
 import re
 
@@ -34,19 +34,7 @@ def _address_key(address, network_id):
 
 
 def _claim_applies(claim, event_time, known_at):
-    """Return (eligible, reason); only reviewed VERIFIED control/operator claims count."""
-    if claim.get("epistemic_status") == "DISPUTED" or claim.get("review_status") == "DISPUTED":
-        return False, "DISPUTED"
-    if claim.get("epistemic_status") != "VERIFIED":
-        return False, "NOT_VERIFIED"
-    if claim.get("review_status") != "REVIEWED":
-        return False, "NOT_REVIEWED"
-    if claim.get("predicate") not in {"CONTROLLED_BY", "OPERATED_BY"}:
-        return False, "NON_ATTRIBUTING_PREDICATE"
-    if claim.get("counter_evidence"):
-        return False, "COUNTER_EVIDENCE_PRESENT"
-    if not claim.get("supporting_evidence"):
-        return False, "SUPPORTING_EVIDENCE_MISSING"
+    """Return (eligible, reason) for a time-applicable economic-control claim."""
     recorded = _parse_utc(claim.get("recorded_at_utc"))
     start = _parse_utc(claim.get("valid_from_utc"))
     end = _parse_utc(claim.get("valid_to_utc"))
@@ -58,6 +46,19 @@ def _claim_applies(claim, event_time, known_at):
         return False, "INVALID_INTERVAL"
     if event_time < start or event_time > end:
         return False, "NOT_VALID_AT_EVENT_TIME"
+    if claim.get("epistemic_status") == "DISPUTED" or claim.get("review_status") == "DISPUTED":
+        return False, "DISPUTED"
+    if claim.get("epistemic_status") != "VERIFIED":
+        return False, "NOT_VERIFIED"
+    if claim.get("review_status") != "REVIEWED":
+        return False, "NOT_REVIEWED"
+    # OPERATED_BY describes operational responsibility, not economic control.
+    if claim.get("predicate") != "CONTROLLED_BY":
+        return False, "NON_CONTROL_PREDICATE"
+    if claim.get("counter_evidence"):
+        return False, "COUNTER_EVIDENCE_PRESENT"
+    if not claim.get("supporting_evidence"):
+        return False, "SUPPORTING_EVIDENCE_MISSING"
     subject = claim.get("subject")
     target = claim.get("object")
     if not isinstance(subject, dict) or subject.get("subject_type") != "ADDRESS":
@@ -274,7 +275,7 @@ def aggregate_entity_flows(movements, claims, start_time_utc, end_time_utc,
         "event_window_utc": {"start_inclusive": start_time_utc, "end_exclusive": end_time_utc},
         "known_at_utc": known_at_utc,
         "attribution_policy": {
-            "accepted_predicates": ["CONTROLLED_BY", "OPERATED_BY"],
+            "accepted_predicates": ["CONTROLLED_BY"],
             "required_epistemic_status": "VERIFIED",
             "required_review_status": "REVIEWED",
             "required_supporting_evidence": True,
