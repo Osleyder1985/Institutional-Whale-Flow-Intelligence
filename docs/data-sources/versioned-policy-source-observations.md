@@ -15,7 +15,8 @@ Select individual records with repeated `--source-id` arguments. The tool perfor
 | Status | Meaning |
 |---|---|
 | `UNCHANGED` | Retrieved body SHA-256 matches the registered baseline |
-| `CONTENT_CHANGED` | Retrieved body SHA-256 differs from the registered baseline |\n| `METADATA_CHANGED` | Body hash matches, but a registered ETag or Last-Modified baseline differs |
+| `CONTENT_CHANGED` | Retrieved body SHA-256 differs from the registered baseline |
+| `METADATA_CHANGED` | Body hash matches, but a registered ETag or Last-Modified baseline differs |
 | `BASELINE_NOT_ESTABLISHED` | No baseline hash exists; no change conclusion is possible |
 | `SOURCE_UNAVAILABLE` / `REVIEW_REQUIRED` | Retrieval failed; this does not prove deletion, revocation, or a legal change |
 
