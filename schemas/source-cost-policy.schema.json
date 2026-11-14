@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://iwfi.invalid/schemas/source-cost-policy.schema.json",
+  "title": "IWFI Source Cost Policy",
+  "description": "Fail-closed zero-external-cost eligibility contract for source adapters.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "source_id",
+    "cost_model",
+    "recurring_free_quota",
+    "billing_risk",
+    "payment_method_required",
+    "paid_fallback_enabled",
+    "terms_url",
+    "terms_reviewed_at_utc",
+    "zero_cost_eligible"
+  ],
+  "properties": {
+    "contract_version": { "const": "1.0.0" },
+    "source_id": { "type": "string", "minLength": 1, "pattern": "\\S" },
+    "cost_model": { "const": "ZERO_EXTERNAL_COST" },
+    "recurring_free_quota": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["limit", "period"],
+      "properties": {
+        "limit": { "type": "integer", "minimum": 1 },
+        "period": { "enum": ["DAILY", "WEEKLY", "MONTHLY", "PER_REQUEST"] }
+      }
+    },
+    "billing_risk": { "const": "NONE" },
+    "payment_method_required": { "const": false },
+    "paid_fallback_enabled": { "const": false },
+    "terms_url": { "type": "string", "format": "uri", "pattern": "^https://" },
+    "terms_reviewed_at_utc": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+    },
+    "zero_cost_eligible": { "const": true }
+  }
+}
