@@ -4,7 +4,7 @@
     {
       "contract_version": "1.1.0",
       "claim_id": "claim-eth-buyer",
-      "trade_id": "synthetic-eth-trade-multi-role",
+      "execution_id": "synthetic-eth-trade-multi-role",
       "actor_id": "synthetic-eth-buyer-a",
       "candidate_actor_ids": [],
       "participant_role": "BUYER",
@@ -31,7 +31,7 @@
     {
       "contract_version": "1.1.0",
       "claim_id": "claim-eth-broker",
-      "trade_id": "synthetic-eth-trade-multi-role",
+      "execution_id": "synthetic-eth-trade-multi-role",
       "actor_id": "synthetic-eth-broker",
       "candidate_actor_ids": [],
       "participant_role": "BROKER",
@@ -58,7 +58,7 @@
     {
       "contract_version": "1.1.0",
       "claim_id": "claim-eth-venue",
-      "trade_id": "synthetic-eth-trade-multi-role",
+      "execution_id": "synthetic-eth-trade-multi-role",
       "actor_id": "synthetic-eth-venue",
       "candidate_actor_ids": [],
       "participant_role": "EXECUTING_VENUE",
@@ -85,7 +85,7 @@
     {
       "contract_version": "1.1.0",
       "claim_id": "claim-eth-custodian",
-      "trade_id": "synthetic-eth-trade-multi-role",
+      "execution_id": "synthetic-eth-trade-multi-role",
       "actor_id": "synthetic-eth-custodian",
       "candidate_actor_ids": [],
       "participant_role": "CUSTODIAN",
@@ -112,7 +112,7 @@
     {
       "contract_version": "1.1.0",
       "claim_id": "claim-eth-fund",
-      "trade_id": "synthetic-eth-trade-multi-role",
+      "execution_id": "synthetic-eth-trade-multi-role",
       "actor_id": "synthetic-eth-fund",
       "candidate_actor_ids": [],
       "participant_role": "FUND",
@@ -139,7 +139,7 @@
     {
       "contract_version": "1.1.0",
       "claim_id": "claim-eth-manager",
-      "trade_id": "synthetic-eth-trade-multi-role",
+      "execution_id": "synthetic-eth-trade-multi-role",
       "actor_id": "synthetic-eth-manager",
       "candidate_actor_ids": [],
       "participant_role": "ASSET_MANAGER",
@@ -166,7 +166,7 @@
     {
       "contract_version": "1.1.0",
       "claim_id": "claim-eth-beneficial-owner-unknown",
-      "trade_id": "synthetic-eth-trade-multi-role",
+      "execution_id": "synthetic-eth-trade-multi-role",
       "actor_id": null,
       "candidate_actor_ids": [],
       "participant_role": "BENEFICIAL_OWNER",
