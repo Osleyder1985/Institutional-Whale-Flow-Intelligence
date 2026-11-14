@@ -17,8 +17,10 @@ class LocalStoragePreflightTests(unittest.TestCase):
             self.assertIn("path", result)
 
     def test_sync_named_directory_is_flagged(self):
-        with tempfile.TemporaryDirectory(prefix="OneDrive-test-") as temp:
-            result = inspect_storage_root(temp)
+        with tempfile.TemporaryDirectory() as temp:
+            sync_dir = Path(temp) / "OneDrive"
+            sync_dir.mkdir()
+            result = inspect_storage_root(sync_dir)
             self.assertEqual(result["sync_risk"], "RISK_DETECTED")
             self.assertIn("OneDrive", result["risk_details"][0])
 
