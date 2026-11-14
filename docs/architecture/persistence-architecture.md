@@ -227,7 +227,7 @@ The chain-integrity contract dependency is now defined and integrated through PR
 
 The persistence implementation must honor `docs/data-model/chain-integrity-contract.md` v2 and the pure evaluator in `iwfi/chain_integrity.py`. PR #117 CI Contract tests #566 passed 314 tests on Linux and 314 on Windows. This verifies the contract/evaluator test suite, not database durability or snapshot persistence. The contract-definition dependency is resolved; durable snapshot immutability still requires persistence and integration tests.
 
-Other unresolved inputs include expected event volume, retention duration by provider, deployment location, recovery objectives, security/key-management details, synchronization batch sizing, and actual query workloads. Offline-first behavior is a confirmed product requirement; its protocol and conflict policies remain assigned to Issue #22. No numeric operational target is invented here.
+Other unresolved inputs include expected event volume, retention duration by provider, deployment location, recovery objectives, security/key-management details, synchronization batch sizing, and actual query workloads. Offline-first behavior is a confirmed product requirement. A provider-neutral protocol proposal now exists in PR #118 / `docs/architecture/offline-sync-protocol.md`: central service authority, durable local outbox/replica, at-least-once delivery with idempotent operation IDs, post-commit receipts bound to operation + device + stream, server-issued cursors, explicit causal dependencies, and entity-specific conflict rules. The proposal is not yet accepted or implemented; Issue #22 remains open for real inbox/outbox transactions, three-client integration, restart/restore, encryption and retention enforcement. No numeric operational target is invented here.
 
 ## 10. Validation plan before backend implementation
 
@@ -252,6 +252,8 @@ The implementation plan must include synthetic tests for:
 - temporal claim correction and supersession;
 - interrupted transactions and retry after failure;
 - same sync batch submitted repeatedly, including a lost response after server commit;
+- receipt fingerprint and device/stream binding, rejecting a receipt whose cursor belongs to another installation or stream;
+- malformed UUIDs and invalid UTC calendar timestamps rejected before operation admission;
 - disconnect mid-batch and resume from the last server-confirmed cursor;
 - concurrent changes from three simulated clients without last-write-wins data loss;
 - causal dependencies arriving out of order and device clocks drifting;
