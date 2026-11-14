@@ -55,7 +55,8 @@ class SourceUseGuardTests(unittest.TestCase):
     def test_missing_retention_blocks_every_operation(self):
         for operation in ("DOWNLOAD", "STORE_LOCAL", "LOCAL_RESEARCH", "DERIVE_LOCAL"):
             with self.subTest(operation=operation):
-                self.assertFalse(authorize(operation, retention=None if False else {}).get("allowed"))
+                result = authorize_source_use(valid_policy(), operation)
+                self.assertFalse(result["allowed"])
         self.assertFalse(authorize(retention={})["allowed"])
 
     def test_external_or_commercial_operations_are_blocked(self):
