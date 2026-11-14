@@ -103,7 +103,8 @@ The product's first question is evidence of **who** is acting and **what** they 
 | Movement Ledger | #10 | #11 | Merged |
 | Observation resolution | #12 | #13 | Merged |
 | Actor Registry + Trade Execution | #51 | #52 | Merged; CI success on final HEAD |
-| End-to-end architecture | #50 | — | Open; next integration-design task |
+| Execution participant attribution | #43 | #55 | Contract and point-in-time resolver merged; real source viability pending |
+| Integrated architecture + boundary tests | #50 | #54, #56 | Architecture and synthetic cross-domain tests merged; Issue closed |
 
 ## Immediate next gate
 
