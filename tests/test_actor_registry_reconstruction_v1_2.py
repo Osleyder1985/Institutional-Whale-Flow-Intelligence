@@ -1,6 +1,9 @@
 import copy
 import json
 import unittest
+from pathlib import Path
+
+from jsonschema import Draft202012Validator
 
 from iwfi.actor_registry_reconstruction_v1_2 import (
     build_actor_registry_reconstruction_manifest_v1_2,
@@ -47,6 +50,13 @@ class RootClaimReconstructionV12Tests(unittest.TestCase):
             snapshots_by_id=snapshots, payloads_by_id=payloads,
             knowledge_cutoff_utc=CUTOFF, valid_time_utc=VALID,
         )
+
+    def test_manifest_conforms_to_versioned_json_schema(self):
+        data = root_fixture()
+        schema_path = Path(__file__).resolve().parents[1] / "schemas" / "attribution-reconstruction-manifest-v1.2.schema.json"
+        schema = json.loads(schema_path.read_text(encoding="utf-8"))
+        Draft202012Validator.check_schema(schema)
+        Draft202012Validator(schema).validate(data[6])
 
     def test_full_root_claim_and_registry_reconstruction(self):
         data = root_fixture()
