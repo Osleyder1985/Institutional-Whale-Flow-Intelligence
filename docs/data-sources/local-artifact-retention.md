@@ -41,7 +41,7 @@ Every newly stored artifact record must contain `depends_on_artifact_ids`, an ex
 
 - Enumerates every direct entry in the managed artifact root (excluding only the dedicated `_deletion_audit` directory); unknown files, folders, symlinks, malformed records, missing payloads, and digest mismatches fail closed.
 - Verifies each artifact directory ID against its record, hashes each `payload.bin`, and produces a deterministic SHA-256 inventory digest.
-- Resolves transitive dependants from the declared dependency graph and separately enumerates every `BACKUP` artifact in that root.
+- Resolves transitive dependants from `depends_on_artifact_ids` and reconciles the schema lineage references `validation_report_artifact_id` and `supersedes_artifact_id`; it separately enumerates every `BACKUP` artifact in that root.
 - Requires the deletion review lists to match the discovered local dependants and backup inventory exactly before any deletion begins.
 - Retains the inventory digest and explicit scope in the deletion audit.
 
