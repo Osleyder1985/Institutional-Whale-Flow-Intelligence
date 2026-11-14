@@ -6,8 +6,7 @@ from pathlib import Path
 import re
 import shutil
 
-from iwfi.retention_policy import authorize_artifact_write, retention_policy_errors
-from iwfi.source_use_guard import source_use_policy_errors
+from iwfi.local_artifact_inventory import (\n    ArtifactInventoryError, build_local_artifact_inventory, dependent_artifact_ids_for,\n)\nfrom iwfi.retention_policy import authorize_artifact_write, retention_policy_errors\nfrom iwfi.source_use_guard import source_use_policy_errors
 
 _SAFE_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 
