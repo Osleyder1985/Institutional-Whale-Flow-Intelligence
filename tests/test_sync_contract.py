@@ -389,7 +389,9 @@ class ReferenceSyncProtocolSimulationTests(unittest.TestCase):
                         "server_sequence": 104, "cursor": "cursor-104",
                         "committed_at_utc": "2026-11-14T10:00:00Z",
                         "idempotent_replay": False})
-        self.assertFalse(self.validators["receipts"].is_valid(receipt))
+        schema = json.loads(SCHEMAS["receipts"].read_text(encoding="utf-8"))
+        validator = Draft202012Validator(schema, format_checker=FormatChecker())
+        self.assertFalse(validator.is_valid(receipt))
 
 
 
