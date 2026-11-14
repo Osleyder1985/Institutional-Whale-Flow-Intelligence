@@ -26,7 +26,8 @@ class IntegratedActivityBoundaryTests(unittest.TestCase):
     def test_exchange_inflow_remains_aggregate_measurement_not_movement_or_trade(self):
         flow = next(x for x in self.observations if x["observation_id"] == "fixture-exchange-inflow")
         self.assertEqual(flow["observation_type"], "EXCHANGE_FLOW_METRIC")
-        self.assertIsNone(flow["movement"])
+        self.assertNotIn("movement", flow)
+        self.assertIn("measurement", flow)
         self.assertNotIn("event_type", flow)
         self.assertNotIn("execution_id", flow)
 
