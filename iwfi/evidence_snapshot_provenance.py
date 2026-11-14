@@ -149,6 +149,12 @@ def verify_manifest_dependencies(manifest, snapshots_by_id, payloads_by_id):
     dependencies = manifest.get("dependencies")
     if not isinstance(dependencies, list):
         return {"status": "INVALID_INPUT", "dependencies": []}
+    unsigned = {key: value for key, value in manifest.items() if key != "manifest_hash"}
+    encoded = json.dumps(unsigned, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    expected_manifest_hash = manifest.get("manifest_hash")
+    if not isinstance(expected_manifest_hash, str) or _sha256(encoded) != expected_manifest_hash:
+        return {"status": "INTEGRITY_FAILED", "dependencies": [],
+                "manifest_status": "MANIFEST_HASH_MISMATCH"}
     results = []
     for dependency in dependencies:
         if not isinstance(dependency, dict):
@@ -160,9 +166,13 @@ def verify_manifest_dependencies(manifest, snapshots_by_id, payloads_by_id):
             status = "SNAPSHOT_MISSING"
         elif payload is None:
             status = "PAYLOAD_UNAVAILABLE"
+        elif any(snapshot.get(field) != dependency.get(field) for field in
+                 ("source_id", "source_snapshot_id", "payload_hash", "hash_algorithm",
+                  "hash_scope", "canonicalization_version")):
+            status = "SNAPSHOT_REFERENCE_MISMATCH"
         else:
             status = verify_snapshot_payload(snapshot, payload)["status"]
         results.append({"source_snapshot_id": sid, "status": status})
     failed = any(item["status"] != "HASH_VERIFIED" for item in results)
     return {"status": "INTEGRITY_FAILED" if failed else "RECONSTRUCTION_INPUTS_VERIFIED",
-            "dependencies": results}
+            "manifest_status": "HASH_VERIFIED", "dependencies": results}
