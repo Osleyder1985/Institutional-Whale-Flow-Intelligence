@@ -47,7 +47,7 @@ Transaction inclusion identity is network + transaction ID + block height/hash +
 - Never resolve cross-provider disagreement by majority vote or implicit provider priority.
 - Conflicting ACTIVE/NOT_ACTIVE assertions for the same block remain unresolved.
 - Multiple block hashes without a same-source, same-view, strictly ordered reorg sequence remain unresolved.
-- The evaluator returns sorted evidence IDs, distinct movement event locators, a policy version and a deterministic SHA-256 assessment fingerprint. Identical evidence under the same policy produces the same fingerprint.
+- The evaluator returns sorted evidence IDs, distinct movement event locators, a policy version and a deterministic SHA-256 assessment fingerprint over the canonicalized full evidence records (not only their IDs). Identical evidence under the same policy produces the same fingerprint; changing evidence content changes the fingerprint. UTC chronology is parsed as timestamps, including fractional seconds, rather than compared lexically.
 - A ResearchSnapshot must freeze the assessment fingerprint/ID and exact evidence observation IDs it used. Later assessments are appended; historical snapshots are not recalculated. The current evaluator is pure and does not implement persistence or snapshot storage.
 
 ## 6. Synthetic test requirements
