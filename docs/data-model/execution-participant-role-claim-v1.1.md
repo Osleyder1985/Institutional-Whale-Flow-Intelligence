@@ -17,7 +17,7 @@ A `TradeExecution` represents one observed execution. An `ExecutionParticipantRo
 | Field | Meaning |
 |---|---|
 | `claim_id` | Stable unique ID for this claim |
-| `trade_id` | Exactly one individual TradeExecution |
+| `execution_id` | Exactly one individual TradeExecution |
 | `actor_id` | Actor Registry reference, or null when identity is unknown/disputed |
 | `candidate_actor_ids` | Candidate actors only for DISPUTED claims; never a selected winner |
 | `participant_role` | The actor's role in this specific execution |
