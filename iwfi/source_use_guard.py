@@ -10,7 +10,7 @@ _FORBIDDEN_OPERATIONS = {
 
 def _valid_utc(value):
     if not isinstance(value, str) or not re.fullmatch(
-        r"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$", value
+        r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$", value
     ):
         return False
     try:
