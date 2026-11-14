@@ -34,7 +34,7 @@ def _address_key(address, network_id):
 
 
 def _claim_applies(claim, event_time, known_at):
-    """Return (eligible, reason) for a time-applicable economic-control claim."""
+    """Return (eligible, reason) for a time-applicable address-control claim."""
     recorded = _parse_utc(claim.get("recorded_at_utc"))
     start = _parse_utc(claim.get("valid_from_utc"))
     end = _parse_utc(claim.get("valid_to_utc"))
@@ -54,7 +54,7 @@ def _claim_applies(claim, event_time, known_at):
         return False, "NOT_VERIFIED"
     if claim.get("review_status") != "REVIEWED":
         return False, "NOT_REVIEWED"
-    # OPERATED_BY describes operational responsibility, not economic control.
+    # OPERATED_BY describes operational responsibility, not control of address keys.
     if claim.get("predicate") != "CONTROLLED_BY":
         return False, "NON_CONTROL_PREDICATE"
     if claim.get("counter_evidence"):
