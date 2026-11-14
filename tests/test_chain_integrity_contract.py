@@ -178,10 +178,12 @@ class ChainIntegrityContractTests(unittest.TestCase):
         later = self._record("status", "BLOCK_STATUS", status="NOT_ACTIVE")
         later["inclusion"] = dict(original["inclusion"])
         later["observed_at_utc"] = "2026-11-13T12:01:00Z"
-        new_result = assess_chain_observations([original, later])
+        new_result = assess_chain_observations([original, later], supersedes_assessment_id=historical_result["assessment_fingerprint"])
         self.assertEqual(historical_result["status"], "CANONICALITY_UNRESOLVED")
         self.assertEqual(new_result["status"], "NOT_CANONICAL")
         self.assertEqual(historical_result["evidence_observation_ids"], ["included"])
+        self.assertEqual(new_result["supersedes_assessment_id"], historical_result["assessment_fingerprint"])
+        self.assertNotEqual(new_result["assessment_fingerprint"], historical_result["assessment_fingerprint"])
 
 
     def test_finality_requires_positive_active_evidence_for_exact_inclusion(self):
@@ -248,6 +250,12 @@ class ChainIntegrityContractTests(unittest.TestCase):
         record["event_locator"]["value"] = "1"
         second = assess_chain_observations([record])["assessment_fingerprint"]
         self.assertNotEqual(first, second)
+
+
+    def test_blank_supersession_reference_is_rejected(self):
+        from iwfi.chain_integrity import assess_chain_observations
+        with self.assertRaises(ValueError):
+            assess_chain_observations([self._record("a", "BLOCK_INCLUDED")], supersedes_assessment_id="   ")
 
 
 if __name__ == "__main__":
