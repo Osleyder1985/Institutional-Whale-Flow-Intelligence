@@ -6,7 +6,7 @@ from pathlib import Path
 import re
 import shutil
 
-from iwfi.retention_policy import authorize_artifact_write
+from iwfi.retention_policy import authorize_artifact_write, retention_policy_errors\nfrom iwfi.source_use_guard import source_use_policy_errors
 
 _SAFE_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 
@@ -43,6 +43,14 @@ def delete_artifacts(root, artifact_id, dependent_artifact_ids_reviewed,
         raise ArtifactDeletionError("storage root must be an existing, non-symlink local directory")
     if not isinstance(source_policy, dict) or not isinstance(retention_policy, dict):
         raise ArtifactDeletionError("source and retention policies must be objects")
+    policy_errors = source_use_policy_errors(source_policy)
+    policy_errors.extend(retention_policy_errors(
+        retention_policy,
+        expected_policy_id=source_policy.get("retention_policy_id"),
+        expected_source_id=source_policy.get("source_id"),
+    ))
+    if policy_errors:
+        raise ArtifactDeletionError("source/retention policy invalid: " + "; ".join(policy_errors))
     if not isinstance(artifact_id, str) or not _SAFE_ID.fullmatch(artifact_id):
         raise ArtifactDeletionError("unsafe artifact_id")
     if not isinstance(deletion_id, str) or not _SAFE_ID.fullmatch(deletion_id):
@@ -52,6 +60,8 @@ def delete_artifacts(root, artifact_id, dependent_artifact_ids_reviewed,
     if not isinstance(dependent_artifact_ids_reviewed, list) or not isinstance(backup_artifact_ids_reviewed, list):
         raise ArtifactDeletionError("dependency and backup reviews must be explicit lists")
     all_ids = [artifact_id] + dependent_artifact_ids_reviewed + backup_artifact_ids_reviewed
+    if any(not isinstance(item, str) or not _SAFE_ID.fullmatch(item) for item in all_ids):
+        raise ArtifactDeletionError("all reviewed artifact IDs must be safe strings")
     if len(all_ids) != len(set(all_ids)):
         raise ArtifactDeletionError("artifact IDs must be unique across target, dependencies, and backups")
     if not _SAFE_ID.fullmatch(artifact_id):
@@ -66,10 +76,10 @@ def delete_artifacts(root, artifact_id, dependent_artifact_ids_reviewed,
         raise ArtifactDeletionError("reviewed_at_utc is not a valid UTC timestamp")
 
     audit_dir = root / "_deletion_audit"
-    if audit_dir.is_symlink():
-        raise ArtifactDeletionError("deletion audit directory cannot be a symlink")
+    if audit_dir.is_symlink() or (audit_dir.exists() and not audit_dir.is_dir()):
+        raise ArtifactDeletionError("deletion audit path must be a non-symlink directory")
     audit_path = audit_dir / f"{deletion_id}.json"
-    if audit_path.exists():
+    if audit_path.exists() or audit_path.is_symlink():
         raise ArtifactDeletionError("deletion audit ID already exists")
 
     records = {}
