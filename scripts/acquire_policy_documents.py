@@ -16,11 +16,12 @@ from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 SOURCE_MANIFEST_PATH = Path(__file__).resolve().parents[1] / "data" / "policy-document-sources-v1.0.json"
 ALLOWED_HOSTS = {"raw.githubusercontent.com", "creativecommons.org", "bin.bnbstatic.com"}
-EXPECTED_DOCUMENT_IDS = {
-    "binance_vision_dataset_terms_v1",
-    "cc_by_nc_sa_4_0_legal_code",
-    "binance_terms_of_use_adgm_2026_01_05",
+EXPECTED_URLS = {
+    "binance_vision_dataset_terms_v1": "https://raw.githubusercontent.com/binance/binance-public-data/master/TERMS_AND_CONDITIONS.md",
+    "cc_by_nc_sa_4_0_legal_code": "https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode.txt",
+    "binance_terms_of_use_adgm_2026_01_05": "https://bin.bnbstatic.com/static/cms/cg08ou2ak0tn7mcplvfg/file/9958035d95bff024a86a662fb4fdba45527d55a936e2cb9ed1d7ddf205ca082d.pdf",
 }
+EXPECTED_DOCUMENT_IDS = set(EXPECTED_URLS)
 CHUNK_SIZE = 1024 * 1024
 MANIFEST_NAME = "policy-document-evidence-manifest-v1.0.json"
 _SHA256 = re.compile(r"^[a-f0-9]{64}$")
@@ -69,6 +70,8 @@ def load_source_manifest_payload(payload):
         if document_id in result:
             raise AcquisitionError("SOURCE_MANIFEST_DUPLICATE_ID")
         _validate_url_shape(url)
+        if url != EXPECTED_URLS.get(document_id):
+            raise AcquisitionError("SOURCE_URL_NOT_ALLOWLISTED")
         expected = item.get("expected_sha256")
         if expected is not None and (not isinstance(expected, str) or not _SHA256.fullmatch(expected)):
             raise AcquisitionError("EXPECTED_SHA256_INVALID")
