@@ -124,6 +124,12 @@ def aggregate_entity_exposure_history(snapshots, claims, known_at_utc):
         if snapshot_time is None or recorded is None:
             excluded["invalid_timestamp"] += 1
             continue
+        if snapshot_time > cutoff:
+            excluded["future_snapshot_at_cutoff"] += 1
+            continue
+        if recorded < snapshot_time:
+            excluded["recorded_before_snapshot"] += 1
+            continue
         if recorded > cutoff:
             excluded["not_known_at_cutoff"] += 1
             continue
