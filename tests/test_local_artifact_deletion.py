@@ -97,6 +97,16 @@ class LocalArtifactDeletionTests(unittest.TestCase):
             self.assertTrue((Path(temp) / "backup-unrelated").exists())
             self.assertTrue((Path(temp) / "other-archive").exists())
 
+    def test_backup_can_be_deleted_as_the_target_artifact(self):
+        with tempfile.TemporaryDirectory() as temp:
+            create_artifact(temp, "backup-target", "BACKUP")
+            result = delete_artifacts(
+                temp, "backup-target", [], ["backup-target"], "deletion-001",
+                "test-unlink", source_policy(), retention_policy(), "2026-11-14T00:00:00Z"
+            )
+            self.assertEqual(result["status"], "VERIFIED")
+            self.assertFalse((Path(temp) / "backup-target").exists())
+
     def test_untracked_nested_file_blocks_deletion(self):
         with tempfile.TemporaryDirectory() as temp:
             create_artifact(temp, "archive-001", "SOURCE_ARCHIVE")
