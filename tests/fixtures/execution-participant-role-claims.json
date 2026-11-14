@@ -1,0 +1,187 @@
+{
+  "contract_version": "1.1.0",
+  "claims": [
+    {
+      "contract_version": "1.1.0",
+      "claim_id": "claim-eth-buyer",
+      "trade_id": "synthetic-eth-trade-multi-role",
+      "actor_id": "synthetic-eth-buyer-a",
+      "candidate_actor_ids": [],
+      "participant_role": "BUYER",
+      "participant_side": "BUY",
+      "epistemic_status": "DIRECT",
+      "attribution_method": "OFFICIAL_NAMED_EXECUTION_DISCLOSURE",
+      "recorded_at_utc": "2026-02-11T12:00:03Z",
+      "known_at_utc": "2026-02-11T12:00:00Z",
+      "valid_from_utc": "2026-02-11T11:00:00Z",
+      "valid_to_utc": "2026-02-11T11:00:00Z",
+      "source_observation_ids": [
+        "obs-eth-buyer"
+      ],
+      "supporting_evidence": [
+        {
+          "evidence_type": "OFFICIAL_NAMED_EXECUTION_DISCLOSURE",
+          "source": "synthetic-source",
+          "record_ref": "synthetic:claim-eth-buyer",
+          "observation_id": "obs-eth-buyer"
+        }
+      ],
+      "counter_evidence": []
+    },
+    {
+      "contract_version": "1.1.0",
+      "claim_id": "claim-eth-broker",
+      "trade_id": "synthetic-eth-trade-multi-role",
+      "actor_id": "synthetic-eth-broker",
+      "candidate_actor_ids": [],
+      "participant_role": "BROKER",
+      "participant_side": "NOT_APPLICABLE",
+      "epistemic_status": "DIRECT",
+      "attribution_method": "OFFICIAL_NAMED_EXECUTION_DISCLOSURE",
+      "recorded_at_utc": "2026-02-11T12:00:03Z",
+      "known_at_utc": "2026-02-11T12:00:00Z",
+      "valid_from_utc": "2026-02-11T11:00:00Z",
+      "valid_to_utc": "2026-02-11T11:00:00Z",
+      "source_observation_ids": [
+        "obs-eth-broker"
+      ],
+      "supporting_evidence": [
+        {
+          "evidence_type": "OFFICIAL_NAMED_EXECUTION_DISCLOSURE",
+          "source": "synthetic-source",
+          "record_ref": "synthetic:claim-eth-broker",
+          "observation_id": "obs-eth-broker"
+        }
+      ],
+      "counter_evidence": []
+    },
+    {
+      "contract_version": "1.1.0",
+      "claim_id": "claim-eth-venue",
+      "trade_id": "synthetic-eth-trade-multi-role",
+      "actor_id": "synthetic-eth-venue",
+      "candidate_actor_ids": [],
+      "participant_role": "EXECUTING_VENUE",
+      "participant_side": "NOT_APPLICABLE",
+      "epistemic_status": "DIRECT",
+      "attribution_method": "OFFICIAL_NAMED_EXECUTION_DISCLOSURE",
+      "recorded_at_utc": "2026-02-11T12:00:03Z",
+      "known_at_utc": "2026-02-11T12:00:00Z",
+      "valid_from_utc": "2026-02-11T11:00:00Z",
+      "valid_to_utc": "2026-02-11T11:00:00Z",
+      "source_observation_ids": [
+        "obs-eth-venue"
+      ],
+      "supporting_evidence": [
+        {
+          "evidence_type": "OFFICIAL_NAMED_EXECUTION_DISCLOSURE",
+          "source": "synthetic-source",
+          "record_ref": "synthetic:claim-eth-venue",
+          "observation_id": "obs-eth-venue"
+        }
+      ],
+      "counter_evidence": []
+    },
+    {
+      "contract_version": "1.1.0",
+      "claim_id": "claim-eth-custodian",
+      "trade_id": "synthetic-eth-trade-multi-role",
+      "actor_id": "synthetic-eth-custodian",
+      "candidate_actor_ids": [],
+      "participant_role": "CUSTODIAN",
+      "participant_side": "NOT_APPLICABLE",
+      "epistemic_status": "DIRECT",
+      "attribution_method": "OFFICIAL_NAMED_EXECUTION_DISCLOSURE",
+      "recorded_at_utc": "2026-02-11T12:00:03Z",
+      "known_at_utc": "2026-02-11T12:00:00Z",
+      "valid_from_utc": "2026-02-11T11:00:00Z",
+      "valid_to_utc": "2026-02-11T11:00:00Z",
+      "source_observation_ids": [
+        "obs-eth-custodian"
+      ],
+      "supporting_evidence": [
+        {
+          "evidence_type": "OFFICIAL_NAMED_EXECUTION_DISCLOSURE",
+          "source": "synthetic-source",
+          "record_ref": "synthetic:claim-eth-custodian",
+          "observation_id": "obs-eth-custodian"
+        }
+      ],
+      "counter_evidence": []
+    },
+    {
+      "contract_version": "1.1.0",
+      "claim_id": "claim-eth-fund",
+      "trade_id": "synthetic-eth-trade-multi-role",
+      "actor_id": "synthetic-eth-fund",
+      "candidate_actor_ids": [],
+      "participant_role": "FUND",
+      "participant_side": "NOT_APPLICABLE",
+      "epistemic_status": "DIRECT",
+      "attribution_method": "OFFICIAL_NAMED_EXECUTION_DISCLOSURE",
+      "recorded_at_utc": "2026-02-11T12:00:03Z",
+      "known_at_utc": "2026-02-11T12:00:00Z",
+      "valid_from_utc": "2026-02-11T11:00:00Z",
+      "valid_to_utc": "2026-02-11T11:00:00Z",
+      "source_observation_ids": [
+        "obs-eth-fund"
+      ],
+      "supporting_evidence": [
+        {
+          "evidence_type": "OFFICIAL_NAMED_EXECUTION_DISCLOSURE",
+          "source": "synthetic-source",
+          "record_ref": "synthetic:claim-eth-fund",
+          "observation_id": "obs-eth-fund"
+        }
+      ],
+      "counter_evidence": []
+    },
+    {
+      "contract_version": "1.1.0",
+      "claim_id": "claim-eth-manager",
+      "trade_id": "synthetic-eth-trade-multi-role",
+      "actor_id": "synthetic-eth-manager",
+      "candidate_actor_ids": [],
+      "participant_role": "ASSET_MANAGER",
+      "participant_side": "NOT_APPLICABLE",
+      "epistemic_status": "DIRECT",
+      "attribution_method": "OFFICIAL_NAMED_EXECUTION_DISCLOSURE",
+      "recorded_at_utc": "2026-02-11T12:00:03Z",
+      "known_at_utc": "2026-02-11T12:00:00Z",
+      "valid_from_utc": "2026-02-11T11:00:00Z",
+      "valid_to_utc": "2026-02-11T11:00:00Z",
+      "source_observation_ids": [
+        "obs-eth-manager"
+      ],
+      "supporting_evidence": [
+        {
+          "evidence_type": "OFFICIAL_NAMED_EXECUTION_DISCLOSURE",
+          "source": "synthetic-source",
+          "record_ref": "synthetic:claim-eth-manager",
+          "observation_id": "obs-eth-manager"
+        }
+      ],
+      "counter_evidence": []
+    },
+    {
+      "contract_version": "1.1.0",
+      "claim_id": "claim-eth-beneficial-owner-unknown",
+      "trade_id": "synthetic-eth-trade-multi-role",
+      "actor_id": null,
+      "candidate_actor_ids": [],
+      "participant_role": "BENEFICIAL_OWNER",
+      "participant_side": "UNKNOWN",
+      "epistemic_status": "UNKNOWN",
+      "attribution_method": "NONE",
+      "recorded_at_utc": "2026-02-11T12:00:03Z",
+      "known_at_utc": "2026-02-11T12:00:00Z",
+      "valid_from_utc": "2026-02-11T11:00:00Z",
+      "valid_to_utc": "2026-02-11T11:00:00Z",
+      "source_observation_ids": [
+        "obs-eth-beneficial-owner-unknown"
+      ],
+      "supporting_evidence": [],
+      "counter_evidence": []
+    }
+  ]
+}
