@@ -63,6 +63,13 @@ def _validate_record(record, source_policy, retention_policy, payload_digest):
         raise ArtifactStoreError("artifact timestamps must be valid UTC timestamps")
     if not isinstance(record["revision_id"], str) or not record["revision_id"].strip():
         raise ArtifactStoreError("revision_id must be non-empty")
+    dependencies = record["depends_on_artifact_ids"]
+    if not isinstance(dependencies, list) or any(
+        not isinstance(item, str) or not _SAFE_ID.fullmatch(item) for item in dependencies
+    ):
+        raise ArtifactStoreError("depends_on_artifact_ids must be an explicit safe-ID list")
+    if len(dependencies) != len(set(dependencies)) or record["artifact_id"] in dependencies:
+        raise ArtifactStoreError("artifact dependencies must be unique and cannot reference self")
     if record["local_sha256"] != payload_digest:
         raise ArtifactStoreError("local_sha256 does not match payload bytes")
 
