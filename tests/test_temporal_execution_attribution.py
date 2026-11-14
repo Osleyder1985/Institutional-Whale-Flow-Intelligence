@@ -130,6 +130,43 @@ class TemporalExecutionAttributionTests(unittest.TestCase):
         self.assertEqual(result["status"], "UNIQUE")
         self.assertEqual(result["actor_ids"], ["synthetic-eth-manager"])
 
+    def test_explicit_relationship_dependency_is_required_for_named_actor(self):
+        claims = copy.deepcopy(self.claims)
+        manager_claim = next(x for x in claims["claims"] if x["claim_id"] == "claim-eth-manager")
+        manager_claim["required_relationship_ids"] = ["synthetic-manager-manages-fund"]
+        result = resolve_execution_participants_as_of(
+            claims, self.trade, "2026-02-11T12:30:00Z", self.actors, self.observation_ids
+        )
+        manager = next(x for x in result["participants"] if x["participant_role"] == "ASSET_MANAGER")
+        self.assertEqual(manager["status"], "DIRECT")
+        self.assertEqual(manager["actor_id"], "synthetic-eth-manager")
+
+    def test_required_relationship_recorded_after_cutoff_blocks_named_actor(self):
+        claims = copy.deepcopy(self.claims)
+        manager_claim = next(x for x in claims["claims"] if x["claim_id"] == "claim-eth-manager")
+        manager_claim["required_relationship_ids"] = ["synthetic-manager-manages-fund"]
+        registry = copy.deepcopy(self.actors)
+        registry["relationships"][0]["recorded_at_utc"] = "2026-02-11T12:31:00Z"
+        result = resolve_execution_participants_as_of(
+            claims, self.trade, "2026-02-11T12:30:00Z", registry, self.observation_ids
+        )
+        manager = next(x for x in result["participants"] if x["participant_role"] == "ASSET_MANAGER")
+        self.assertEqual(manager["status"], "UNKNOWN")
+        self.assertIsNone(manager["actor_id"])
+
+    def test_required_disputed_relationship_blocks_named_actor(self):
+        claims = copy.deepcopy(self.claims)
+        manager_claim = next(x for x in claims["claims"] if x["claim_id"] == "claim-eth-manager")
+        manager_claim["required_relationship_ids"] = ["synthetic-manager-manages-fund"]
+        registry = copy.deepcopy(self.actors)
+        registry["relationships"][0]["status"] = "DISPUTED"
+        result = resolve_execution_participants_as_of(
+            claims, self.trade, "2026-02-11T12:30:00Z", registry, self.observation_ids
+        )
+        manager = next(x for x in result["participants"] if x["participant_role"] == "ASSET_MANAGER")
+        self.assertEqual(manager["status"], "UNKNOWN")
+        self.assertIsNone(manager["actor_id"])
+
     def test_relationship_discovered_after_cutoff_is_unknown(self):
         result = resolve_relationship_as_of(
             self.actors, "synthetic-eth-manager", "synthetic-eth-fund",
