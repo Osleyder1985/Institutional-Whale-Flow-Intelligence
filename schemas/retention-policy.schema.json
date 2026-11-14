@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://iwfi.invalid/schemas/retention-policy.schema.json",
+  "title": "IWFI Local Artifact Retention Policy",
+  "description": "Fail-closed, source-scoped retention policy. This schema defines required evidence but does not approve any retention duration.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "policy_id", "source_id", "status", "storage_scope", "cloud_sync_allowed", "external_cost_usd", "artifact_rules"],
+  "properties": {
+    "contract_version": { "const": "1.0.0" },
+    "policy_id": { "type": "string", "minLength": 1, "pattern": "\\S" },
+    "source_id": { "type": "string", "minLength": 1, "pattern": "\\S" },
+    "status": { "enum": ["NOT_APPROVED", "APPROVED"] },
+    "storage_scope": { "const": "LOCAL_ONLY" },
+    "cloud_sync_allowed": { "const": false },
+    "external_cost_usd": { "const": 0 },
+    "artifact_rules": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["SOURCE_ARCHIVE", "CHECKSUM", "VALIDATION_REPORT", "NORMALIZED_OBSERVATION", "DERIVED_DATA", "SNAPSHOT", "LOG", "BACKUP"],
+      "properties": {
+        "SOURCE_ARCHIVE": { "$ref": "#/$defs/artifactRule" },
+        "CHECKSUM": { "$ref": "#/$defs/artifactRule" },
+        "VALIDATION_REPORT": { "$ref": "#/$defs/artifactRule" },
+        "NORMALIZED_OBSERVATION": { "$ref": "#/$defs/artifactRule" },
+        "DERIVED_DATA": { "$ref": "#/$defs/artifactRule" },
+        "SNAPSHOT": { "$ref": "#/$defs/artifactRule" },
+        "LOG": { "$ref": "#/$defs/artifactRule" },
+        "BACKUP": { "$ref": "#/$defs/artifactRule" }
+      }
+    }
+  },
+  "$defs": {
+    "artifactRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "retention_basis", "retention_mode", "deletion_method", "deletion_evidence_required", "inherits_source_restrictions"],
+      "properties": {
+        "status": { "enum": ["NOT_APPROVED", "APPROVED"] },
+        "retention_basis": { "type": "string", "minLength": 1, "pattern": "\\S" },
+        "retention_mode": { "enum": ["FIXED_DURATION", "UNTIL_EVENT"] },
+        "retention_duration_seconds": { "type": "integer", "minimum": 1 },
+        "retention_end_event": { "type": "string", "minLength": 1, "pattern": "\\S" },
+        "deletion_method": { "type": "string", "minLength": 1, "pattern": "\\S" },
+        "deletion_evidence_required": { "const": true },
+        "inherits_source_restrictions": { "const": true }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "retention_mode": { "const": "FIXED_DURATION" } }, "required": ["retention_mode"] },
+          "then": { "required": ["retention_duration_seconds"], "not": { "required": ["retention_end_event"] } }
+        },
+        {
+          "if": { "properties": { "retention_mode": { "const": "UNTIL_EVENT" } }, "required": ["retention_mode"] },
+          "then": { "required": ["retention_end_event"], "not": { "required": ["retention_duration_seconds"] } }
+        }
+      ]
+    }
+  }
+}
