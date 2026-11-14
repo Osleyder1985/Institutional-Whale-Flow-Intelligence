@@ -222,6 +222,37 @@ def resolve_relationship_as_of(registry, subject_actor_id, object_actor_id, rela
     })}
 
 
+def resolve_relationship_id_as_of(registry, relationship_id, knowledge_cutoff_utc, valid_time_utc):
+    """Resolve one explicitly referenced direct relationship claim by ID and both temporal axes."""
+    cutoff, valid_time = _time(knowledge_cutoff_utc), _time(valid_time_utc)
+    if cutoff is None or valid_time is None or not isinstance(relationship_id, str) or not relationship_id.strip():
+        return {"status": "INVALID_INPUT", "relationship": None}
+    errors = validate_actor_registry_v11(registry)
+    if errors:
+        return {"status": "INVALID_REGISTRY", "relationship": None, "errors": errors}
+    matches = [item for item in registry["relationships"] if item["relationship_id"] == relationship_id]
+    if len(matches) != 1:
+        return {"status": "UNKNOWN", "relationship": None}
+    relation = matches[0]
+    subject = resolve_actor_identity_as_of(
+        registry, relation["subject_actor_id"], knowledge_cutoff_utc, valid_time_utc
+    )
+    target = resolve_actor_identity_as_of(
+        registry, relation["object_actor_id"], knowledge_cutoff_utc, valid_time_utc
+    )
+    if subject["status"] == "DISPUTED" or target["status"] == "DISPUTED":
+        return {"status": "DISPUTED", "relationship": None}
+    if subject["status"] != "ELIGIBLE" or target["status"] != "ELIGIBLE":
+        return {"status": "UNKNOWN", "relationship": None}
+    if _time(relation["known_at_utc"]) > cutoff or _time(relation["recorded_at_utc"]) > cutoff:
+        return {"status": "UNKNOWN", "relationship": None}
+    if not _valid_at(relation, valid_time):
+        return {"status": "UNKNOWN", "relationship": None}
+    if relation.get("counter_evidence_refs") or relation.get("status") == "DISPUTED":
+        return {"status": "DISPUTED", "relationship": None}
+    return {"status": relation["status"], "relationship": relation}
+
+
 def resolve_execution_participants_as_of(claim_registry, trade, knowledge_cutoff_utc,
                                          actor_registry, observation_ids):
     """Resolve role claims only when actor identity is bitemporally eligible for the execution."""
@@ -288,6 +319,43 @@ def resolve_execution_participants_as_of(claim_registry, trade, knowledge_cutoff
                 claim["attribution_method"] = "NONE"
                 claim["source_observation_ids"] = []
                 claim["counter_evidence"] = []
+        if claim.get("epistemic_status") in {"DIRECT", "INFERRED"}:
+            dependencies = claim.get("required_relationship_ids", [])
+            if not isinstance(dependencies, list) or any(
+                not isinstance(value, str) or not value.strip() for value in dependencies
+            ) or len(dependencies) != len(set(dependencies)):
+                return {"status": "INVALID_INPUT", "participants": [], "errors": [
+                    f"claim {claim.get('claim_id')}: invalid required_relationship_ids"
+                ]}
+            relationship_inferred = False
+            relationship_blocked = False
+            for relationship_id in dependencies:
+                relation_result = resolve_relationship_id_as_of(
+                    actor_registry, relationship_id, knowledge_cutoff_utc, trade["event_time_utc"]
+                )
+                relation = relation_result.get("relationship")
+                if relation_result["status"] in {"UNKNOWN", "DISPUTED", "INVALID_INPUT", "INVALID_REGISTRY"}:
+                    relationship_blocked = True
+                    break
+                if relation is None or claim.get("actor_id") not in {
+                    relation.get("subject_actor_id"), relation.get("object_actor_id")
+                }:
+                    return {"status": "INVALID_INPUT", "participants": [], "errors": [
+                        f"claim {claim.get('claim_id')}: required relationship does not include attributed actor"
+                    ]}
+                if relation_result["status"] != "VERIFIED":
+                    relationship_inferred = True
+            if relationship_blocked:
+                claim["actor_id"] = None
+                claim["candidate_actor_ids"] = []
+                claim["epistemic_status"] = "UNKNOWN"
+                claim["attribution_method"] = "NONE"
+                claim["source_observation_ids"] = []
+                claim["supporting_evidence"] = []
+                claim["counter_evidence"] = []
+            elif relationship_inferred and claim["epistemic_status"] == "DIRECT":
+                claim["epistemic_status"] = "INFERRED"
+                claim["attribution_method"] = "OTHER"
         visible_claims.append(claim)
 
     # Claims converted to UNKNOWN must be schema-valid and must not keep unsupported refs.
