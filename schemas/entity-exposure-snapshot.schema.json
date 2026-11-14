@@ -180,5 +180,126 @@
       "format": "date-time",
       "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "asset_id": {
+            "const": "bitcoin:btc"
+          }
+        },
+        "required": [
+          "asset_id"
+        ]
+      },
+      "then": {
+        "properties": {
+          "network_id": {
+            "const": "bitcoin-mainnet"
+          },
+          "addresses": {
+            "items": {
+              "properties": {
+                "unit": {
+                  "const": "satoshi"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "asset_id": {
+            "const": "ethereum:eth"
+          }
+        },
+        "required": [
+          "asset_id"
+        ]
+      },
+      "then": {
+        "properties": {
+          "network_id": {
+            "const": "eip155:1"
+          },
+          "addresses": {
+            "items": {
+              "properties": {
+                "unit": {
+                  "const": "wei"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "canonicality": {
+            "const": "CANONICAL"
+          }
+        },
+        "required": [
+          "canonicality"
+        ]
+      },
+      "then": {
+        "properties": {
+          "confirmation_status": {
+            "const": "CONFIRMED"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "inventory_coverage": {
+            "properties": {
+              "status": {
+                "const": "COMPLETE"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          }
+        },
+        "required": [
+          "inventory_coverage"
+        ]
+      },
+      "then": {
+        "properties": {
+          "inventory_coverage": {
+            "properties": {
+              "expected_address_count": {
+                "type": "integer"
+              },
+              "evidence_ref": {
+                "type": "string",
+                "minLength": 1
+              },
+              "review_status": {
+                "const": "REVIEWED"
+              },
+              "reviewer_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "reviewed_at_utc": {
+                "$ref": "#/$defs/utcTimestamp"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
 }
