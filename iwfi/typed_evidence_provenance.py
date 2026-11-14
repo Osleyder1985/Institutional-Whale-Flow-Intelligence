@@ -155,3 +155,60 @@ def resolve_actor_evidence_as_of(actor_record, snapshots, knowledge_cutoff_utc,
         return {"status": "INVALID_INPUT", "supporting": supporting, "counter": counter}
     return {"status": "RESOLVED", "supporting": supporting, "counter": counter,
             "identity_status": actor_record.get("identity_status")}
+
+
+def resolve_actor_registry_evidence_as_of(registry, snapshots,
+                                          knowledge_cutoff_utc, valid_time_utc):
+    """Resolve evidence for actors, aliases, classifications and relationships."""
+    if not isinstance(registry, dict) or registry.get("contract_version") != "1.2.0":
+        return {"status": "INVALID_INPUT", "records": [],
+                "errors": ["unsupported Actor Registry contract version"]}
+    cutoff, valid_time = _parse_time(knowledge_cutoff_utc), _parse_time(valid_time_utc)
+    if cutoff is None or valid_time is None:
+        return {"status": "INVALID_INPUT", "records": [],
+                "errors": ["invalid query timestamps"]}
+    collections = []
+    for index, actor in enumerate(registry.get("actors", [])):
+        collections.append((f"actors[{index}]", actor))
+        if isinstance(actor, dict):
+            for field in ("aliases", "classifications"):
+                for subindex, item in enumerate(actor.get(field, [])):
+                    collections.append((f"actors[{index}].{field}[{subindex}]", item))
+    for index, relationship in enumerate(registry.get("relationships", [])):
+        collections.append((f"relationships[{index}]", relationship))
+    results, errors = [], []
+    for label, item in collections:
+        if not isinstance(item, dict):
+            errors.append(f"{label}: expected object")
+            continue
+        known = _parse_time(item.get("known_at_utc"))
+        recorded = _parse_time(item.get("recorded_at_utc"))
+        if known is None or recorded is None or recorded < known:
+            errors.append(f"{label}: invalid bitemporal metadata")
+            continue
+        if known > cutoff or recorded > cutoff:
+            results.append({"record": label, "status": "EXCLUDED_AFTER_CUTOFF"})
+            continue
+        start_value, end_value = item.get("valid_from_utc"), item.get("valid_to_utc")
+        start = _parse_time(start_value) if start_value is not None else None
+        end = _parse_time(end_value) if end_value is not None else None
+        if ((start_value is not None and start is None) or
+                (end_value is not None and end is None) or
+                (start is not None and end is not None and end < start)):
+            errors.append(f"{label}: invalid validity interval")
+            continue
+        if (start and start > valid_time) or (end and end < valid_time):
+            results.append({"record": label, "status": "EXCLUDED_OUTSIDE_VALIDITY"})
+            continue
+        for polarity in ("evidence_refs", "counter_evidence_refs"):
+            if polarity not in item:
+                continue
+            resolved = resolve_typed_evidence_refs(
+                item[polarity], snapshots, knowledge_cutoff_utc,
+                valid_time_utc, require_all=True)
+            results.append({"record": label, "polarity": polarity,
+                            "resolution": resolved})
+            if resolved["status"] == "INVALID_INPUT":
+                errors.append(f"{label}.{polarity}: evidence resolution failed")
+    return {"status": "INVALID_INPUT" if errors else "RESOLVED",
+            "records": results, "errors": errors}
