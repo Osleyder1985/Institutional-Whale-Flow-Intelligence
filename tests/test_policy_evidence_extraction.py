@@ -77,6 +77,7 @@ class PolicyEvidenceExtractionTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             manifest = {
+                "manifest_version": "1.0.0",
                 "storage_scope": "LOCAL_ONLY",
                 "external_upload_performed": False,
                 "external_sync_performed": False,
@@ -102,6 +103,12 @@ class PolicyEvidenceExtractionTests(unittest.TestCase):
             with self.assertRaisesRegex(EvidenceExtractionError, "OUTPUT_BUNDLE_ALREADY_EXISTS"):
                 write_bundle({"bundle_version": "1.0.0"}, output)
             self.assertEqual(output.read_text(encoding="utf-8"), "previous")
+
+    def test_private_bundle_cannot_be_written_inside_repository(self):
+        from scripts.extract_policy_evidence import _ensure_outside_repository
+        repository_root = Path(__file__).resolve().parents[1]
+        with self.assertRaisesRegex(EvidenceExtractionError, "PRIVATE_EVIDENCE_PATH_INSIDE_REPOSITORY"):
+            _ensure_outside_repository(repository_root / "private-evidence.json")
 
     def test_pdf_requires_optional_pypdf_dependency(self):
         with tempfile.TemporaryDirectory() as directory:
