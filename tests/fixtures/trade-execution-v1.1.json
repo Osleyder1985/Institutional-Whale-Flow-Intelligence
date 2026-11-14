@@ -1,0 +1,48 @@
+{
+  "contract_version": "1.1.0",
+  "execution_id": "synthetic-eth-trade-multi-role",
+  "event_type": "TRADE_EXECUTION",
+  "aggregation_level": "INDIVIDUAL_EXECUTION",
+  "execution_status": "PARTIALLY_EXECUTED",
+  "asset_base": "ETH",
+  "asset_quote": "USD",
+  "instrument_type": "SPOT",
+  "venue_id": "venue-synthetic-eth",
+  "base_quantity": "2.5",
+  "quote_quantity": "7500",
+  "price": "3000",
+  "price_unit": "USD_PER_ETH",
+  "fee_amount": "2.5",
+  "fee_asset": "USD",
+  "aggressor_side": "SELL",
+  "participant_side": "UNKNOWN",
+  "participant_attribution_status": "UNKNOWN",
+  "participant_actor_id": null,
+  "attribution_claim_ids": [],
+  "event_time_utc": "2026-02-11T11:00:00Z",
+  "published_at_utc": "2026-02-11T11:00:00Z",
+  "available_at_utc": "2026-02-11T11:00:01Z",
+  "ingested_at_utc": "2026-02-11T11:00:02Z",
+  "computed_at_utc": "2026-02-11T11:00:03Z",
+  "source_observation_ids": [
+    "exec-evidence-eth"
+  ],
+  "source_evidence": [
+    {
+      "evidence_id": "exec-evidence-eth",
+      "evidence_type": "OFFICIAL_EXECUTION_DISCLOSURE",
+      "source": "synthetic-official-disclosure",
+      "record_ref": "synthetic:eth:001",
+      "granularity": "INDIVIDUAL_EXECUTION"
+    }
+  ],
+  "participant_role_claim_ids": [
+    "claim-eth-buyer",
+    "claim-eth-broker",
+    "claim-eth-venue",
+    "claim-eth-custodian",
+    "claim-eth-fund",
+    "claim-eth-manager",
+    "claim-eth-beneficial-owner-unknown"
+  ]
+}
