@@ -61,7 +61,7 @@ def _fingerprint(network_id, transaction_id, records, status, reason):
     return hashlib.sha256(encoded).hexdigest()
 
 
-def assess_chain_observations(observations):
+def assess_chain_observations(observations, supersedes_assessment_id=None):
     """Assess one transaction's inclusion history without conflating providers.
 
     REOBSERVED requires a strictly later ACTIVE observation from the same
@@ -72,11 +72,15 @@ def assess_chain_observations(observations):
     positive ACTIVE evidence for the exact inclusion block from the same
     source view. Height comparison alone is never sufficient.
     """
+    if supersedes_assessment_id is not None and (
+        not isinstance(supersedes_assessment_id, str) or not supersedes_assessment_id.strip()
+    ):
+        raise ValueError("supersedes_assessment_id must be null or a non-empty string")
     if not isinstance(observations, (list, tuple)) or not observations:
         return {
             "status": "UNKNOWN", "network_id": None, "transaction_id": None,
-            "policy_version": POLICY_VERSION, "evidence_observation_ids": [],
-            "inclusion_keys": [], "movement_event_locators": [],
+            "policy_version": POLICY_VERSION, "supersedes_assessment_id": supersedes_assessment_id,
+            "evidence_observation_ids": [], "inclusion_keys": [], "movement_event_locators": [],
             "reason_code": "NO_ADMISSIBLE_OBSERVATIONS",
             "assessment_fingerprint": _fingerprint(None, None, [], "UNKNOWN", "NO_ADMISSIBLE_OBSERVATIONS"),
         }
@@ -153,6 +157,7 @@ def assess_chain_observations(observations):
             "network_id": network_id,
             "transaction_id": transaction_id,
             "policy_version": POLICY_VERSION,
+            "supersedes_assessment_id": supersedes_assessment_id,
             "evidence_observation_ids": evidence_ids,
             "inclusion_keys": serialized_keys,
             "movement_event_locators": serialized_locators,
