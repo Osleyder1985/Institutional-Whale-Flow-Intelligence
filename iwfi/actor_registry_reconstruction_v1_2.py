@@ -72,7 +72,10 @@ def build_actor_registry_reconstruction_manifest_v1_2(
         root_claim_contract_version=root_version,
     )
     base["manifest_version"] = "1.2.0"
+    if descriptor["source_snapshot_id"] in {item.get("source_snapshot_id") for item in base["dependencies"]}:
+        raise ValueError("root claim snapshot ID must be distinct from registry evidence snapshots")
     base["root_claim_snapshot"] = {
+        "descriptor_hash": _sha(_canonical(descriptor)),
         "source_id": descriptor.get("source_id"),
         "source_snapshot_id": descriptor.get("source_snapshot_id"),
         "retrieved_at_utc": descriptor.get("retrieved_at_utc"),
@@ -106,6 +109,8 @@ def verify_actor_registry_reconstruction_manifest_v1_2(
         frozen = manifest.get("root_claim_snapshot")
         if not isinstance(frozen, dict) or not isinstance(root_claim_snapshot_descriptor, dict):
             return fail("ROOT_CLAIM_SNAPSHOT_BINDING_MISSING")
+        if frozen.get("descriptor_hash") != _sha(_canonical(root_claim_snapshot_descriptor)):
+            return fail("ROOT_CLAIM_SNAPSHOT_DESCRIPTOR_MISMATCH")
         fields = ("source_id", "source_snapshot_id", "retrieved_at_utc", "payload_hash",
                   "hash_algorithm", "hash_scope", "canonicalization_version",
                   "media_type", "payload_retention")
