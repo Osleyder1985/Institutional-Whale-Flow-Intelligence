@@ -1,0 +1,247 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://iwfi.invalid/schemas/evidence-snapshot-v1.0.schema.json",
+  "title": "IWFI Evidence Snapshot v1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "source_id",
+    "source_snapshot_id",
+    "retrieved_at_utc",
+    "published_at_utc",
+    "media_type",
+    "payload_retention",
+    "hash_status",
+    "hash_scope",
+    "payload_hash",
+    "hash_algorithm",
+    "payload_size_bytes",
+    "canonicalization_version",
+    "storage_ref",
+    "rights_policy_ref"
+  ],
+  "properties": {
+    "contract_version": {
+      "const": "1.0.0"
+    },
+    "source_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "source_snapshot_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "retrieved_at_utc": {
+      "$ref": "#/$defs/utc"
+    },
+    "published_at_utc": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/utc"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "source_version": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "etag": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "last_modified": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "media_type": {
+      "type": "string",
+      "minLength": 1
+    },
+    "payload_retention": {
+      "enum": [
+        "RETAINED",
+        "NOT_RETAINED_POLICY",
+        "NOT_RETAINED_UNAVAILABLE"
+      ]
+    },
+    "hash_status": {
+      "enum": [
+        "AVAILABLE",
+        "NOT_PERMITTED",
+        "NOT_COMPUTED"
+      ]
+    },
+    "hash_scope": {
+      "enum": [
+        "RAW_BYTES",
+        "CANONICAL_JSON"
+      ]
+    },
+    "payload_hash": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "hash_algorithm": {
+      "const": "SHA-256"
+    },
+    "payload_size_bytes": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "canonicalization_version": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "storage_ref": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "rights_policy_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "recorded_at_utc": {
+      "$ref": "#/$defs/utc"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "hash_status": {
+            "const": "AVAILABLE"
+          }
+        },
+        "required": [
+          "hash_status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload_hash": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "payload_size_bytes": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "hash_status": {
+            "enum": [
+              "NOT_PERMITTED",
+              "NOT_COMPUTED"
+            ]
+          }
+        },
+        "required": [
+          "hash_status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload_hash": {
+            "type": "null"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "payload_retention": {
+            "const": "RETAINED"
+          }
+        },
+        "required": [
+          "payload_retention"
+        ]
+      },
+      "then": {
+        "properties": {
+          "hash_status": {
+            "const": "AVAILABLE"
+          },
+          "storage_ref": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "hash_scope": {
+            "const": "CANONICAL_JSON"
+          }
+        },
+        "required": [
+          "hash_scope"
+        ]
+      },
+      "then": {
+        "properties": {
+          "canonicalization_version": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "hash_scope": {
+            "const": "RAW_BYTES"
+          }
+        },
+        "required": [
+          "hash_scope"
+        ]
+      },
+      "then": {
+        "properties": {
+          "canonicalization_version": {
+            "type": "null"
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "utc": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+    }
+  }
+}
