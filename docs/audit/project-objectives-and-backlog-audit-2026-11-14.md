@@ -21,7 +21,7 @@ El principal problema organizativo no es la falta de trabajo técnico: es la fal
 | Fuentes aprobadas para captura productiva | 0 | Ninguna fuente ha superado todos los gates documentales y operativos |
 | Muestras reales BTC+ETH integradas y verificadas | 0 pares completos | Las pruebas sintéticas no demuestran cobertura ni exactitud de datos reales |
 
-Las cantidades anteriores son un recuento de GitHub, no una medida de avance porcentual.
+Las cantidades anteriores son un recuento de GitHub, no una medida de avance porcentual. La PR #119 contiene esta auditoría y se abrió después de tomar el inventario; por eso no forma parte de las 28 PR originales del corte.
 
 ## 2. Objetivo oficial que debe gobernar el repositorio
 
@@ -230,7 +230,7 @@ La cadena debe revisarse secuencialmente; no se deben fusionar PRs apiladas fuer
 | PR | Entrega | Relación | Disposición |
 |---:|---|---|---|
 | #107 | Flujos netos por dirección point-in-time | #45 | CI reportada 319/319 Linux y Windows; alcance parcial, no balance ni identidad. |
-| #108 | Flujos atribuibles a entidades | #45, #42, #8, #109 | CI no acreditada en la descripción; mantener explícita la limitación BTC UTXO y revisar integración con #110. |
+| #108 | Flujos atribuibles a entidades | #45, #42, #8, #109 | CI reportada como aprobada en Issue #45; revisar el HEAD exacto y mantener explícita la limitación BTC UTXO y la integración con #110. |
 | #110 | Contabilidad BTC UTXO por transacción | #109 | CI reportada 322/322; falta muestra real mainnet y reconciliación. |
 | #112 | Exposición histórica con gates de completitud | #111 | CI reportada 328/328; faltan snapshots reales y cobertura de inventario. |
 
