@@ -271,9 +271,6 @@
               "candidate_actor_ids": {
                 "maxItems": 0
               },
-              "participant_side": {
-                "const": "UNKNOWN"
-              },
               "attribution_method": {
                 "const": "NONE"
               }
