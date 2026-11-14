@@ -27,14 +27,14 @@ def build_audit_package_zip(*, manifest, artifacts_by_path):
     """Return deterministic ZIP bytes for a previously built inventory manifest."""
     if not isinstance(manifest, dict) or not isinstance(artifacts_by_path, dict):
         raise ValueError("manifest and artifact mapping are required")
+    if MANIFEST_PATH in artifacts_by_path:
+        raise ValueError("artifact path is reserved for the package manifest")
     expected_hash = manifest.get("reconstruction_manifest_hash")
     checked = verify_audit_package_manifest(
         manifest=manifest, artifacts_by_path=artifacts_by_path,
         expected_reconstruction_manifest_hash=expected_hash)
     if checked.get("status") != "AUDIT_PACKAGE_VERIFIED":
         raise ValueError("audit package inventory must verify before export")
-    if MANIFEST_PATH in artifacts_by_path:
-        raise ValueError("artifact path is reserved for the package manifest")
     output = BytesIO()
     with zipfile.ZipFile(output, "w", compression=_ARCHIVE_COMPRESSION,
                          allowZip64=True) as archive:
@@ -78,6 +78,11 @@ def verify_audit_package_zip(*, archive_bytes,
                 if info.is_dir() or info.flag_bits & 0x1:
                     return fail("DIRECTORY_OR_ENCRYPTED_ENTRY_NOT_ALLOWED",
                                 path=name)
+                if name != MANIFEST_PATH:
+                    try:
+                        _validate_path(name)
+                    except ValueError:
+                        return fail("UNSAFE_ARCHIVE_PATH", path=name)
                 if info.compress_type != _ARCHIVE_COMPRESSION:
                     return fail("UNSUPPORTED_COMPRESSION", path=name)
                 if info.date_time != _FIXED_TIMESTAMP:
@@ -85,11 +90,6 @@ def verify_audit_package_zip(*, archive_bytes,
                 mode = (info.external_attr >> 16) & 0xFFFF
                 if stat.S_ISLNK(mode) or (mode and not stat.S_ISREG(mode)):
                     return fail("NON_REGULAR_FILE_ENTRY", path=name)
-                if name != MANIFEST_PATH:
-                    try:
-                        _validate_path(name)
-                    except ValueError:
-                        return fail("UNSAFE_ARCHIVE_PATH", path=name)
                 content = archive.read(info)
                 if len(content) != info.file_size:
                     return fail("ARCHIVE_SIZE_MISMATCH", path=name)
