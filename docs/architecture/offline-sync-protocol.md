@@ -38,14 +38,14 @@ Every user-created mutation is represented by an immutable operation envelope:
 | policy_versions | Required map, may be empty | Exact domain policy versions used |
 | created_at_device_utc | Required UTC timestamp | Diagnostic only; never determines server order |
 | payload_hash | Required SHA-256 | Integrity check over canonical payload bytes |
-| retention_class | Required | Determines whether payload content may be persisted |
+| retention_class / terms_record_id | Required | Determines whether payload content may be persisted; RAW_ALLOWED requires an explicit approved terms record |
 | payload | Required object | Only permitted normalized content; raw provider payload remains prohibited unless specifically authorized |
 
-The idempotency key is operation_id. The server stores the hash of the canonical full envelope/payload for that ID.
+The idempotency key is operation_id. payload_hash is SHA-256 over canonical UTF-8 JSON payload bytes. The server independently stores operation_fingerprint, SHA-256 over the canonical complete envelope (including payload_hash, schema/policy versions, retention metadata and payload). Object keys are sorted and arrays retain their declared order.
 
-- Same operation_id + same hash: return the original receipt; do not apply twice.
-- Same operation_id + different hash: reject as IDEMPOTENCY_KEY_REUSE, preserve a security/audit conflict, and do not overwrite the first operation.
-- A retry must reuse the exact operation ID and payload hash. A changed payload is a new operation with a new ID and explicit supersession/correction relation.
+- Same operation_id + same operation_fingerprint: return the original receipt; do not apply twice.
+- Same operation_id + different operation_fingerprint: reject as IDEMPOTENCY_KEY_REUSE, preserve a security/audit conflict, and do not overwrite the first operation.
+- A retry must reuse the exact operation ID and complete operation fingerprint. A changed payload or envelope is a new operation with a new ID and explicit supersession/correction relation.
 
 ## 4. Delivery and acknowledgement
 
