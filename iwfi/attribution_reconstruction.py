@@ -186,9 +186,29 @@ def verify_attribution_reconstruction(
     except (KeyError, ValueError):
         return {"status": "INTEGRITY_FAILED", "manifest_status": "INVALID_TEMPORAL_SCOPE", "dependencies": []}
 
+    dependencies = manifest.get("dependencies")
+    if not isinstance(dependencies, list):
+        return {"status": "INTEGRITY_FAILED", "manifest_status": "INVALID_DEPENDENCIES", "dependencies": []}
+    claim_observations = _collect_observation_ids(claim)
+    manifest_observations = set()
+    dependency_ids = set()
+    for dependency in dependencies:
+        if not isinstance(dependency, dict):
+            return {"status": "INTEGRITY_FAILED", "manifest_status": "INVALID_DEPENDENCY", "dependencies": []}
+        sid = dependency.get("source_snapshot_id")
+        observation_ids = dependency.get("observation_ids")
+        if not isinstance(sid, str) or not sid.strip() or sid in dependency_ids:
+            return {"status": "INTEGRITY_FAILED", "manifest_status": "DUPLICATE_OR_INVALID_DEPENDENCY", "dependencies": []}
+        if not isinstance(observation_ids, list) or any(not isinstance(item, str) or not item.strip() for item in observation_ids):
+            return {"status": "INTEGRITY_FAILED", "manifest_status": "INVALID_DEPENDENCY_OBSERVATIONS", "dependencies": []}
+        dependency_ids.add(sid)
+        manifest_observations.update(observation_ids)
+    if manifest_observations != claim_observations:
+        return {"status": "INTEGRITY_FAILED", "manifest_status": "OBSERVATION_DEPENDENCY_MISMATCH", "dependencies": []}
+
     results = []
-    for dependency in manifest.get("dependencies", []):
-        sid = dependency.get("source_snapshot_id") if isinstance(dependency, dict) else None
+    for dependency in dependencies:
+        sid = dependency["source_snapshot_id"]
         snapshot = snapshots_by_id.get(sid)
         payload = payloads_by_id.get(sid)
         if snapshot is None:
