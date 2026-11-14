@@ -195,8 +195,7 @@ def delete_artifacts(root, artifact_id, dependent_artifact_ids_reviewed,
     }
     try:
         with completed_path.open("x", encoding="utf-8", newline="") as stream:
-            stream.write(json.dumps(audit, sort_keys=True, separators=(",", ":")) + "
-")
+            stream.write(json.dumps(audit, sort_keys=True, separators=(",", ":")) + "\n")
             stream.flush()
             os.fsync(stream.fileno())
     except FileExistsError as exc:
