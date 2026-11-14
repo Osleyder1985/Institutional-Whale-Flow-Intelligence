@@ -20,6 +20,8 @@ El constructor recoge referencias de:
 - `observation_ids`;
 - `source_observation_ids`.
 
+Se ha probado tanto con Entity Attribution Claim como con un Execution Participant Role Claim v1.1. Durante la verificación se vuelve a extraer el conjunto de observaciones del claim y se compara con la unión de las referencias del manifiesto; un manifiesto que omita o invente una observación falla incluso si alguien recalcula su hash local.
+
 Cada identificador de observación debe mapearse explícitamente a uno o varios `source_snapshot_id`. Cada snapshot debe estar presente en el conjunto congelado y tener `retrieved_at_utc` no posterior al cutoff. Si falta una correspondencia o el snapshot es posterior al cutoff, la construcción falla.
 
 Se conservan tanto observaciones que sustentan como las que contradicen la atribución. No se descartan contra-evidencias para producir una reconstrucción aparentemente concluyente.
