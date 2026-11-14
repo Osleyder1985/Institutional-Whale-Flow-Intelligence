@@ -42,7 +42,7 @@ def validate_operation_semantics(operation):
         raise ValueError("operation must be an object")
     operation_id = operation.get("operation_id")
     timestamp = operation.get("created_at_device_utc")
-    if not isinstance(timestamp, str) or not re.fullmatch(r"\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z", timestamp):
+    if not isinstance(timestamp, str) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z", timestamp):
         raise ValueError("created_at_device_utc must be UTC with a Z suffix")
     try:
         parsed_timestamp = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
