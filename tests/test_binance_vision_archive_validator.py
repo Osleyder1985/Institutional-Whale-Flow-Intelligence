@@ -27,7 +27,8 @@ class BinanceVisionArchiveValidatorTests(unittest.TestCase):
             # Synthetic row only; it is not Binance production data.
             rows = ["1,100.25,0.01,10,10,1794441600000000,False,True"]
         with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zipped:
-            zipped.writestr(csv_name, "\n".join(rows) + "\n")
+            csv_payload = ("\\n".join(rows) + "\\n") if rows else "";
+            zipped.writestr(csv_name, csv_payload)
             if extra:
                 for name, payload in extra.items():
                     zipped.writestr(name, payload)
