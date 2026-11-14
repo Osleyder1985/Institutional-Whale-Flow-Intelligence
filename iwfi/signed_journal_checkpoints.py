@@ -8,6 +8,7 @@ import json
 from datetime import datetime
 from pathlib import Path
 
+from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey, Ed25519PublicKey
 
@@ -136,7 +137,7 @@ def verify_signed_checkpoint(checkpoint, trusted_public_key_pem, journal_path=No
             return {"status": "SIGNATURE_INVALID", "reason": "SIGNATURE_MISSING"}
         body = {k: v for k, v in checkpoint.items() if k != "signature_hex"}
         public.verify(bytes.fromhex(signature_hex), _canonical(body))
-    except (ValueError, TypeError, KeyError):
+    except (InvalidSignature, ValueError, TypeError, KeyError):
         return {"status": "SIGNATURE_INVALID", "reason": "SIGNATURE_OR_FORMAT_INVALID"}
     result = {"status": "SIGNATURE_VERIFIED",
               "checkpoint_hash": checkpoint_hash(checkpoint),
