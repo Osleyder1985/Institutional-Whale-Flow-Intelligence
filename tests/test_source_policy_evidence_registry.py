@@ -31,6 +31,8 @@ class SourcePolicyEvidenceRegistryTests(unittest.TestCase):
                 "policy_id": "synthetic-policy-1",
                 "policy_version": "1.0",
                 "issuer": "Synthetic issuer",
+                "rights_ref": "synthetic-rights-reference",
+                "status": "ACTIVE",
                 "document_ref": "synthetic-document",
                 "document_sha256": "a" * 64,
                 "retrieved_at_utc": "2026-11-13T00:00:00Z",
