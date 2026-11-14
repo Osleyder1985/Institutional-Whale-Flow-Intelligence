@@ -38,6 +38,8 @@ class BinanceSpotFlowMetricsTests(unittest.TestCase):
         self.assertEqual(bucket["signed_base_volume_delta"], "-0.25")
         self.assertEqual(bucket["taker_buy_quote_qty"], "25.0250")
         self.assertEqual(bucket["taker_sell_quote_qty"], "50.1000")
+        self.assertEqual(bucket["taker_buy_to_sell_base_ratio"], "1/2")
+        self.assertEqual(bucket["taker_buy_to_sell_quote_ratio"], "1001/2004")
         self.assertEqual(result["participant_identity"], "UNKNOWN")
         self.assertEqual(result["institutional_attribution"], "NOT_ESTABLISHED")
 
@@ -62,6 +64,14 @@ class BinanceSpotFlowMetricsTests(unittest.TestCase):
         self.assertEqual(result["buckets"][0]["signed_base_volume_delta"], "-1")
         self.assertEqual(result["buckets"][1]["cumulative_signed_base_volume"], "0")
         self.assertIn("ZERO_ACTIVITY_NOT_PROVEN", result["unobserved_interval_semantics"])
+
+    def test_buy_to_sell_ratios_are_null_when_sell_denominator_is_zero(self):
+        rows = [["1", "10", "1", "1", "1", "1794528000000000", "false", "true"]]
+        archive, checksum = self.make_archive(rows)
+        result = process_archive(archive, checksum, "BTCUSDT", "2026-11-13")
+        bucket = result["buckets"][0]
+        self.assertIsNone(bucket["taker_buy_to_sell_base_ratio"])
+        self.assertIsNone(bucket["taker_buy_to_sell_quote_ratio"])
 
     def test_invalid_interval_is_rejected(self):
         rows = [["1", "10", "1", "1", "1", "1794528000000000", "false", "true"]]
