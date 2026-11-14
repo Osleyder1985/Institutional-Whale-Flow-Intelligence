@@ -130,5 +130,39 @@
     "payload": {
       "type": "object"
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "retention": {
+            "properties": {
+              "retention_class": {
+                "const": "RAW_ALLOWED"
+              }
+            },
+            "required": [
+              "retention_class"
+            ]
+          }
+        },
+        "required": [
+          "retention"
+        ]
+      },
+      "then": {
+        "properties": {
+          "retention": {
+            "properties": {
+              "terms_record_id": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
 }
