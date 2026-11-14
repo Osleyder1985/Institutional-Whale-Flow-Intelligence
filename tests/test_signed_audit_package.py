@@ -1,4 +1,8 @@
+import json
 import unittest
+from pathlib import Path
+
+from jsonschema import Draft202012Validator
 
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
@@ -73,6 +77,13 @@ class SignedAuditPackageTests(unittest.TestCase):
             sign_audit_package(
                 archive_bytes="not bytes", private_key_pem=self.private,
                 issued_at_utc="2026-11-14T12:00:00Z")
+
+    def test_signature_schema_is_valid_and_envelope_conforms(self):
+        signature = self.sign()
+        schema_path = Path(__file__).resolve().parents[1] / "schemas" / "signed-audit-package-v1.0.schema.json"
+        schema = json.loads(schema_path.read_text(encoding="utf-8"))
+        Draft202012Validator.check_schema(schema)
+        Draft202012Validator(schema, format_checker=Draft202012Validator.FORMAT_CHECKER).validate(signature)
 
 
 if __name__ == "__main__":
