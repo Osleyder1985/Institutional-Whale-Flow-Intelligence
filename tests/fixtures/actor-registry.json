@@ -301,7 +301,8 @@
       "valid_to_utc": null,
       "evidence_refs": [
         "evidence-manager-fund"
-      ]
+      ],
+      "counter_evidence_refs": []
     },
     {
       "relationship_id": "rel-manager-fund-disputed",
@@ -314,7 +315,8 @@
       "valid_to_utc": null,
       "evidence_refs": [
         "counter-manager-fund"
-      ]
+      ],
+      "counter_evidence_refs": []
     }
   ]
 }
