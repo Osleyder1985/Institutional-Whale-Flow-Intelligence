@@ -22,7 +22,7 @@ class LocalStoragePreflightTests(unittest.TestCase):
             sync_dir.mkdir()
             result = inspect_storage_root(sync_dir)
             self.assertEqual(result["sync_risk"], "RISK_DETECTED")
-            self.assertIn("OneDrive", result["risk_details"][0])
+            self.assertIn("onedrive", result["risk_details"][0])
 
     def test_missing_path_blocks(self):
         with tempfile.TemporaryDirectory() as temp:
