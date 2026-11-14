@@ -68,6 +68,12 @@ def build_attribution_reconstruction_manifest(
     valid_time = _parse_utc(valid_time_utc)
     if claim_time > cutoff:
         raise ValueError("claim was recorded after the knowledge cutoff")
+    valid_from = claim.get("valid_from_utc")
+    valid_to = claim.get("valid_to_utc")
+    if valid_from is not None and valid_time < _parse_utc(valid_from):
+        raise ValueError("requested valid time precedes the claim validity interval")
+    if valid_to is not None and valid_time > _parse_utc(valid_to):
+        raise ValueError("requested valid time follows the claim validity interval")
     if not isinstance(algorithm_id, str) or not algorithm_id.strip():
         raise ValueError("algorithm_id is required")
     if not isinstance(algorithm_version, str) or not algorithm_version.strip():
@@ -158,12 +164,27 @@ def verify_attribution_reconstruction(
         return {"status": "INTEGRITY_FAILED", "manifest_status": "MANIFEST_HASH_MISMATCH", "dependencies": []}
     if manifest.get("claim_canonicalization_version") != _CANONICALIZATION:
         return {"status": "INTEGRITY_FAILED", "manifest_status": "UNSUPPORTED_CLAIM_CANONICALIZATION", "dependencies": []}
-    if manifest.get("claim_hash") != actual_claim_hash or manifest.get("claim_id") != claim.get("claim_id"):
+    if (
+        manifest.get("claim_hash") != actual_claim_hash
+        or manifest.get("claim_id") != claim.get("claim_id")
+        or manifest.get("claim_contract_version") != claim.get("contract_version")
+        or manifest.get("claim_recorded_at_utc") != claim.get("recorded_at_utc")
+    ):
         return {"status": "INTEGRITY_FAILED", "manifest_status": "CLAIM_HASH_MISMATCH", "dependencies": []}
     try:
         cutoff = _parse_utc(manifest["knowledge_cutoff_utc"])
+        claim_time = _parse_utc(claim.get("recorded_at_utc"))
+        valid_time = _parse_utc(manifest["valid_time_utc"])
+        if claim_time > cutoff:
+            raise ValueError("claim after cutoff")
+        valid_from = claim.get("valid_from_utc")
+        valid_to = claim.get("valid_to_utc")
+        if valid_from is not None and valid_time < _parse_utc(valid_from):
+            raise ValueError("valid time before claim interval")
+        if valid_to is not None and valid_time > _parse_utc(valid_to):
+            raise ValueError("valid time after claim interval")
     except (KeyError, ValueError):
-        return {"status": "INTEGRITY_FAILED", "manifest_status": "INVALID_CUTOFF", "dependencies": []}
+        return {"status": "INTEGRITY_FAILED", "manifest_status": "INVALID_TEMPORAL_SCOPE", "dependencies": []}
 
     results = []
     for dependency in manifest.get("dependencies", []):
