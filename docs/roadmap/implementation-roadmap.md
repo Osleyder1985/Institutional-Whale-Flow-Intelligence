@@ -1,112 +1,108 @@
 # IWFI Implementation Roadmap
 
-Status: prioritized proposal; no production integration or data capture is authorized by this roadmap.
+Status: dependency-driven roadmap, updated after merge of PR #52. No production provider integration, capture, polling or backfill is authorized by this document.
 
 ## Product boundary
 
-Initial pilot: native BTC on Bitcoin mainnet and native ETH on Ethereum mainnet. Tokens, other chains, automated trading, autonomous market evaluation, and unapproved provider polling remain out of scope.
+Initial pilot: native BTC on Bitcoin mainnet and native ETH on Ethereum mainnet. Tokens, other chains, automated trading, autonomous market evaluation and unapproved provider polling remain out of scope.
 
-Execution is dependency-driven, not calendar-driven. No dates, durations, budgets, or performance targets are invented before access, workload, and evidence are measured.
+The product's first question is evidence of **who** is acting and **what** they did. The system must not claim to identify an institutional participant when the source exposes only an anonymous exchange execution, an address label, a transfer or an aggregate flow.
 
 ## Phase 0 — Governance and audit baseline (P0)
 
-**Objective:** ensure repository changes are traceable and main cannot be changed outside the agreed review process.
+- [x] Initial repository baseline — Issue #1 / PR #2.
+- [x] Main ruleset activated — Issue #4.
+- [ ] Require the stable contract-test status check and strict up-to-date branch requirement — Issue #4.
+- [ ] Verify effective deletion/force-push protections and document evidence — Issue #4.
 
-- [x] Record the initial repository baseline and its limitations — Issue #1 / PR #2.
-- [x] Activate the protect-main repository ruleset with deletion, non-fast-forward, linear-history and pull-request requirements — Issue #4.
-- [ ] Require the stable contract-test status check and require the branch to be up to date (strict=true) — Issue #4.
-- [ ] Verify effective classic/inherited protection details and document non-destructive evidence for deletion/force-push restrictions — Issue #4.
-
-**Exit gate:** Issue #4 is accepted only after required CI and strict up-to-date checks are configured and verified. CI passing alone is not a merge requirement until GitHub enforces it.
+**Exit gate:** repository enforcement, not merely passing CI, must demonstrate the agreed main-branch protections.
 
 ## Phase 1 — Provider and source due diligence (P0)
 
-**Objective:** know what evidence can legally and technically be obtained before selecting a source.
-
-- [x] Document candidate-provider capabilities, limitations, plans, terms questions and official references — Issue #3 / PR #5.
+- [x] Official-documentation comparison for Arkham, CryptoQuant, Glassnode, Nansen, CoinGlass and primary-source categories — Issue #3 / PR #5.
 - [ ] Verify account-specific endpoint entitlements, applicable personal/non-commercial terms, storage/retention rights, quotas and actual cost.
-- [ ] Obtain representative BTC and ETH samples from an authorized source and validate timestamp, units, revisions, coverage and attribution semantics.
-- [ ] Record an explicit provider decision; no provider is approved by the current documentation review.
+- [ ] Obtain authorized representative BTC and ETH samples.
+- [ ] Validate timestamps, units, revisions, history, coverage and attribution semantics against those samples.
+- [ ] Record an explicit source decision: APPROVED, APPROVED_WITH_RESTRICTIONS or NOT_APPROVED.
 
-**Exit gate:** no API adapter, paid plan, polling, historical backfill or raw-payload retention before the relevant permissions and user authorization are recorded.
+**Current decision:** no commercial provider is approved. CryptoQuant is the best-documented on-chain candidate, not an approved source. Arkham remains a candidate for entity/address intelligence; its account access, endpoint coverage, methodology and retention rights are unverified. Public exchange trades can prove venue executions but generally do not reveal the customer or beneficial owner.
+
+**Exit gate:** source-specific permissions and real samples are verified for both assets. No paid plan, API adapter, polling, backfill or raw-payload retention before explicit approval.
 
 ## Phase 2 — Canonical evidence contracts (P0)
 
-**Objective:** establish versioned, provider-neutral contracts before ingestion.
+- [x] Source Observation contract and tests — Issue #6 / PR #7.
+- [x] Temporal, evidence-backed Attribution Claims — Issue #8 / PR #9.
+- [x] Native BTC/ETH Movement Ledger — Issue #10 / PR #11.
+- [x] Deterministic observation resolution — Issue #12 / PR #13.
+- [x] Actor Registry and individual Trade Execution contracts — Issue #51 / PR #52.
 
-- [ ] Source-observation contract and automated schema tests — Issue #6 / PR #7 (implemented and CI-validated in an open PR; not merged).
-- [ ] Temporal, evidence-backed address/entity claims — Issue #8 / PR #9 (implemented and CI-validated in an open PR; not merged).
-- [ ] Movement Ledger for native BTC/ETH transfers with source and attribution integrity — Issue #10 / PR #11 (implemented and CI-validated in a Draft PR; not merged).
-- [ ] Deterministic observation-resolution policy for duplicate records, contradictions, partial evidence and individual transfer identity — Issue #12 / PR #13 (implemented and CI-validated in a Draft PR; not merged).
-- [ ] Complete review of all open contract PRs and merge only after their dependency chain, CI and semantics are accepted.
+**Exit gate:** observations, attribution claims, transfers, actor identities and individual trade executions remain distinct, versioned and traceable. Unknown identities remain unknown; contradictions remain visible; transfer and aggregate flow evidence cannot be represented as individual trades.
 
-Implementation and CI evidence exist in the open PRs, but Phase 2 remains incomplete until the dependency chain is reviewed and accepted and the changes are merged in order. **Exit gate:** a source record, a claim, a movement, and a resolution decision remain distinct and traceable. No ambiguous identity is silently merged; missing facts remain missing; contradictions remain visible.
+## Phase 3 — Integrated architecture and authorized read-only vertical slice (P0)
 
-## Phase 3 — Authorized read-only vertical slice (P0)
-
-**Objective:** prove one complete path from a permitted source to a validated, reproducible BTC/ETH observation.
-
+- [ ] Complete the end-to-end integration design and traceability matrix — Issue #50.
+- [ ] Complete source/account approval — Issue #3.
 - [ ] Select one source only after Phase 1 approval.
-- [ ] Implement one read-only adapter for a narrowly scoped endpoint and documented product tier.
-- [ ] Validate pagination, rate limits, retries, partial responses, timestamps, source hashes and schema revisions.
-- [ ] Run deterministic tests against authorized samples; do not use synthetic fixtures as evidence of provider accuracy.
-- [ ] Record coverage gaps and provider/source limitations.
+- [ ] Implement one narrowly scoped, read-only adapter for that source and product tier.
+- [ ] Validate pagination, rate limits, retries, partial responses, timestamps, hashes, schema revisions and data quality.
+- [ ] Run deterministic tests against authorized real samples; synthetic fixtures are not evidence of provider accuracy.
+- [ ] Demonstrate both BTC and ETH through the same canonical pipeline, with actor attribution explicitly UNKNOWN when the source does not identify a participant.
 
-**Exit gate:** reproducible sample validation for both supported assets, explicit permission/retention records, and no unexplained data loss or silent coercion.
+**Exit gate:** a reproducible end-to-end path from permitted source observation to a typed, quality-checked result for both assets, with no silent data loss/coercion and explicit identity limitations.
 
 ## Phase 4 — Persistence and historical integrity (P1)
 
-**Objective:** persist evidence only after source rights and identity rules are accepted.
-
-- [ ] Choose storage technology based on retention, query, integrity, cost and operational requirements.
-- [ ] Preserve immutable source observations and append-only resolution decisions.
-- [ ] Enforce uniqueness, idempotency, supersession and provenance at the persistence boundary.
+- [ ] Select storage based on retention, query, integrity, cost and operational requirements.
+- [ ] Preserve immutable observations and append-only claims/resolution decisions within source rights.
+- [ ] Enforce uniqueness, idempotency, supersession and provenance at persistence boundaries.
 - [ ] Test restart/replay, partial ingestion, corrections, duplicates, contradictions and reprocessing.
-- [ ] Keep raw payloads only where the source terms explicitly permit them.
 
-**Exit gate:** replaying the same authorized inputs and policy version reproduces the same decision without overwriting historical evidence.
+**Exit gate:** replaying identical authorized inputs and policy versions reproduces the same decisions without overwriting prior knowledge.
 
 ## Phase 5 — Attribution and flow interpretation (P1)
 
-**Objective:** distinguish observed transfers from ownership, exchange activity, trades and institutional intent.
-
 - [ ] Evaluate provider labels as claims with provenance and validity intervals.
-- [ ] Corroborate important entity claims using genuinely independent evidence.
-- [ ] Keep exchange-flow metrics, ETF disclosures and on-chain transfers as separate evidence types.
-- [ ] Do not infer beneficial ownership, accumulation, distribution, buy/sell activity or causality from a transfer alone.
+- [ ] Corroborate material entity claims with genuinely independent evidence.
+- [ ] Keep exchange metrics, ETF disclosures, on-chain transfers, holdings and individual executions separate.
+- [ ] Never infer beneficial ownership, accumulation, distribution, intent or price causality from a transfer alone.
 - [ ] Report unknown, disputed, delayed and partial states explicitly.
 
-**Exit gate:** every interpretation links to supporting and counterevidence, alternatives, coverage and uncertainty.
+**Exit gate:** every interpretation links to supporting evidence, counterevidence, alternatives, coverage and uncertainty.
 
 ## Phase 6 — Research analytics and user-facing evaluation (P2)
 
-**Objective:** add analysis only after the evidence pipeline is validated.
-
 - [ ] Define and test metric formulas, units, windows, revisions and minimum coverage.
-- [ ] Evaluate historical flow patterns without inventing thresholds or probabilities.
+- [ ] Evaluate historical patterns without invented thresholds or probabilities.
 - [ ] Assess hypotheses with counterevidence and non-causal alternatives.
-- [ ] Persist reproducible, user-requested research snapshots.
-- [ ] Add presentation/export only when it improves traceability.
+- [ ] Persist reproducible, explicitly requested research snapshots.
+- [ ] Add presentation/export only where it improves traceability.
 
-**Exit gate:** analyses are reproducible, explicitly user-initiated, and do not generate unsupported signals or claims.
+**Exit gate:** analyses are reproducible, user-initiated and do not generate unsupported signals or claims.
 
 ## Operating constraints
 
-- Market analysis runs only when explicitly requested by the user.
-- No scheduled polling, backfill, alerting or autonomous analysis is enabled by default.
-- No provider is considered approved based solely on a public feature page or synthetic test fixture.
-- A transfer is not a trade; an exchange inflow is not proof of a sale; an outflow is not proof of a purchase.
+- Market analysis runs only when explicitly requested.
+- No scheduled polling, backfill, alerts or autonomous analysis by default.
+- No provider is approved solely by a public feature page or synthetic fixture.
+- A transfer is not a trade; exchange inflow is not proof of sale; outflow is not proof of purchase.
 - Correlation is not causality. Unknown is not zero. Provider labels are not verified legal identity.
-- Contract PRs remain stacked in dependency order: #7 → #9 → #11 → #13. Independent research and baseline PRs #2 and #5 are not prerequisites for code integration unless their Issues require it.
+- A public exchange execution may be confirmed while its customer and beneficial owner remain unknown.
 
 ## Current work register
 
-| Work item | Issue | PR | Current evidence/state |
+| Work item | Issue | PR | Current state |
 |---|---:|---:|---|
-| Initial baseline and requirements | #1 | #2 | Documentation drafted; roadmap added; governance and provider decisions remain open |
-| Provider due diligence | #3 | #5 | Official documentation reviewed; no provider approved; account and sample validation pending |
-| Main-branch governance | #4 | — | Ruleset active; required status checks and strict up-to-date requirement missing |
-| Source-observation contract | #6 | #7 | CI verified; PR open |
-| Address/entity claims | #8 | #9 | CI 52 tests passed; PR open |
-| Movement Ledger | #10 | #11 | CI 101 tests passed; PR Draft |
-| Observation resolution | #12 | #13 | CI 177 tests passed; PR Draft |
+| Initial baseline | #1 | #2 | Merged |
+| Provider due diligence | #3 | #5 | Documentation reviewed; account/sample approval pending |
+| Main-branch governance | #4 | — | Ruleset active; enforcement verification incomplete |
+| Source Observation | #6 | #7 | Merged |
+| Attribution Claims | #8 | #9 | Merged |
+| Movement Ledger | #10 | #11 | Merged |
+| Observation resolution | #12 | #13 | Merged |
+| Actor Registry + Trade Execution | #51 | #52 | Merged; CI success on final HEAD |
+| End-to-end architecture | #50 | — | Open; next integration-design task |
+
+## Immediate next gate
+
+Complete Issue #3's account-level/source-sample checks before selecting an adapter. In parallel, complete Issue #50's integration architecture using the now-merged contracts. Only then begin the first authorized read-only BTC/ETH vertical slice.
