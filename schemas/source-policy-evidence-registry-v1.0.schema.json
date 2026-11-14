@@ -17,7 +17,8 @@
         "properties": {
           "source_id": { "type": "string", "minLength": 1 },
           "provider_name": { "type": "string", "minLength": 1 },
-          "assessment_status": { "enum": ["UNASSESSED", "PENDING_EVIDENCE", "UNDER_REVIEW", "APPROVED", "REJECTED", "EXPIRED", "REVOKED"] },\n          "allOf": [{ "if": { "properties": { "assessment_status": { "const": "APPROVED" } }, "required": ["assessment_status"] }, "then": { "properties": { "policies": { "minItems": 1 } } } }],
+          "assessment_status": { "enum": ["UNASSESSED", "PENDING_EVIDENCE", "UNDER_REVIEW", "APPROVED", "REJECTED", "EXPIRED", "REVOKED"] },
+          "allOf": [{ "if": { "properties": { "assessment_status": { "const": "APPROVED" } }, "required": ["assessment_status"] }, "then": { "properties": { "policies": { "minItems": 1 } } } }],
           "policies": {
             "type": "array",
             "items": {
