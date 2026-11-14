@@ -1,11 +1,4 @@
-"""Acquire and seal official policy documents locally; never upload or approve them.
-
-Usage:
-    python scripts/acquire_policy_documents.py --output-dir <private-local-directory>
-
-Only the three reviewed HTTPS source URLs below are accepted. Downloads are streamed
-without an arbitrary size cap. Each file is written atomically and never overwritten.
-"""
+"""Acquire and seal allowlisted official policy documents locally; never upload or approve them."""
 from __future__ import annotations
 
 import argparse
@@ -21,32 +14,16 @@ from urllib.parse import urlparse
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 
-DOCUMENTS = {
-    "binance_vision_dataset_terms_v1": {
-        "url": "https://raw.githubusercontent.com/binance/binance-public-data/master/TERMS_AND_CONDITIONS.md",
-        "filename": "binance_vision_dataset_terms_v1.md",
-        "provider": "Binance",
-        "version_observed": "1.0 (document states Last Updated: 2026-08-26)",
-        "source_url_mutable": True,
-    },
-    "cc_by_nc_sa_4_0_legal_code": {
-        "url": "https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode.txt",
-        "filename": "cc_by_nc_sa_4_0_legalcode.txt",
-        "provider": "Creative Commons",
-        "version_observed": "4.0",
-        "source_url_mutable": True,
-    },
-    "binance_terms_of_use_adgm_2026_01_05": {
-        "url": "https://bin.bnbstatic.com/static/cms/cg08ou2ak0tn7mcplvfg/file/9958035d95bff024a86a662fb4fdba45527d55a936e2cb9ed1d7ddf205ca082d.pdf",
-        "filename": "binance_terms_of_use_adgm_2026_01_05.pdf",
-        "provider": "Binance / ADGM entities identified in document",
-        "version_observed": "Effective Date: 2026-01-05; applicability to this user still requires review",
-        "source_url_mutable": True,
-    },
-}
+SOURCE_MANIFEST_PATH = Path(__file__).resolve().parents[1] / "data" / "policy-document-sources-v1.0.json"
 ALLOWED_HOSTS = {"raw.githubusercontent.com", "creativecommons.org", "bin.bnbstatic.com"}
+EXPECTED_DOCUMENT_IDS = {
+    "binance_vision_dataset_terms_v1",
+    "cc_by_nc_sa_4_0_legal_code",
+    "binance_terms_of_use_adgm_2026_01_05",
+}
 CHUNK_SIZE = 1024 * 1024
 MANIFEST_NAME = "policy-document-evidence-manifest-v1.0.json"
+_SHA256 = re.compile(r"^[a-f0-9]{64}$")
 
 
 class AcquisitionError(RuntimeError):
@@ -69,6 +46,67 @@ def _utc_now():
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
+def load_source_manifest_payload(payload):
+    """Validate the complete, versioned, closed source-document inventory."""
+    if not isinstance(payload, dict) or payload.get("manifest_version") != "1.0.0":
+        raise AcquisitionError("SOURCE_MANIFEST_INVALID")
+    entries = payload.get("documents")
+    if not isinstance(entries, list) or not entries:
+        raise AcquisitionError("SOURCE_MANIFEST_INCOMPLETE")
+    result = {}
+    for item in entries:
+        if not isinstance(item, dict):
+            raise AcquisitionError("SOURCE_MANIFEST_INVALID")
+        document_id = item.get("document_id")
+        url = item.get("url")
+        filename = item.get("filename")
+        if (not isinstance(document_id, str) or not document_id
+                or not isinstance(filename, str) or not re.fullmatch(r"[a-z0-9_.-]+", filename)
+                or not isinstance(item.get("provider"), str) or not item["provider"].strip()
+                or not isinstance(item.get("observed_version"), str)
+                or not isinstance(item.get("url_is_mutable"), bool)):
+            raise AcquisitionError("SOURCE_MANIFEST_INVALID")
+        if document_id in result:
+            raise AcquisitionError("SOURCE_MANIFEST_DUPLICATE_ID")
+        _validate_url_shape(url)
+        expected = item.get("expected_sha256")
+        if expected is not None and (not isinstance(expected, str) or not _SHA256.fullmatch(expected)):
+            raise AcquisitionError("EXPECTED_SHA256_INVALID")
+        result[document_id] = {
+            "url": url,
+            "filename": filename,
+            "provider": item["provider"],
+            "version_observed": item["observed_version"],
+            "source_url_mutable": item["url_is_mutable"],
+            "expected_sha256": expected,
+        }
+    if set(result) != EXPECTED_DOCUMENT_IDS:
+        raise AcquisitionError("SOURCE_MANIFEST_INCOMPLETE")
+    if len({item["url"] for item in result.values()}) != len(result):
+        raise AcquisitionError("SOURCE_MANIFEST_DUPLICATE_URL")
+    return result
+
+
+def _validate_url_shape(url):
+    if not isinstance(url, str):
+        raise AcquisitionError("URL_NOT_ALLOWLISTED")
+    parsed = urlparse(url)
+    if (parsed.scheme != "https" or parsed.hostname not in ALLOWED_HOSTS
+            or parsed.username or parsed.password or parsed.fragment):
+        raise AcquisitionError("URL_NOT_ALLOWLISTED")
+
+
+def _load_source_manifest():
+    try:
+        payload = json.loads(SOURCE_MANIFEST_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise AcquisitionError("SOURCE_MANIFEST_UNAVAILABLE_OR_INVALID") from exc
+    return load_source_manifest_payload(payload)
+
+
+DOCUMENTS = _load_source_manifest()
+
+
 def _validate_document_id(document_id):
     if document_id not in DOCUMENTS:
         raise AcquisitionError("DOCUMENT_ID_NOT_ALLOWLISTED")
@@ -76,10 +114,7 @@ def _validate_document_id(document_id):
 
 
 def _validate_url(url):
-    parsed = urlparse(url)
-    if (parsed.scheme != "https" or parsed.hostname not in ALLOWED_HOSTS
-            or parsed.username or parsed.password or parsed.fragment):
-        raise AcquisitionError("URL_NOT_ALLOWLISTED")
+    _validate_url_shape(url)
     if url not in {item["url"] for item in DOCUMENTS.values()}:
         raise AcquisitionError("URL_NOT_ALLOWLISTED")
 
@@ -139,6 +174,9 @@ def _download_one(document_id, output_dir, opener=None):
             if content_length is not None and int(content_length) != byte_count:
                 raise AcquisitionError("CONTENT_LENGTH_MISMATCH")
             sha256 = digest.hexdigest()
+            expected_sha256 = spec.get("expected_sha256")
+            if expected_sha256 is not None and sha256 != expected_sha256:
+                raise AcquisitionError("EXPECTED_SHA256_MISMATCH")
             os.link(temporary_path, destination)
             return {
                 "document_id": document_id,
