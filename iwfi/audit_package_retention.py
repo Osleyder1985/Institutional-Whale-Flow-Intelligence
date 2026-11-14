@@ -137,16 +137,16 @@ def evaluate_retention_authorizations(*, manifest, authorization_context):
         if evaluated_at < start or evaluated_at >= expiry:
             return _fail("ARTIFACT_AUTHORIZATION_EXPIRED_OR_NOT_YET_VALID", artifact_path=path)
         direct = auth["source_ids"]
+        if (not isinstance(direct, list) or not direct
+                or any(not isinstance(item, str) or not item.strip() for item in direct)
+                or len(direct) != len(set(direct))):
+            return _fail("ARTIFACT_SOURCE_LINEAGE_INCOMPLETE", artifact_path=path)
         declared_sources = entry.get("source_ids")
         if (not isinstance(declared_sources, list) or not declared_sources
                 or any(not isinstance(item, str) or not item.strip() for item in declared_sources)
                 or len(declared_sources) != len(set(declared_sources))
                 or set(direct) != set(declared_sources)):
             return _fail("ARTIFACT_AUTHORIZATION_SOURCE_BINDING_MISMATCH", artifact_path=path)
-        if (not isinstance(direct, list) or not direct
-                or any(not isinstance(item, str) or not item.strip() for item in direct)
-                or len(direct) != len(set(direct))):
-            return _fail("ARTIFACT_SOURCE_LINEAGE_INCOMPLETE", artifact_path=path)
         try:
             closure = _source_closure(direct, lineage)
         except ValueError as exc:
