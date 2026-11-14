@@ -28,7 +28,7 @@ python scripts/validate_policy_findings.py `
   --output "$HOME\IWFI-private-evidence\policy-documents\policy-review-validation.json"
 ```
 
-The validation report is created outside the repository and is never overwritten. The tool verifies references only; it does not determine whether an interpretation is legally correct, whether a clause applies to IWFI, or whether redistribution, retention, or source use is authorized.
+The validation report is created outside the repository and is never overwritten. Before checking findings, the tool rebuilds the extraction bundle from the original local snapshots and capture manifest, re-verifies each original file SHA-256/byte count, and requires the supplied bundle contents to match that reconstruction exactly. It then verifies each finding hash and exact text locator. The tool does not determine whether an interpretation is legally correct, whether a clause applies to IWFI, or whether redistribution, retention, or source use is authorized.
 
 ## Status semantics
 
