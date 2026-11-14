@@ -5,12 +5,12 @@ This module has no network, database, credential, retry, or background behavior.
 import hashlib
 import json
 import re
+import uuid
 from datetime import datetime
-from uuid import UUID
-from datetime import datetime, timezone
 
 
 _SHA256_RE = re.compile(r"^[a-f0-9]{64}$")
+_UTC_SECONDS_RE = re.compile(r"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$")
 
 
 def canonical_payload_hash(payload):
@@ -38,36 +38,30 @@ def operation_fingerprint(operation):
 
 
 def validate_operation_semantics(operation):
-    """Validate semantic invariants not expressible by the JSON Schema alone."""
+    """Validate semantic invariants not expressible by JSON Schema alone."""
     if not isinstance(operation, dict):
         raise ValueError("operation must be an object")
+
     operation_id = operation.get("operation_id")
-    timestamp = operation.get("created_at_device_utc")
-    if not isinstance(timestamp, str) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z", timestamp):
-        raise ValueError("created_at_device_utc must be UTC with a Z suffix")
+    if not isinstance(operation_id, str):
+        raise ValueError("operation_id must be a UUID")
     try:
-        parsed_timestamp = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
-    except ValueError as exc:
-        raise ValueError("created_at_device_utc must be a valid calendar timestamp") from exc
-    if parsed_timestamp.tzinfo != timezone.utc:
-        raise ValueError("created_at_device_utc must be UTC")
-    dependencies = operation.get("causal_dependencies")
-    if not isinstance(operation_id, str) or not operation_id.strip():
-        raise ValueError("operation_id must be a non-empty string")
-    try:
-        if str(UUID(operation_id)) != operation_id.lower():
-            raise ValueError("operation_id must use canonical UUID text")
+        if str(uuid.UUID(operation_id)) != operation_id:
+            raise ValueError("operation_id must use canonical UUID notation")
     except (ValueError, AttributeError) as exc:
         raise ValueError("operation_id must be a UUID") from exc
+
     timestamp = operation.get("created_at_device_utc")
-    if not isinstance(timestamp, str):
-        raise ValueError("created_at_device_utc must be a UTC timestamp")
+    if not isinstance(timestamp, str) or not _UTC_SECONDS_RE.fullmatch(timestamp):
+        raise ValueError("created_at_device_utc must be UTC with a Z suffix")
     try:
         parsed_timestamp = datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%SZ")
     except ValueError as exc:
         raise ValueError("created_at_device_utc must be a valid UTC calendar timestamp") from exc
     if parsed_timestamp.strftime("%Y-%m-%dT%H:%M:%SZ") != timestamp:
         raise ValueError("created_at_device_utc must use canonical UTC seconds format")
+
+    dependencies = operation.get("causal_dependencies")
     if not isinstance(dependencies, list):
         raise ValueError("causal_dependencies must be an array")
     if any(not isinstance(value, str) or not value.strip() for value in dependencies):
@@ -76,6 +70,7 @@ def validate_operation_semantics(operation):
         raise ValueError("causal dependencies must be unique")
     if operation_id in dependencies:
         raise ValueError("an operation cannot depend on itself")
+
     payload = operation.get("payload")
     expected_hash = operation.get("payload_hash")
     if not isinstance(payload, dict) or not isinstance(expected_hash, str):
