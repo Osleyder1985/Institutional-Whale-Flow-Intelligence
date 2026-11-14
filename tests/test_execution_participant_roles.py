@@ -23,6 +23,7 @@ class ExecutionParticipantRoleTests(unittest.TestCase):
         cls.actors = json.loads((FIXTURES / "execution-participant-role-actors.json").read_text(encoding="utf-8"))
         cls.schema = json.loads((ROOT.parent / "schemas" / "execution-participant-role-claim.schema.json").read_text(encoding="utf-8"))
         cls.trade_v11 = json.loads((FIXTURES / "trade-execution-v1.1.json").read_text(encoding="utf-8"))
+        cls.trade_v11_btc = json.loads((FIXTURES / "trade-execution-btc-v1.1.json").read_text(encoding="utf-8"))
         cls.trade_v11_schema = json.loads((ROOT.parent / "schemas" / "trade-execution-v1.1.schema.json").read_text(encoding="utf-8"))
         cls.actor_ids = [item["actor_id"] for item in cls.actors["actors"]]
         cls.observation_ids = [
@@ -42,7 +43,7 @@ class ExecutionParticipantRoleTests(unittest.TestCase):
 
     def test_multiple_distinct_roles_coexist_for_one_execution(self):
         result = resolve_execution_participants(
-            self.registry, self.trades[1], "2026-02-11T12:30:00Z", self.actor_ids, self.observation_ids
+            self.registry, self.trade_v11, "2026-02-11T12:30:00Z", self.actor_ids, self.observation_ids
         )
         self.assertEqual(result["status"], "RESOLVED")
         by_role = {item["participant_role"]: item for item in result["participants"]}
@@ -55,7 +56,7 @@ class ExecutionParticipantRoleTests(unittest.TestCase):
 
     def test_custodian_does_not_imply_beneficial_owner(self):
         result = resolve_execution_participants(
-            self.registry, self.trades[1], "2026-02-11T12:30:00Z", self.actor_ids, self.observation_ids
+            self.registry, self.trade_v11, "2026-02-11T12:30:00Z", self.actor_ids, self.observation_ids
         )
         by_role = {item["participant_role"]: item for item in result["participants"]}
         self.assertEqual(by_role["CUSTODIAN"]["status"], "DIRECT")
@@ -64,14 +65,14 @@ class ExecutionParticipantRoleTests(unittest.TestCase):
 
     def test_fund_and_asset_manager_remain_separate_actors(self):
         result = resolve_execution_participants(
-            self.registry, self.trades[1], "2026-02-11T12:30:00Z", self.actor_ids, self.observation_ids
+            self.registry, self.trade_v11, "2026-02-11T12:30:00Z", self.actor_ids, self.observation_ids
         )
         by_role = {item["participant_role"]: item for item in result["participants"]}
         self.assertNotEqual(by_role["FUND"]["actor_id"], by_role["ASSET_MANAGER"]["actor_id"])
 
     def test_aggressor_side_alone_does_not_create_participant_claim(self):
         result = resolve_execution_participants(
-            self.registry, self.trades[0], "2026-01-10T10:00:10Z", self.actor_ids, self.observation_ids
+            self.registry, self.trade_v11_btc, "2026-01-10T10:00:10Z", self.actor_ids, self.observation_ids
         )
         self.assertEqual(result["status"], "RESOLVED")
         self.assertEqual(result["participants"], [])
@@ -85,8 +86,10 @@ class ExecutionParticipantRoleTests(unittest.TestCase):
         conflict["supporting_evidence"][0]["observation_id"] = "obs-eth-buyer-conflict"
         conflict["supporting_evidence"][0]["record_ref"] = "synthetic:buyer-conflict"
         registry["claims"].append(conflict)
+        execution = copy.deepcopy(self.trade_v11)
+        execution["participant_role_claim_ids"].append("claim-eth-buyer-conflict")
         result = resolve_execution_participants(
-            registry, self.trades[1], "2026-02-11T12:30:00Z", self.actor_ids, self.observation_ids + ["obs-eth-buyer-conflict"]
+            registry, execution, "2026-02-11T12:30:00Z", self.actor_ids, self.observation_ids + ["obs-eth-buyer-conflict"]
         )
         buyer = next(item for item in result["participants"] if item["participant_role"] == "BUYER")
         self.assertEqual(buyer["status"], "DISPUTED")
@@ -94,7 +97,7 @@ class ExecutionParticipantRoleTests(unittest.TestCase):
 
     def test_claim_known_after_cutoff_is_not_visible(self):
         result = resolve_execution_participants(
-            self.registry, self.trades[1], "2026-02-11T11:59:59Z", self.actor_ids, self.observation_ids
+            self.registry, self.trade_v11, "2026-02-11T11:59:59Z", self.actor_ids, self.observation_ids
         )
         self.assertEqual(result["participants"], [])
 
@@ -132,7 +135,7 @@ class ExecutionParticipantRoleTests(unittest.TestCase):
         registry = copy.deepcopy(self.registry)
         registry["claims"][0]["known_at_utc"] = "not-a-time"
         result = resolve_execution_participants(
-            registry, self.trades[1], "2026-02-11T12:30:00Z", self.actor_ids, self.observation_ids
+            registry, self.trade_v11, "2026-02-11T12:30:00Z", self.actor_ids, self.observation_ids
         )
         self.assertEqual(result["status"], "INVALID_INPUT")
         self.assertEqual(result["participants"], [])
@@ -163,8 +166,10 @@ class ExecutionParticipantRoleTests(unittest.TestCase):
             registry, self.trades, self.actor_ids, self.observation_ids
         )
         self.assertEqual(errors, [])
+        execution = copy.deepcopy(self.trade_v11_btc)
+        execution["participant_role_claim_ids"] = ["claim-btc-buyer-identity-unknown"]
         result = resolve_execution_participants(
-            registry, self.trades[0], "2026-01-10T10:00:10Z", self.actor_ids, self.observation_ids
+            registry, execution, "2026-01-10T10:00:10Z", self.actor_ids, self.observation_ids
         )
         buyer = result["participants"][0]
         self.assertEqual(buyer["participant_role"], "BUYER")
@@ -175,7 +180,7 @@ class ExecutionParticipantRoleTests(unittest.TestCase):
 
     def test_recorded_after_cutoff_is_not_visible_even_if_known_at_is_earlier(self):
         result = resolve_execution_participants(
-            self.registry, self.trades[1], "2026-02-11T12:00:01Z",
+            self.registry, self.trade_v11, "2026-02-11T12:00:01Z",
             self.actor_ids, self.observation_ids
         )
         self.assertEqual(result["status"], "RESOLVED")
@@ -185,7 +190,7 @@ class ExecutionParticipantRoleTests(unittest.TestCase):
         registry = copy.deepcopy(self.registry)
         registry["claims"][0]["actor_id"] = "actor-not-in-registry"
         result = resolve_execution_participants(
-            registry, self.trades[1], "2026-02-11T12:30:00Z",
+            registry, self.trade_v11, "2026-02-11T12:30:00Z",
             self.actor_ids, self.observation_ids
         )
         self.assertEqual(result["status"], "INVALID_INPUT")
@@ -196,7 +201,7 @@ class ExecutionParticipantRoleTests(unittest.TestCase):
         registry["claims"][0]["source_observation_ids"] = ["observation-not-in-ledger"]
         registry["claims"][0]["supporting_evidence"][0]["observation_id"] = "observation-not-in-ledger"
         result = resolve_execution_participants(
-            registry, self.trades[1], "2026-02-11T12:30:00Z",
+            registry, self.trade_v11, "2026-02-11T12:30:00Z",
             self.actor_ids, self.observation_ids
         )
         self.assertEqual(result["status"], "INVALID_INPUT")
@@ -224,7 +229,7 @@ class ExecutionParticipantRoleTests(unittest.TestCase):
         }
         registry["claims"].append(unknown_buyer)
         result = resolve_execution_participants(
-            registry, self.trades[1], "2026-02-11T12:30:00Z",
+            registry, self.trade_v11, "2026-02-11T12:30:00Z",
             self.actor_ids, self.observation_ids
         )
         buyer = next(item for item in result["participants"] if item["participant_role"] == "BUYER")
@@ -237,7 +242,7 @@ class ExecutionParticipantRoleTests(unittest.TestCase):
         registry = copy.deepcopy(self.registry)
         registry["claims"][0]["attribution_method"] = "NONE"
         result = resolve_execution_participants(
-            registry, self.trades[1], "2026-02-11T12:30:00Z",
+            registry, self.trade_v11, "2026-02-11T12:30:00Z",
             self.actor_ids, self.observation_ids
         )
         self.assertEqual(result["status"], "INVALID_INPUT")
@@ -247,7 +252,7 @@ class ExecutionParticipantRoleTests(unittest.TestCase):
         registry = copy.deepcopy(self.registry)
         registry["claims"][0]["supporting_evidence"][0]["record_ref"] = "   "
         result = resolve_execution_participants(
-            registry, self.trades[1], "2026-02-11T12:30:00Z",
+            registry, self.trade_v11, "2026-02-11T12:30:00Z",
             self.actor_ids, self.observation_ids
         )
         self.assertEqual(result["status"], "INVALID_INPUT")
