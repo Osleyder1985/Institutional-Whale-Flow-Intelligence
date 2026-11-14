@@ -262,10 +262,13 @@ def resolve_execution_participants(registry, trade, as_of_utc, actor_ids, observ
     as_of = _time(as_of_utc)
     event_time = _time(trade.get("event_time_utc")) if isinstance(trade, dict) else None
     execution_id = trade.get("execution_id") if isinstance(trade, dict) else None
-    if as_of is None or event_time is None or not _nonempty(execution_id):
-        return {"status": "INVALID_INPUT", "participants": [], "errors": ["invalid trade or as_of timestamp"]}
+    if as_of is None or event_time is None or not _nonempty(execution_id) or not isinstance(trade, dict) or trade.get("contract_version") != "1.1.0":
+        return {"status": "INVALID_INPUT", "participants": [], "errors": ["invalid TradeExecution v1.1 or as_of timestamp"]}
     if not isinstance(registry, dict) or registry.get("contract_version") != "1.1.0" or not isinstance(registry.get("claims"), list):
         return {"status": "INVALID_INPUT", "participants": [], "errors": ["invalid claim registry"]}
+    link_errors = validate_execution_participant_role_links(trade, registry, actor_ids, observation_ids)
+    if link_errors:
+        return {"status": "INVALID_INPUT", "participants": [], "errors": link_errors}
 
     eligible = []
     for claim in registry["claims"]:
@@ -282,17 +285,6 @@ def resolve_execution_participants(registry, trade, as_of_utc, actor_ids, observ
         if known > as_of or recorded > as_of:
             continue
         eligible.append(claim)
-
-    scoped_registry = {"contract_version": "1.1.0", "claims": eligible}
-    validation_errors = validate_execution_participant_roles(
-        scoped_registry, [trade], actor_ids, observation_ids
-    )
-    if validation_errors:
-        return {
-            "status": "INVALID_INPUT",
-            "participants": [],
-            "errors": validation_errors,
-        }
 
     by_role = {}
     for claim in eligible:
