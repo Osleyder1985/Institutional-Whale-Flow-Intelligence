@@ -1,7 +1,8 @@
 import unittest
 
 from iwfi.typed_evidence_provenance import (
-    resolve_actor_evidence_as_of,\n    resolve_actor_registry_evidence_as_of,
+    resolve_actor_evidence_as_of,
+    resolve_actor_registry_evidence_as_of,
     resolve_typed_evidence_refs,
 )
 
@@ -141,6 +142,20 @@ class TypedEvidenceProvenanceTests(unittest.TestCase):
             [{"ref_type": "WALLET", "ref_id": "obs-btc-1"}],
             snapshots(), CUTOFF, EVENT)
         self.assertEqual(result["rejected"][0]["reason"], "INVALID_REFERENCE")
+
+    def test_utc_parser_accepts_valid_z_timestamp(self):
+        result = resolve_typed_evidence_refs(
+            [{"ref_type": "SOURCE_OBSERVATION", "ref_id": "obs-btc-1"}],
+            snapshots(), CUTOFF, EVENT)
+        self.assertEqual(result["status"], "RESOLVED")
+
+    def test_utc_parser_rejects_offset_and_missing_seconds(self):
+        data = snapshots()
+        data["SOURCE_OBSERVATION"]["records"][0]["retrieved_at_utc"] = "2026-11-09T13:00:00+00:00"
+        result = resolve_typed_evidence_refs(
+            [{"ref_type": "SOURCE_OBSERVATION", "ref_id": "obs-btc-1"}],
+            data, CUTOFF, EVENT)
+        self.assertEqual(result["rejected"][0]["reason"], "INVALID_TEMPORAL_METADATA")
 
 
 if __name__ == "__main__":
