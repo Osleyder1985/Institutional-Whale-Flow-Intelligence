@@ -204,7 +204,7 @@ def resolve_execution_participants_as_of(claim_registry, trade, knowledge_cutoff
             identity = resolve_actor_identity_as_of(actor_registry, actor_id, knowledge_cutoff_utc,
                                                      trade["event_time_utc"])
             if identity["status"] != "ELIGIBLE":
-                # Preserve the role and evidence, but do not emit an ineligible named actor.
+                # Preserve the role, but do not emit an ineligible named actor.
                 claim["actor_id"] = None
                 claim["candidate_actor_ids"] = []
                 claim["epistemic_status"] = "UNKNOWN"
@@ -212,6 +212,10 @@ def resolve_execution_participants_as_of(claim_registry, trade, knowledge_cutoff
                 claim["source_observation_ids"] = []
                 claim["supporting_evidence"] = []
                 claim["counter_evidence"] = []
+            elif identity["actor"]["identity_status"] != "VERIFIED" and claim["epistemic_status"] == "DIRECT":
+                # The execution disclosure may be direct while the actor's identity is only inferred/labelled.
+                claim["epistemic_status"] = "INFERRED"
+                claim["attribution_method"] = "OTHER"
         elif claim.get("epistemic_status") == "DISPUTED":
             claim["candidate_actor_ids"] = [
                 candidate for candidate in claim.get("candidate_actor_ids", [])
