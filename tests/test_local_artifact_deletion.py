@@ -94,6 +94,20 @@ class LocalArtifactDeletionTests(unittest.TestCase):
             self.assertTrue((Path(temp) / "archive-001").exists())
             self.assertTrue((Path(temp) / "feature-001").exists())
 
+    def test_schema_lineage_reference_is_discovered_as_dependency(self):
+        with tempfile.TemporaryDirectory() as temp:
+            create_artifact(temp, "archive-001", "SOURCE_ARCHIVE")
+            create_artifact(temp, "report-001", "VALIDATION_REPORT")
+            record_path = Path(temp) / "report-001" / "record.json"
+            record = json.loads(record_path.read_text(encoding="utf-8"))
+            record["supersedes_artifact_id"] = "archive-001"
+            record_path.write_text(json.dumps(record), encoding="utf-8")
+            with self.assertRaisesRegex(ArtifactDeletionError, "dependency review does not match"):
+                delete_artifacts(temp, "archive-001", [], [], "deletion-001",
+                                 "test-unlink", source_policy(), retention_policy(),
+                                 "2026-11-14T00:00:00Z")
+            self.assertTrue((Path(temp) / "archive-001").exists())
+
     def test_omitted_backup_blocks_deletion(self):
         with tempfile.TemporaryDirectory() as temp:
             create_artifact(temp, "archive-001", "SOURCE_ARCHIVE")
