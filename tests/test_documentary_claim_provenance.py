@@ -1,5 +1,9 @@
 import hashlib
+import json
 import unittest
+from pathlib import Path
+
+import jsonschema
 
 from scripts.documentary_claim_provenance import (
     DocumentaryClaimError, validate_claim, validate_claim_collection, validate_snapshot_catalog,
@@ -125,6 +129,36 @@ class DocumentaryClaimProvenanceTests(unittest.TestCase):
         result = validate_claim_collection([claim(), claim()], [SNAPSHOT])
         self.assertFalse(result["valid"])
         self.assertIn("DUPLICATE_CLAIM_ID", result["errors"])
+
+    def test_multiple_distinct_clauses_from_one_snapshot_are_allowed(self):
+        item = claim()
+        second = dict(item["evidence"][0])
+        second["locator"] = {"locator_type": "CLAUSE", "value": "4.2"}
+        second["extracted_span_sha256"] = hashlib.sha256(b"section 4.2").hexdigest()
+        item["evidence"].append(second)
+        self.assertTrue(validate_claim(item, [SNAPSHOT])["valid"])
+
+    def test_json_schema_accepts_valid_claim_and_enforces_expression_rules(self):
+        schema_path = Path(__file__).resolve().parents[1] / "schemas" / "documentary-attribution-claim-v1.0.schema.json"
+        schema = json.loads(schema_path.read_text(encoding="utf-8"))
+        jsonschema.Draft202012Validator.check_schema(schema)
+        validator = jsonschema.Draft202012Validator(schema)
+        valid = claim()
+        self.assertEqual(list(validator.iter_errors(valid)), [])
+
+        verbatim_without_span = claim(expression_type="VERBATIM")
+        verbatim_without_span["evidence"][0].pop("extracted_span_sha256")
+        self.assertTrue(list(validator.iter_errors(verbatim_without_span)))
+
+        inference_with_literal_span = claim(expression_type="INFERENCE", epistemic_status="INFERRED")
+        self.assertTrue(list(validator.iter_errors(inference_with_literal_span)))
+
+    def test_json_schema_requires_reviewer_metadata_for_reviewed_claim(self):
+        schema_path = Path(__file__).resolve().parents[1] / "schemas" / "documentary-attribution-claim-v1.0.schema.json"
+        schema = json.loads(schema_path.read_text(encoding="utf-8"))
+        validator = jsonschema.Draft202012Validator(schema)
+        item = claim(review_status="REVIEWED")
+        self.assertTrue(list(validator.iter_errors(item)))
 
     def test_duplicate_snapshot_identity_rejected(self):
         with self.assertRaisesRegex(DocumentaryClaimError, "DUPLICATE_SNAPSHOT_IDENTITY"):
