@@ -28,11 +28,11 @@ If applicable verified claims point to more than one entity, the address is `CON
 ## Transfer accounting
 
 - Event window: half-open `[start_time_utc, end_time_utc)`.
-- Knowledge cutoff: movement and claim `recorded_at_utc <= known_at_utc`.
+- Knowledge cutoff: movement, claim `recorded_at_utc` and claim `review.reviewed_at_utc` must all be <= `known_at_utc`.
 - Claim validity: inclusive `[valid_from_utc, valid_to_utc]`.
 - Only `VALID/PARTIAL`, confirmed transfers with a known positive decimal amount are included.
 - Ethereum native transfers are supported in this first directed-flow implementation. Bitcoin UTXO_VOUT is excluded with `unsupported_utxo_accounting`; a UTXO output has a recipient but no unique sender, so treating it as a directed transfer would fabricate input-to-output pairing. See Issue #109.
-- EVM addresses are compared case-insensitively; Bitcoin address strings remain case-sensitive.
+- EVM addresses are compared case-insensitively.
 - An attributed source and destination resolving to the same entity form an internal transfer. The amount is reported in `internal_transfer_volume` and is excluded from external incoming, outgoing and net flow.
 - Transfers between different attributed entities count once as outgoing for the source entity and once as incoming for the destination entity. This is two entity-side views of one transfer, not two distinct chain transfers.
 - When only one endpoint is attributed, its external flow is recorded and the other side is explicitly counted as an unknown counterparty.
