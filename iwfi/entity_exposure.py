@@ -26,14 +26,21 @@ def _parse_utc(value):
         return None
 
 
+def _address_key(address, network_id):
+    if not isinstance(address, str) or not address:
+        return None
+    return address.lower() if network_id == "eip155:1" else address
+
+
 def _resolve_control(address, network_id, snapshot_time, known_at, claim_index):
+    address_key = _address_key(address, network_id)
     eligible, disputed = [], []
     for claim in claim_index.values():
         subject = claim.get("subject")
         if not isinstance(subject, dict):
             continue
         if (subject.get("subject_type") != "ADDRESS"
-                or subject.get("subject_id") != address
+                or _address_key(subject.get("subject_id"), network_id) != address_key
                 or subject.get("network_id") != network_id):
             continue
         recorded = _parse_utc(claim.get("recorded_at_utc"))
@@ -163,14 +170,15 @@ def aggregate_entity_exposure_history(snapshots, claims, known_at_utc):
             amount = record.get("balance_atomic")
             unit = record.get("unit")
             observation_id = record.get("source_observation_id")
-            if (not isinstance(address, str) or not address
-                    or address in seen_addresses
+            address_key = _address_key(address, network_id)
+            if (address_key is None
+                    or address_key in seen_addresses
                     or not isinstance(amount, int) or isinstance(amount, bool) or amount < 0
                     or unit != expected[1]
                     or not isinstance(observation_id, str) or not observation_id):
                 valid_records = False
                 break
-            seen_addresses.add(address)
+            seen_addresses.add(address_key)
             resolution = _resolve_control(address, network_id, snapshot_time, cutoff, claim_index)
             address_resolutions.append({
                 "address": address,
@@ -184,7 +192,7 @@ def aggregate_entity_exposure_history(snapshots, claims, known_at_utc):
             if resolution["status"] == "ATTRIBUTED" and resolution["entity_id"] == scope_entity_id:
                 known_balance += amount
                 attributed_count += 1
-                address_set.add(address)
+                address_set.add(address_key)
                 claim_ids.update(resolution["claim_ids"])
             else:
                 unresolved_count += 1
