@@ -28,11 +28,12 @@ class ChainIntegrityContractTests(unittest.TestCase):
                 record = {
                     "observation_id": scenario["scenario_id"] + "-" + str(index),
                     "network_id": scenario["network_id"],
-                    "source": {"kind": "SELF_HOSTED_NODE", "source_id": "fixture-node", "method": "synthetic-fixture"},
-                    "transaction_id": observation["transaction_id"],
+                    "source": {"kind": "SELF_HOSTED_NODE", "source_id": "fixture-node", "view_id": "fixture-view", "method": "synthetic-fixture"},
+                    "transaction_id": observation.get("transaction_id"),
                     "observation_kind": observation["observation_kind"],
                     "observed_at_utc": "2026-11-13T12:00:00Z",
                     "inclusion": observation.get("inclusion"),
+                    "checkpoint": observation.get("checkpoint"),
                     "source_asserted_chain_status": observation.get("source_asserted_chain_status"),
                     "source_asserted_head_tag": observation.get("source_asserted_head_tag"),
                     "event_locator": None,
@@ -45,7 +46,7 @@ class ChainIntegrityContractTests(unittest.TestCase):
         self.assertTrue(list(self.validator.iter_errors(record)))
 
     def test_block_inclusion_requires_block_identity(self):
-        record = {"observation_id": "i", "network_id": "bitcoin-mainnet", "source": {"kind": "SELF_HOSTED_NODE", "source_id": "n", "method": "getblock"}, "transaction_id": "a" * 64, "observation_kind": "BLOCK_INCLUDED", "observed_at_utc": "2026-11-13T12:00:00Z"}
+        record = {"observation_id": "i", "network_id": "bitcoin-mainnet", "source": {"kind": "SELF_HOSTED_NODE", "source_id": "n", "view_id": "fixture-view", "method": "getblock"}, "transaction_id": "a" * 64, "observation_kind": "BLOCK_INCLUDED", "observed_at_utc": "2026-11-13T12:00:00Z"}
         self.assertTrue(list(self.validator.iter_errors(record)))
 
     def test_network_specific_transaction_hash_formats(self):
@@ -78,18 +79,19 @@ class ChainIntegrityContractTests(unittest.TestCase):
         checkpoint = next(x for x in scenario["observations"] if x["observation_kind"] == "FINALITY_CHECKPOINT")
         inclusion = next(x for x in scenario["observations"] if x["observation_kind"] == "BLOCK_INCLUDED")
         self.assertEqual(checkpoint.get("source_asserted_head_tag"), "finalized")
-        self.assertGreaterEqual(checkpoint["inclusion"]["block_height"], inclusion["inclusion"]["block_height"])
+        self.assertGreaterEqual(checkpoint["checkpoint"]["block_height"], inclusion["inclusion"]["block_height"])
 
 
     def _record(self, observation_id, kind, tx="a" * 64, height=100, block="b" * 64, status="UNKNOWN", network="bitcoin-mainnet", source="node-a", tag=None):
         return {
             "observation_id": observation_id,
             "network_id": network,
-            "transaction_id": tx if network == "bitcoin-mainnet" else "0x" + tx[-64:],
-            "source": {"kind": "SELF_HOSTED_NODE", "source_id": source, "method": "fixture"},
+            "transaction_id": None if kind == "FINALITY_CHECKPOINT" else (tx if network == "bitcoin-mainnet" else "0x" + tx[-64:]),
+            "source": {"kind": "SELF_HOSTED_NODE", "source_id": source, "view_id": "view-a", "method": "fixture"},
             "observation_kind": kind,
             "observed_at_utc": "2026-11-13T12:00:00Z",
-            "inclusion": None if kind == "MEMPOOL_SEEN" else {"block_height": height, "block_hash": block if network == "bitcoin-mainnet" else "0x" + block[-64:], "transaction_index": 0},
+            "inclusion": None if kind in {"MEMPOOL_SEEN", "FINALITY_CHECKPOINT"} else {"block_height": height, "block_hash": block if network == "bitcoin-mainnet" else "0x" + block[-64:], "transaction_index": 0},
+            "checkpoint": {"block_height": height, "block_hash": "0x" + block[-64:]} if kind == "FINALITY_CHECKPOINT" else None,
             "source_asserted_chain_status": status,
             "source_asserted_head_tag": tag,
         }
@@ -135,9 +137,11 @@ class ChainIntegrityContractTests(unittest.TestCase):
         tx = "a" * 64
         inclusion = self._record("included", "BLOCK_INCLUDED", tx=tx, network="eip155:1", height=100, block="b" * 64, status="ACTIVE", source="eth-node")
         checkpoint = self._record("checkpoint", "FINALITY_CHECKPOINT", tx=tx, network="eip155:1", height=101, block="c" * 64, source="eth-node", tag="finalized")
-        self.assertEqual(assess_chain_observations([inclusion, checkpoint])["status"], "FINALIZED")
-        checkpoint["inclusion"]["block_height"] = 99
-        self.assertEqual(assess_chain_observations([inclusion, checkpoint])["status"], "INCLUDED")
+        checkpoint["observed_at_utc"] = "2026-11-13T12:01:00Z"
+        canonical = self._record("canonical", "BLOCK_STATUS", tx=tx, network="eip155:1", height=100, block="b" * 64, status="ACTIVE", source="eth-node")
+        self.assertEqual(assess_chain_observations([inclusion, canonical, checkpoint])["status"], "FINALIZED")
+        checkpoint["checkpoint"]["block_height"] = 99
+        self.assertEqual(assess_chain_observations([inclusion, canonical, checkpoint])["status"], "INCLUDED")
 
     def test_bitcoin_never_receives_finalized_assessment(self):
         from iwfi.chain_integrity import assess_chain_observations
@@ -174,10 +178,84 @@ class ChainIntegrityContractTests(unittest.TestCase):
         later = self._record("status", "BLOCK_STATUS", status="NOT_ACTIVE")
         later["inclusion"] = dict(original["inclusion"])
         later["observed_at_utc"] = "2026-11-13T12:01:00Z"
-        new_result = assess_chain_observations([original, later])
-        self.assertEqual(historical_result["status"], "INCLUDED")
+        new_result = assess_chain_observations([original, later], supersedes_assessment_id=historical_result["assessment_fingerprint"])
+        self.assertEqual(historical_result["status"], "CANONICALITY_UNRESOLVED")
         self.assertEqual(new_result["status"], "NOT_CANONICAL")
         self.assertEqual(historical_result["evidence_observation_ids"], ["included"])
+        self.assertEqual(new_result["supersedes_assessment_id"], historical_result["assessment_fingerprint"])
+        self.assertNotEqual(new_result["assessment_fingerprint"], historical_result["assessment_fingerprint"])
+
+
+    def test_finality_requires_positive_active_evidence_for_exact_inclusion(self):
+        from iwfi.chain_integrity import assess_chain_observations
+        tx = "a" * 64
+        inclusion = self._record("included", "BLOCK_INCLUDED", tx=tx, network="eip155:1", height=100, block="b" * 64, status="UNKNOWN", source="eth-node")
+        checkpoint = self._record("checkpoint", "FINALITY_CHECKPOINT", tx=tx, network="eip155:1", height=101, block="c" * 64, source="eth-node", tag="finalized")
+        checkpoint["observed_at_utc"] = "2026-11-13T12:01:00Z"
+        self.assertEqual(assess_chain_observations([inclusion, checkpoint])["status"], "CANONICALITY_UNRESOLVED")
+
+    def test_finality_requires_same_source_view(self):
+        from iwfi.chain_integrity import assess_chain_observations
+        tx = "a" * 64
+        inclusion = self._record("included", "BLOCK_INCLUDED", tx=tx, network="eip155:1", height=100, block="b" * 64, status="ACTIVE", source="eth-node")
+        checkpoint = self._record("checkpoint", "FINALITY_CHECKPOINT", tx=tx, network="eip155:1", height=101, block="c" * 64, source="eth-node", tag="finalized")
+        checkpoint["source"]["view_id"] = "different-view"
+        checkpoint["observed_at_utc"] = "2026-11-13T12:01:00Z"
+        self.assertEqual(assess_chain_observations([inclusion, checkpoint])["status"], "INCLUDED")
+
+    def test_reorg_requires_same_source_and_same_view(self):
+        from iwfi.chain_integrity import assess_chain_observations
+        old = self._record("old", "BLOCK_INCLUDED", block="b" * 64, status="NOT_ACTIVE", source="provider-a")
+        new = self._record("new", "BLOCK_INCLUDED", block="c" * 64, status="ACTIVE", source="provider-a")
+        new["source"]["view_id"] = "different-view"
+        new["observed_at_utc"] = "2026-11-13T12:01:00Z"
+        self.assertEqual(assess_chain_observations([old, new])["status"], "CANONICALITY_UNRESOLVED")
+
+    def test_multiple_event_locators_remain_distinct_for_one_transaction(self):
+        from iwfi.chain_integrity import assess_chain_observations
+        first = self._record("out-0", "BLOCK_INCLUDED", status="ACTIVE")
+        second = self._record("out-1", "BLOCK_INCLUDED", status="ACTIVE")
+        first["event_locator"] = {"kind": "UTXO_VOUT", "value": "0"}
+        second["event_locator"] = {"kind": "UTXO_VOUT", "value": "1"}
+        result = assess_chain_observations([first, second])
+        self.assertEqual(result["status"], "INCLUDED")
+        self.assertEqual(result["movement_event_locators"], [
+            {"kind": "UTXO_VOUT", "value": "0"},
+            {"kind": "UTXO_VOUT", "value": "1"},
+        ])
+        self.assertEqual(len(result["inclusion_keys"]), 2)
+
+    def test_assessment_fingerprint_is_stable_and_policy_versioned(self):
+        from iwfi.chain_integrity import POLICY_VERSION, assess_chain_observations
+        record = self._record("a", "BLOCK_INCLUDED", status="ACTIVE")
+        first = assess_chain_observations([record])
+        second = assess_chain_observations([record])
+        self.assertEqual(first["assessment_fingerprint"], second["assessment_fingerprint"])
+        self.assertEqual(first["policy_version"], POLICY_VERSION)
+
+
+    def test_reorg_timestamp_order_handles_fractional_seconds(self):
+        from iwfi.chain_integrity import assess_chain_observations
+        old = self._record("old", "BLOCK_INCLUDED", block="b" * 64, status="NOT_ACTIVE")
+        new = self._record("new", "BLOCK_INCLUDED", block="c" * 64, status="ACTIVE")
+        old["observed_at_utc"] = "2026-11-13T12:00:00Z"
+        new["observed_at_utc"] = "2026-11-13T12:00:00.100Z"
+        self.assertEqual(assess_chain_observations([old, new])["status"], "REOBSERVED")
+
+    def test_fingerprint_changes_when_evidence_content_changes(self):
+        from iwfi.chain_integrity import assess_chain_observations
+        record = self._record("a", "BLOCK_INCLUDED", status="ACTIVE")
+        record["event_locator"] = {"kind": "UTXO_VOUT", "value": "0"}
+        first = assess_chain_observations([record])["assessment_fingerprint"]
+        record["event_locator"]["value"] = "1"
+        second = assess_chain_observations([record])["assessment_fingerprint"]
+        self.assertNotEqual(first, second)
+
+
+    def test_blank_supersession_reference_is_rejected(self):
+        from iwfi.chain_integrity import assess_chain_observations
+        with self.assertRaises(ValueError):
+            assess_chain_observations([self._record("a", "BLOCK_INCLUDED")], supersedes_assessment_id="   ")
 
 
 if __name__ == "__main__":

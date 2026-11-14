@@ -1,88 +1,68 @@
-# Chain Integrity Contract v1 — Bitcoin and Ethereum mainnet
+# Chain Integrity Contract v2 — Bitcoin and Ethereum mainnet
 
-Status: proposed; synthetic fixtures only. Related: Issue #19, Issue #16.
-This contract defines evidence and derived assessments. It does not activate nodes/providers, capture data, poll, backfill, or authorize a production backend.
+Status: implemented as a pure evaluator with synthetic fixtures; no provider integration or production persistence is authorized. Related: Issues #18 and #19, Issue #16.
 
-## 1. Core separation
+## 1. Immutable facts and versioned assessments
 
-A chain observation is an immutable statement made by a named source at an observed time. A canonicality assessment is a versioned interpretation over a defined set of observations and policy version. Never overwrite an observation to reflect a later chain view.
+A chain observation is an immutable statement made by a named source at an observed UTC time. A canonicality assessment is a derived interpretation over a defined evidence set and policy version. New evidence creates a new assessment; it never edits an earlier observation, assessment, movement, decision, or ResearchSnapshot.
 
-The same transaction may have multiple inclusion observations. An inclusion is identified by network + transaction ID + block hash + transaction position when available. A transfer within that transaction remains identified by the Movement Ledger key: network + normalized transaction ID + protocol event locator. Block inclusion identity and transfer identity are distinct.
+Every observation identifies network, source kind, stable source ID, source view ID, method/client/API version, observation ID and observed time. `source.view_id` identifies the provider/node chain view or session context used to make the assertion. If the source cannot provide a stable view identifier, it must not be fabricated; same-view sequencing/finality conclusions remain unresolved.
 
-NOT_OBSERVED is not an evidence state. Missing response, timeout, pruned data, unsupported RPC, and absent index entry are not proof of non-inclusion or reversal.
+Transaction inclusion identity is network + transaction ID + block height/hash + transaction position when available. Transfer identity remains network + normalized transaction ID + protocol event locator. One transaction can contain multiple transfers; `UTXO_VOUT`, `EVM_TRACE_PATH`, `EVM_TX_VALUE` and separately scoped `EVM_LOG_INDEX` are retained independently. Transaction position is never a transfer locator.
 
-## 2. Immutable evidence envelope
+## 2. Bitcoin mainnet
 
-Each record stores a unique observation ID; network identifier; source kind and stable source ID; transaction ID/hash; observation kind and UTC observation time; inclusion facts (height, hash, transaction position) when observed; source-asserted active-chain status only when explicitly provided; nullable protocol event locator; and source/API/client version plus reproducible evidence reference, subject to provider terms. No secrets.
+- `MEMPOOL_SEEN` is a source-specific mempool observation, not block inclusion.
+- `BLOCK_INCLUDED` records a transaction in a particular block (height/hash/transaction index).
+- `BLOCK_STATUS` records the source's explicit status for that exact block.
+- `ACTIVE` supports `INCLUDED` for that block at the observation time; `NOT_ACTIVE` supports `NOT_CANONICAL` for that block inclusion only.
+- A later inclusion in another block is a new inclusion observation. `REOBSERVED` is allowed only when the old `NOT_ACTIVE` and later `ACTIVE` evidence are strictly ordered and come from the same source ID and same non-empty source view ID. Otherwise the result is `CANONICALITY_UNRESOLVED`.
+- Bitcoin has no protocol-level `FINALIZED` state in this contract. Confirmation depth is source-reported chain depth; no universal threshold is invented.
 
-The envelope records what the source said, not what IWFI concludes. Different sources' contradictory records are retained.
+## 3. Ethereum mainnet
 
-## 3. Network-specific evidence semantics
+- Preserve receipt blockHash, blockNumber, transactionIndex, execution status, and transfer event locator independently.
+- A receipt/inclusion without positive canonical-membership evidence is `CANONICALITY_UNRESOLVED`, not `INCLUDED`.
+- `SAFE` is not treated as `FINALIZED`.
+- A `FINALITY_CHECKPOINT` is an independent block observation. It has no transaction ID and no transaction inclusion object; it records a separate `checkpoint` (block height/hash), the explicit `finalized` tag, source ID, source view ID, method and observation time.
+- `FINALIZED` requires all of the following: (1) positive `ACTIVE` evidence for the exact transaction inclusion block; (2) a later `finalized` checkpoint; (3) same source ID and same non-empty source view ID for both assertions; and (4) checkpoint height at or above the inclusion height. Height comparison alone is insufficient.
+- This remains an assessment of the reporting source's view, not independent cryptographic proof of consensus ancestry or a guarantee against consensus failure. Provider/client capabilities and evidence provenance must be retained.
 
-### Bitcoin mainnet
+## 4. Assessment states
 
-- MEMPOOL_SEEN means a particular source reported the transaction in its mempool at observed_at. It is not block inclusion.
-- BLOCK_INCLUDED records inclusion in a specific block identified by height and hash; transaction position is retained when available.
-- BLOCK_STATUS records a source's explicit status for a particular block. Bitcoin Core getblock/getblockheader expose confirmations and report -1 for a block not on the main chain. getrawtransaction with an explicit block hash can report in_active_chain. Preserve exact RPC/method, response time and returned values; do not generalize these fields to every provider.
-- If an old block is reported outside the active chain, assess that specific inclusion as NOT_CANONICAL only with positive evidence. Do not say the transaction was economically reversed: it may later be re-included.
-- A later inclusion of the same txid in a different block is a new inclusion observation linked to the same transaction. Re-evaluate each transfer event separately using its original UTXO_VOUT locator.
-- A transaction returning to a mempool is source-specific evidence only. It is not guaranteed: policy, conflicts, eviction, node configuration and observation timing affect mempool visibility.
-- Confirmation count is source-reported chain depth, not protocol finality. This contract defines no universal confirmation threshold and no FINALIZED state for Bitcoin.
+| State | Meaning |
+|---|---|
+| `UNKNOWN` | No admissible evidence |
+| `OBSERVED` | Transaction seen (for example, mempool) without block inclusion |
+| `CANONICALITY_UNRESOLVED` | Inclusion exists but canonical membership is not positively established, evidence is stale/incomplete, or sources/views conflict |
+| `INCLUDED` | Positive canonical-membership evidence exists for the exact block; no Ethereum finality claim |
+| `NOT_CANONICAL` | Positive evidence says this specific block inclusion is no longer canonical |
+| `REOBSERVED` | A strictly later inclusion is observed after positive non-canonical evidence from the same source view |
+| `FINALIZED` | Ethereum-only source-view assessment meeting every checkpoint condition above |
 
-### Ethereum mainnet
+`NOT_CANONICAL` is not an economic/application reversal. `REVERTED` is excluded because it conflates a chain reorganization with failed execution, replacement, refund, or compensating transfer. Absence, timeout, pruning, or missing index entries never prove non-inclusion or reversal.
 
-- BLOCK_INCLUDED records transaction receipt or block inclusion, retaining blockHash, blockNumber, transactionIndex, and receipt/log facts when available.
-- A receipt is block-specific. Its existence alone is not an enduring canonicality guarantee. Compare its blockHash with the block at the same height from the same source view; preserve both responses and timestamps. Cross-source disagreement remains unresolved.
-- Preserve logIndex and trace path as event locators where available. A transaction may contain multiple logs/internal transfers; never collapse them by transaction hash.
-- Record latest, safe, and finalized tags only when the RPC endpoint supports them and the exact returned block number/hash is captured. latest may be reorganized; safe is a source's safe-head view; finalized is the execution client's view of the consensus-finalized head. A tag is evidence of that source's view, not universal proof independent of source/client integrity.
-- FINALIZED assessment is allowed only when the included block is at or below a captured finalized checkpoint from an identified source, with checkpoint number/hash and observed time preserved. If unsupported, unavailable, inconsistent, or only safe is reported, status is not FINALIZED.
-- If a transaction hash is later included in another block after a reorg, create a new inclusion observation. Preserve the previous receipt/inclusion. Do not reuse the old block hash or mutate the prior snapshot.
+## 5. Conflict, determinism and history
 
-## 4. Derived assessment vocabulary
+- Never resolve cross-provider disagreement by majority vote or implicit provider priority.
+- Conflicting ACTIVE/NOT_ACTIVE assertions for the same block remain unresolved.
+- Multiple block hashes without a same-source, same-view, strictly ordered reorg sequence remain unresolved.
+- The evaluator returns sorted evidence IDs, distinct movement event locators, a policy version and a deterministic SHA-256 assessment fingerprint over the canonicalized full evidence records (not only their IDs). Identical evidence under the same policy produces the same fingerprint; changing evidence content changes the fingerprint. UTC chronology is parsed as timestamps, including fractional seconds, rather than compared lexically.
+- Each assessment may carry an explicit supersedes_assessment_id supplied by the append-only persistence caller; the evaluator validates and returns this link but does not discover or persist prior assessments. A ResearchSnapshot must freeze the assessment fingerprint/ID and exact evidence observation IDs it used. Later assessments are appended; historical snapshots are not recalculated. The current evaluator is pure and does not implement persistence or snapshot storage.
 
-These values are assessments, not source observations:
-- OBSERVED: transaction seen by a source; no block inclusion established.
-- INCLUDED: at least one inclusion is evidenced, but canonicality has not been established by sufficient current evidence.
-- CANONICALITY_UNRESOLVED: evidence conflicts, is incomplete, stale, or cannot establish whether the referenced inclusion is canonical.
-- NOT_CANONICAL: positive evidence establishes that the referenced prior inclusion block is no longer in the active/canonical chain. This applies to that inclusion, not as a blanket transaction reversal.
-- REOBSERVED: a later observation exists after an earlier inclusion was assessed NOT_CANONICAL; specify whether it is mempool-only or a new inclusion.
-- FINALIZED: Ethereum-only, supported by captured finalized checkpoint evidence as described above.
-- UNKNOWN: no admissible evidence supports a more specific assessment.
+## 6. Synthetic test requirements
 
-REVERTED is deliberately excluded: it ambiguously conflates chain reorganization with application-level reversal, replacement, refund, or compensating transfer. Those are distinct domain events and require separate evidence.
+Fixtures/tests cover mempool-only observations, inclusion without canonicality, positive and negative block status, same-view re-inclusion, cross-view ambiguity, provider conflict, independent Ethereum checkpoints, finality without active inclusion, multiple event locators in one transaction, determinism, idempotency, and preservation of the earlier assessment result after later evidence.
 
-## 5. Transition and supersession rules
+## 7. Non-goals and release gate
 
-- OBSERVED -> INCLUDED: add a new inclusion observation.
-- INCLUDED -> CANONICALITY_UNRESOLVED: conflicting or insufficient chain-view evidence appears.
-- INCLUDED -> NOT_CANONICAL: positive evidence establishes that the referenced block left the active/canonical chain.
-- NOT_CANONICAL -> REOBSERVED: later mempool sighting or inclusion is observed; record observation kind and new block facts, if any.
-- Ethereum INCLUDED -> FINALIZED: captured finalized checkpoint evidence covers the inclusion block and is internally consistent.
-- FINALIZED is not downgraded by absence or one provider's contradictory response. A genuine consensus-level contradiction is escalated as a critical integrity incident; retain evidence and create a new CANONICALITY_UNRESOLVED assessment pending investigation rather than silently rewriting history.
-- No transition deletes observations, movements, decisions, or snapshots. Each assessment records policy version, input observation IDs/fingerprint, source set, assessed time, and supersedes assessment ID (nullable for first assessment).
-- A ResearchSnapshot freezes exact assessment and evidence IDs available at creation. Later evidence creates a new assessment and, only on a new user-requested run, a new snapshot.
+No node/provider activation, polling, mempool subscription, RPC credentials, backfill, real ingestion, production persistence, raw-payload retention, economic intent classification, purchase/sale inference, or market-impact claim is authorized. Persistence must separately implement append-only observations/assessments and snapshot references under Issue #16 and provider terms.
 
-## 6. Multi-source conflict handling
-
-Do not select a winner by provider count or arbitrary priority. Preserve each source assertion with source identity, client/API version, observed time and raw-field provenance (payload retention remains governed by provider terms). If sources disagree about block hash at a height, active-chain membership, receipt, or finalized head, return CANONICALITY_UNRESOLVED unless a network-specific evidence rule resolves the exact inclusion. A single provider's silence is not contradictory evidence.
-
-## 7. Validation requirements
-
-- Block height, transaction index and output/log indexes are non-negative integers when present.
-- Block hash and transaction ID must match network-specific format; schema validates basic shape, while network-specific semantic validation checks canonical normalization.
-- Bitcoin transfer event locator remains UTXO_VOUT; Ethereum event locators remain the Movement Ledger's supported EVM_TRACE_PATH / EVM_TX_VALUE or log locator where separately defined. Never substitute transaction position for transfer event identity.
-- observed_at is UTC RFC 3339; event/block timestamps are not substitutes for observation time.
-- Unknown fields, missing fields, malformed values, and unsupported source semantics remain explicit validation failures or unresolved states, not guessed defaults.
-
-## 8. Non-goals and release gate
-
-No automatic chain watcher, polling, mempool subscription, RPC credentials, provider activation, raw-payload retention, historical backfill, production persistence, economic intent classification, purchase/sale inference, or market-impact claim is authorized. The next implementation step after contract acceptance is a separate, explicitly scoped design for ingestion and persistence that satisfies provider terms and Issue #16.
-
-## 9. Official protocol and RPC references
+## 8. Official protocol references
 
 - Bitcoin Developer Reference — getblock: https://developer.bitcoin.org/reference/rpc/getblock.html
 - Bitcoin Developer Reference — getrawtransaction: https://developer.bitcoin.org/reference/rpc/getrawtransaction.html
-- Ethereum Execution APIs — JSON-RPC methods and block tags: https://ethereum.github.io/execution-apis/api/methods/eth_getBlockReceipts/
+- Ethereum Execution APIs — JSON-RPC methods and block tags: https://ethereum.github.io/execution-apis/
 - ethereum.org — Proof-of-stake finality: https://ethereum.org/developers/docs/consensus-mechanisms/pos/
 
-These references support the RPC fields and protocol distinctions above. Provider-specific support, retention, and implementation behavior must still be verified per provider and client version.
+These sources describe protocol/client interfaces. They do not establish that every third-party provider exposes the same fields or that a provider's response is independent consensus proof.
