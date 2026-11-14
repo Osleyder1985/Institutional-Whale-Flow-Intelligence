@@ -147,6 +147,40 @@ def resolve_actor_identity_as_of(registry, actor_id, knowledge_cutoff_utc, valid
     return {"status": "ELIGIBLE", "actor": actor}
 
 
+def resolve_actor_alias_as_of(registry, alias_value, knowledge_cutoff_utc, valid_time_utc,
+                             alias_type=None, scope=None):
+    """Resolve aliases using separate knowledge-cutoff and real-world-validity instants."""
+    cutoff, valid_time = _time(knowledge_cutoff_utc), _time(valid_time_utc)
+    if cutoff is None or valid_time is None or not isinstance(alias_value, str) or not alias_value.strip():
+        return {"status": "INVALID_INPUT", "actor_ids": []}
+    errors = validate_actor_registry_v11(registry)
+    if errors:
+        return {"status": "INVALID_REGISTRY", "actor_ids": [], "errors": errors}
+    matches = set()
+    for actor in registry["actors"]:
+        identity = resolve_actor_identity_as_of(registry, actor["actor_id"], knowledge_cutoff_utc, valid_time_utc)
+        if identity["status"] != "ELIGIBLE":
+            continue
+        for alias in actor.get("aliases", []):
+            if alias.get("value", "").casefold() != alias_value.casefold():
+                continue
+            if alias_type is not None and alias.get("alias_type") != alias_type:
+                continue
+            if scope is not None and alias.get("scope") != scope:
+                continue
+            known, recorded = _time(alias.get("known_at_utc")), _time(alias.get("recorded_at_utc"))
+            if known is None or recorded is None or known > cutoff or recorded > cutoff:
+                continue
+            if _valid_at(alias, valid_time):
+                matches.add(actor["actor_id"])
+    ordered = sorted(matches)
+    if not ordered:
+        return {"status": "UNKNOWN", "actor_ids": []}
+    if len(ordered) > 1:
+        return {"status": "AMBIGUOUS", "actor_ids": ordered}
+    return {"status": "UNIQUE", "actor_ids": ordered}
+
+
 def resolve_relationship_as_of(registry, subject_actor_id, object_actor_id, relationship_type,
                                knowledge_cutoff_utc, valid_time_utc):
     """Resolve only direct relationship claims known by cutoff and valid at the event time."""
@@ -156,6 +190,16 @@ def resolve_relationship_as_of(registry, subject_actor_id, object_actor_id, rela
     errors = validate_actor_registry_v11(registry)
     if errors:
         return {"status": "INVALID_REGISTRY", "evidence_refs": [], "errors": errors}
+    subject_identity = resolve_actor_identity_as_of(
+        registry, subject_actor_id, knowledge_cutoff_utc, valid_time_utc
+    )
+    object_identity = resolve_actor_identity_as_of(
+        registry, object_actor_id, knowledge_cutoff_utc, valid_time_utc
+    )
+    if subject_identity["status"] == "DISPUTED" or object_identity["status"] == "DISPUTED":
+        return {"status": "DISPUTED", "evidence_refs": []}
+    if subject_identity["status"] != "ELIGIBLE" or object_identity["status"] != "ELIGIBLE":
+        return {"status": "UNKNOWN", "evidence_refs": []}
     matches = []
     for item in registry["relationships"]:
         if (item.get("subject_actor_id"), item.get("object_actor_id"), item.get("relationship_type")) != (
