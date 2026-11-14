@@ -114,6 +114,13 @@ class TypedEvidenceProvenanceTests(unittest.TestCase):
         self.assertEqual(len(result["supporting"]["resolved"]), 1)
         self.assertEqual(result["counter"]["resolved"][0]["epistemic_status"], "DISPUTED")
 
+    def test_transfer_cannot_prove_beneficial_ownership(self):
+        result = resolve_typed_evidence_refs(
+            [{"ref_type": "SOURCE_OBSERVATION", "ref_id": "obs-btc-1"}],
+            snapshots(), CUTOFF, EVENT, predicate="BENEFICIAL_OWNER")
+        self.assertEqual(result["rejected"][0]["reason"],
+                         "TRANSFER_DOES_NOT_PROVE_OWNERSHIP_OR_EXECUTION_SIDE")
+
     def test_wrong_reference_type_is_rejected(self):
         result = resolve_typed_evidence_refs(
             [{"ref_type": "WALLET", "ref_id": "obs-btc-1"}],
