@@ -35,6 +35,6 @@ Este resultado no prueba que la atribución sea verdadera, que el actor sea bene
 
 Los payloads con `payload_retention` distinto de RETAINED se reportan en `snapshot_retention_warnings`: aunque bytes se hayan suministrado transitoriamente para esta ejecución, no se afirma que puedan reconstruirse en el futuro. El caller debe cumplir la política de derechos.
 
-El módulo solo reconstruye referencias presentes en dependencias del manifiesto. El contrato de manifiesto v1.0 sigue recogiendo IDs de observaciones del claim; una ampliación futura deberá versionar el manifiesto para congelar dependencias directas del Actor Registry y todas las claim refs no incluidas en el claim raíz.
+El manifiesto raíz debe enumerar los IDs de observación usados mediante los campos reconocidos por Attribution Reconstruction v1.0 (por ejemplo, `source_observation_ids` o `supporting_evidence[].observation_id`); cada uno debe mapearse al snapshot exacto. El módulo solo reconstruye referencias presentes en dependencias del manifiesto. El contrato de manifiesto v1.0 sigue recogiendo IDs de observaciones del claim; una ampliación futura deberá versionar el manifiesto para congelar dependencias directas del Actor Registry y todas las claim refs no incluidas en el claim raíz.
 
 Fixtures sintéticos ETH; coste externo 0 USD. Sin red, captura real, polling, backfill, APIs ni servicios pagos.
