@@ -34,6 +34,14 @@ class EvidenceExtractionError(RuntimeError):
     """Raised when a local evidence bundle fails validation or extraction."""
 
 
+def _ensure_outside_repository(path: Path) -> Path:
+    resolved = path.expanduser().resolve()
+    repository_root = Path(__file__).resolve().parents[1]
+    if resolved == repository_root or repository_root in resolved.parents:
+        raise EvidenceExtractionError("PRIVATE_EVIDENCE_PATH_INSIDE_REPOSITORY")
+    return resolved
+
+
 def _sha256_file(path: Path) -> tuple[str, int]:
     digest = hashlib.sha256()
     size = 0
@@ -116,7 +124,7 @@ def _find_structural_locators(text: str) -> list[dict[str, Any]]:
 
 
 def build_extraction_bundle(evidence_dir: str | Path) -> dict[str, Any]:
-    evidence_dir = Path(evidence_dir).expanduser().resolve()
+    evidence_dir = _ensure_outside_repository(Path(evidence_dir))
     manifest_path = evidence_dir / MANIFEST_NAME
     if not manifest_path.is_file() or manifest_path.is_symlink():
         raise EvidenceExtractionError("EVIDENCE_MANIFEST_MISSING_OR_UNSAFE")
@@ -125,7 +133,9 @@ def build_extraction_bundle(evidence_dir: str | Path) -> dict[str, Any]:
     except (OSError, json.JSONDecodeError) as exc:
         raise EvidenceExtractionError("EVIDENCE_MANIFEST_INVALID") from exc
 
-    if not isinstance(manifest, dict) or not isinstance(manifest.get("documents"), list):
+    if (not isinstance(manifest, dict)
+            or manifest.get("manifest_version") != "1.0.0"
+            or not isinstance(manifest.get("documents"), list)):
         raise EvidenceExtractionError("EVIDENCE_MANIFEST_INVALID")
     if manifest.get("storage_scope") != "LOCAL_ONLY":
         raise EvidenceExtractionError("EVIDENCE_STORAGE_SCOPE_NOT_LOCAL_ONLY")
@@ -193,7 +203,7 @@ def build_extraction_bundle(evidence_dir: str | Path) -> dict[str, Any]:
 
 
 def write_bundle(bundle: dict[str, Any], output_path: str | Path) -> Path:
-    output_path = Path(output_path).expanduser().resolve()
+    output_path = _ensure_outside_repository(Path(output_path))
     output_path.parent.mkdir(parents=True, exist_ok=True)
     if output_path.exists() or output_path.is_symlink():
         raise EvidenceExtractionError("OUTPUT_BUNDLE_ALREADY_EXISTS")
