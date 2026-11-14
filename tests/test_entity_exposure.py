@@ -93,7 +93,7 @@ class EntityExposureTests(unittest.TestCase):
         self.assertEqual(history["snapshots"][1]["total_entity_exposure_atomic"], 3500)
         change = history["changes"][0]
         self.assertEqual(change["total_entity_delta_atomic"], 500)
-        self.assertEqual(change["candidate_direction"], "NET_ACCUMULATION")
+        self.assertEqual(change["candidate_direction"], "NET_BALANCE_INCREASE")
         self.assertEqual(change["classification_status"], "NOT_CALIBRATED")
 
     def test_partial_inventory_emits_known_address_exposure_but_not_total(self):
