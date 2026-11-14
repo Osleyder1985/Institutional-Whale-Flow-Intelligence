@@ -35,6 +35,8 @@ def build_local_artifact_inventory(root):
         if path.is_symlink() or not path.is_dir() or not _SAFE_ID.fullmatch(path.name):
             raise ArtifactInventoryError(f"unrecognized or unsafe root entry: {path.name}")
         children = list(path.iterdir())
+        if any(child.is_symlink() for child in children):
+            raise ArtifactInventoryError(f"symlink found inside artifact: {path.name}")
         if {child.name for child in children} != {"record.json", "payload.bin"}:
             raise ArtifactInventoryError(
                 f"artifact directory contains untracked entries: {path.name}"
