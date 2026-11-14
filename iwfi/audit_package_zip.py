@@ -23,12 +23,26 @@ def _canonical(value):
                       ensure_ascii=False, allow_nan=False).encode("utf-8")
 
 
+def _has_bound_reconstruction_manifest(manifest):
+    entries = manifest.get("artifacts") if isinstance(manifest, dict) else None
+    if not isinstance(entries, list):
+        return False
+    bound = [item for item in entries
+             if isinstance(item, dict)
+             and item.get("role") == "RECONSTRUCTION_MANIFEST"]
+    return (len(bound) == 1
+            and bound[0].get("hash_algorithm") == "SHA-256"
+            and bound[0].get("sha256") == manifest.get("reconstruction_manifest_hash"))
+
+
 def build_audit_package_zip(*, manifest, artifacts_by_path):
     """Return deterministic ZIP bytes for a previously built inventory manifest."""
     if not isinstance(manifest, dict) or not isinstance(artifacts_by_path, dict):
         raise ValueError("manifest and artifact mapping are required")
     if MANIFEST_PATH in artifacts_by_path:
         raise ValueError("artifact path is reserved for the package manifest")
+    if not _has_bound_reconstruction_manifest(manifest):
+        raise ValueError("exact reconstruction manifest artifact must be inventoried and hash-bound")
     expected_hash = manifest.get("reconstruction_manifest_hash")
     checked = verify_audit_package_manifest(
         manifest=manifest, artifacts_by_path=artifacts_by_path,
@@ -103,6 +117,8 @@ def verify_audit_package_zip(*, archive_bytes,
                 return fail("PACKAGE_MANIFEST_INVALID_JSON")
             if _canonical(manifest) != manifest_bytes:
                 return fail("PACKAGE_MANIFEST_NOT_CANONICAL")
+            if not _has_bound_reconstruction_manifest(manifest):
+                return fail("RECONSTRUCTION_MANIFEST_ARTIFACT_MISMATCH")
             verified = verify_audit_package_manifest(
                 manifest=manifest, artifacts_by_path=payloads,
                 expected_reconstruction_manifest_hash=expected_reconstruction_manifest_hash)
