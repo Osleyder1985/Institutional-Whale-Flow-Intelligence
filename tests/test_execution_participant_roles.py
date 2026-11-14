@@ -293,5 +293,40 @@ class ExecutionParticipantRoleTests(unittest.TestCase):
         self.assertTrue(any("legacy singular attribution" in item for item in errors))
 
 
+    def test_explicit_disputed_buyer_claim_is_valid_without_selecting_side(self):
+        claim = copy.deepcopy(self.registry["claims"][0])
+        claim["claim_id"] = "claim-eth-buyer-disputed"
+        claim["actor_id"] = None
+        claim["candidate_actor_ids"] = ["synthetic-eth-buyer-a", "synthetic-eth-buyer-b"]
+        claim["participant_side"] = "UNKNOWN"
+        claim["epistemic_status"] = "DISPUTED"
+        claim["attribution_method"] = "CONFLICT_REVIEW"
+        claim["source_observation_ids"].append("obs-eth-buyer-counter")
+        claim["counter_evidence"] = [{
+            "evidence_type": "OTHER",
+            "source": "synthetic-counter-source",
+            "record_ref": "synthetic:buyer-counter",
+            "observation_id": "obs-eth-buyer-counter"
+        }]
+        registry = {"contract_version": "1.1.0", "claims": [claim]}
+        validator = Draft202012Validator(self.schema, format_checker=FormatChecker())
+        self.assertEqual(list(validator.iter_errors(registry)), [])
+        errors = validate_execution_participant_roles(
+            registry, [self.trade_v11], self.actor_ids,
+            self.observation_ids + ["obs-eth-buyer-counter"]
+        )
+        self.assertEqual(errors, [])
+
+    def test_identified_buyer_cannot_have_unknown_side(self):
+        registry = copy.deepcopy(self.registry)
+        registry["claims"][0]["participant_side"] = "UNKNOWN"
+        validator = Draft202012Validator(self.schema, format_checker=FormatChecker())
+        self.assertTrue(list(validator.iter_errors(registry)))
+        errors = validate_execution_participant_roles(
+            registry, self.trades, self.actor_ids, self.observation_ids
+        )
+        self.assertTrue(any("identified BUYER requires BUY side" in item for item in errors))
+
+
 if __name__ == "__main__":
     unittest.main()
