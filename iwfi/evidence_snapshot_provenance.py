@@ -4,8 +4,10 @@ This module never fetches sources or writes storage. Callers provide exact bytes
 read from an authorized local artifact and an explicit retention decision.
 """
 from datetime import datetime
+import copy
 import hashlib
 import json
+from types import MappingProxyType
 import re
 
 _UTC = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
@@ -176,3 +178,46 @@ def verify_manifest_dependencies(manifest, snapshots_by_id, payloads_by_id):
     failed = any(item["status"] != "HASH_VERIFIED" for item in results)
     return {"status": "INTEGRITY_FAILED" if failed else "RECONSTRUCTION_INPUTS_VERIFIED",
             "manifest_status": "HASH_VERIFIED", "dependencies": results}
+
+
+class AppendOnlySnapshotLedger:
+    """Small in-memory reference model: append is allowed; replacement/deletion is not."""
+
+    def __init__(self, snapshots=()):
+        records = []
+        seen = set()
+        for snapshot in snapshots:
+            self._validate_snapshot(snapshot)
+            sid = snapshot["source_snapshot_id"]
+            if sid in seen:
+                raise ValueError("duplicate source_snapshot_id")
+            seen.add(sid)
+            records.append(MappingProxyType(copy.deepcopy(snapshot)))
+        self._records = tuple(records)
+
+    @staticmethod
+    def _validate_snapshot(snapshot):
+        if not isinstance(snapshot, dict):
+            raise ValueError("snapshot must be an object")
+        required = ("source_id", "source_snapshot_id", "retrieved_at_utc",
+                    "payload_retention", "hash_status", "rights_policy_ref")
+        if any(not snapshot.get(field) for field in required):
+            raise ValueError("snapshot descriptor is incomplete")
+
+    @property
+    def snapshots(self):
+        return self._records
+
+    def append(self, snapshot):
+        self._validate_snapshot(snapshot)
+        sid = snapshot["source_snapshot_id"]
+        if any(item["source_snapshot_id"] == sid for item in self._records):
+            raise ValueError("snapshot identifiers are immutable and cannot be reused")
+        self._records = self._records + (MappingProxyType(copy.deepcopy(snapshot)),)
+        return self
+
+    def get(self, source_snapshot_id):
+        for snapshot in self._records:
+            if snapshot["source_snapshot_id"] == source_snapshot_id:
+                return snapshot
+        return None
