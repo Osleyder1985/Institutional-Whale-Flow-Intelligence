@@ -89,11 +89,11 @@ class EntityExposureTests(unittest.TestCase):
                           [("bc1qaddress1", 1500), ("bc1qaddress2", 2000)])
         result = aggregate([first, second], claims)
         history = result["histories"][0]
-        self.assertEqual(history["snapshots"][0]["total_entity_exposure_atomic"], 3000)
-        self.assertEqual(history["snapshots"][1]["total_entity_exposure_atomic"], 3500)
+        self.assertEqual(history["snapshots"][0]["total_controlled_address_exposure_atomic"], 3000)
+        self.assertEqual(history["snapshots"][1]["total_controlled_address_exposure_atomic"], 3500)
         change = history["changes"][0]
-        self.assertEqual(change["total_entity_delta_atomic"], 500)
-        self.assertEqual(change["relative_total_change"], "1/6")
+        self.assertEqual(change["total_controlled_address_delta_atomic"], 500)
+        self.assertEqual(change["relative_controlled_address_change"], "1/6")
         self.assertEqual(change["candidate_direction"], "NET_BALANCE_INCREASE")
         self.assertEqual(change["classification_status"], "NOT_CALIBRATED")
 
@@ -103,8 +103,8 @@ class EntityExposureTests(unittest.TestCase):
                         [("bc1qaddress1", 1000)], coverage="PARTIAL")
         result = aggregate([item], claims)
         row = result["histories"][0]["snapshots"][0]
-        self.assertEqual(row["known_address_exposure_atomic"], 1000)
-        self.assertIsNone(row["total_entity_exposure_atomic"])
+        self.assertEqual(row["known_controlled_address_exposure_atomic"], 1000)
+        self.assertIsNone(row["total_controlled_address_exposure_atomic"])
         self.assertEqual(row["coverage_status"], "PARTIAL")
 
     def test_complete_inventory_with_unattributed_address_is_downgraded(self):
@@ -112,8 +112,8 @@ class EntityExposureTests(unittest.TestCase):
                         [("bc1qaddress1", 1000), ("bc1qunknown", 500)])
         result = aggregate([item], [claim("c1", "bc1qaddress1")])
         row = result["histories"][0]["snapshots"][0]
-        self.assertEqual(row["known_address_exposure_atomic"], 1000)
-        self.assertIsNone(row["total_entity_exposure_atomic"])
+        self.assertEqual(row["known_controlled_address_exposure_atomic"], 1000)
+        self.assertIsNone(row["total_controlled_address_exposure_atomic"])
         self.assertEqual(row["coverage_status"], "PARTIAL")
         self.assertEqual(row["addresses_unresolved"], 1)
 
@@ -123,22 +123,22 @@ class EntityExposureTests(unittest.TestCase):
             claim("c1", "bc1qaddress1", "entity-a"),
             claim("c2", "bc1qaddress1", "entity-b"),
         ])
-        self.assertIsNone(result["histories"][0]["snapshots"][0]["total_entity_exposure_atomic"])
+        self.assertIsNone(result["histories"][0]["snapshots"][0]["total_controlled_address_exposure_atomic"])
 
     def test_future_claim_review_is_not_used_at_knowledge_cutoff(self):
         item = snapshot("s1", "2026-11-01T00:00:00Z", [("bc1qaddress1", 1000)])
         future = claim("c1", "bc1qaddress1", reviewed="2026-11-16T00:00:00Z")
         result = aggregate([item], [future])
         row = result["histories"][0]["snapshots"][0]
-        self.assertEqual(row["known_address_exposure_atomic"], 0)
-        self.assertIsNone(row["total_entity_exposure_atomic"])
+        self.assertEqual(row["known_controlled_address_exposure_atomic"], 0)
+        self.assertIsNone(row["total_controlled_address_exposure_atomic"])
 
     def test_open_inventory_without_reviewed_evidence_is_never_complete(self):
         item = snapshot("s1", "2026-11-01T00:00:00Z", [("bc1qaddress1", 1000)])
         item["inventory_coverage"]["reviewed_at_utc"] = None
         item["inventory_coverage"]["reviewer_id"] = None
         result = aggregate([item], [claim("c1", "bc1qaddress1")])
-        self.assertIsNone(result["histories"][0]["snapshots"][0]["total_entity_exposure_atomic"])
+        self.assertIsNone(result["histories"][0]["snapshots"][0]["total_controlled_address_exposure_atomic"])
 
     def test_known_address_delta_requires_same_attributed_address_set(self):
         claims = [
@@ -164,7 +164,7 @@ class EntityExposureTests(unittest.TestCase):
         result = aggregate([item], claims)
         row = result["histories"][0]["snapshots"][0]
         self.assertEqual(row["unit"], "wei")
-        self.assertEqual(row["known_address_exposure_atomic"], 10**18)
+        self.assertEqual(row["known_controlled_address_exposure_atomic"], 10**18)
 
     def test_duplicate_snapshot_ids_fail_closed(self):
         item = snapshot("same", "2026-11-01T00:00:00Z", [("bc1qaddress1", 1000)])
@@ -203,13 +203,13 @@ class EntityExposureTests(unittest.TestCase):
             [item], [real_claim], "2026-11-15T00:00:00Z"
         )
         row = result["histories"][0]["snapshots"][0]
-        self.assertEqual(row["known_address_exposure_atomic"], 123456)
-        self.assertIsNone(row["total_entity_exposure_atomic"])
+        self.assertEqual(row["known_controlled_address_exposure_atomic"], 123456)
+        self.assertIsNone(row["total_controlled_address_exposure_atomic"])
         item["snapshot_time_utc"] = "2022-11-23T00:00:00Z"
         result_after = aggregate_entity_exposure_history(
             [item], [real_claim], "2026-11-15T00:00:00Z"
         )
-        self.assertEqual(result_after["histories"][0]["snapshots"][0]["known_address_exposure_atomic"], 0)
+        self.assertEqual(result_after["histories"][0]["snapshots"][0]["known_controlled_address_exposure_atomic"], 0)
 
 
 if __name__ == "__main__":
