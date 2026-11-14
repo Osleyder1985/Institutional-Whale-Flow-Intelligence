@@ -40,7 +40,10 @@ def _claim_resolution(address, event_time, known_at, claim_index):
         recorded = _parse_utc(claim.get("recorded_at_utc"))
         start = _parse_utc(claim.get("valid_from_utc"))
         end = _parse_utc(claim.get("valid_to_utc"))
-        if recorded is None or start is None or end is None or recorded > known_at:
+        review = claim.get("review")
+        reviewed_at = _parse_utc(review.get("reviewed_at_utc")) if isinstance(review, dict) else None
+        if (recorded is None or start is None or end is None
+                or reviewed_at is None or recorded > known_at or reviewed_at > known_at):
             continue
         if start > end or event_time < start or event_time > end:
             continue
