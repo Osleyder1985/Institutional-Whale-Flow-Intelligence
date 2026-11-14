@@ -1,4 +1,5 @@
 import json
+import re
 import unittest
 from pathlib import Path
 
@@ -6,6 +7,19 @@ from jsonschema import Draft202012Validator, ValidationError
 
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def _extract_documented_source_ids(markdown):
+    return re.findall(r"^\| `([^`]+)` \|", markdown, flags=re.MULTILINE)
+
+
+def _assert_source_inventory_matches(registry_ids, documented_ids):
+    if len(registry_ids) != len(set(registry_ids)):
+        raise AssertionError("registry source IDs contain duplicates")
+    if len(documented_ids) != len(set(documented_ids)):
+        raise AssertionError("documented source IDs contain duplicates")
+    if set(registry_ids) != set(documented_ids) or len(registry_ids) != len(documented_ids):
+        raise AssertionError("documented source IDs do not exactly match registry")
 
 
 class SourcePolicyEvidenceRegistryTests(unittest.TestCase):
@@ -36,6 +50,29 @@ class SourcePolicyEvidenceRegistryTests(unittest.TestCase):
         for source in self.registry["sources"]:
             self.assertEqual(source["assessment_status"], "PENDING_EVIDENCE")
             self.assertEqual(source["policies"], [])
+
+    def test_documented_source_scopes_exactly_match_registry(self):
+        markdown = (ROOT / "docs" / "data-sources" / "source-policy-intake-status-v1.0.md").read_text(encoding="utf-8")
+        registry_ids = [source["source_id"] for source in self.registry["sources"]]
+        documented_ids = _extract_documented_source_ids(markdown)
+        _assert_source_inventory_matches(registry_ids, documented_ids)
+        self.assertEqual(len(registry_ids), 20)
+
+    def test_documented_source_inventory_rejects_missing_id(self):
+        registry_ids = [source["source_id"] for source in self.registry["sources"]]
+        with self.assertRaisesRegex(AssertionError, "exactly match"):
+            _assert_source_inventory_matches(registry_ids, registry_ids[:-1])
+
+    def test_documented_source_inventory_rejects_duplicate_id(self):
+        registry_ids = [source["source_id"] for source in self.registry["sources"]]
+        with self.assertRaisesRegex(AssertionError, "duplicates"):
+            _assert_source_inventory_matches(registry_ids, registry_ids + [registry_ids[0]])
+
+    def test_documented_source_inventory_rejects_unknown_id(self):
+        registry_ids = [source["source_id"] for source in self.registry["sources"]]
+        documented_ids = registry_ids[:-1] + ["binance_spot_api_ticker_generic_btcusdt"]
+        with self.assertRaisesRegex(AssertionError, "exactly match"):
+            _assert_source_inventory_matches(registry_ids, documented_ids)
 
     def test_provider_policy_requires_original_document_hash_and_review(self):
         record = {
