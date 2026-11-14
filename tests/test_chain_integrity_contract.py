@@ -135,9 +135,11 @@ class ChainIntegrityContractTests(unittest.TestCase):
         tx = "a" * 64
         inclusion = self._record("included", "BLOCK_INCLUDED", tx=tx, network="eip155:1", height=100, block="b" * 64, status="ACTIVE", source="eth-node")
         checkpoint = self._record("checkpoint", "FINALITY_CHECKPOINT", tx=tx, network="eip155:1", height=101, block="c" * 64, source="eth-node", tag="finalized")
-        self.assertEqual(assess_chain_observations([inclusion, checkpoint])["status"], "FINALIZED")
-        checkpoint["inclusion"]["block_height"] = 99
-        self.assertEqual(assess_chain_observations([inclusion, checkpoint])["status"], "INCLUDED")
+        checkpoint["observed_at_utc"] = "2026-11-13T12:01:00Z"
+        canonical = self._record("canonical", "BLOCK_STATUS", tx=tx, network="eip155:1", height=100, block="b" * 64, status="ACTIVE", source="eth-node")
+        self.assertEqual(assess_chain_observations([inclusion, canonical, checkpoint])["status"], "FINALIZED")
+        checkpoint["checkpoint"]["block_height"] = 99
+        self.assertEqual(assess_chain_observations([inclusion, canonical, checkpoint])["status"], "INCLUDED")
 
     def test_bitcoin_never_receives_finalized_assessment(self):
         from iwfi.chain_integrity import assess_chain_observations
