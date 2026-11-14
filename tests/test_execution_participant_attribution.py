@@ -74,7 +74,18 @@ class ExecutionParticipantAttributionTests(unittest.TestCase):
 
     def test_unknown_cannot_select_actor_or_side(self):
         registry = copy.deepcopy(self.registry)
-        registry["claims"][1]["actor_id"] = "actor-fund-northstar-btc"
+        unknown = copy.deepcopy(registry["claims"][0])
+        unknown["attribution_id"] = "claim-btc-unknown-invalid"
+        unknown["execution_id"] = "btc-execution-001"
+        unknown["actor_id"] = "actor-fund-northstar-btc"
+        unknown["attribution_status"] = "UNKNOWN"
+        unknown["participant_side"] = "UNKNOWN"
+        unknown["attribution_method"] = "NONE"
+        unknown["valid_from_utc"] = None
+        unknown["valid_to_utc"] = None
+        unknown["source_observation_ids"] = []
+        unknown["supporting_evidence"] = []
+        registry["claims"].append(unknown)
         errors = validate_execution_attributions(registry, self.executions, self.actor_ids, self.observation_ids)
         self.assertTrue(any("UNKNOWN attribution" in x for x in errors))
 
