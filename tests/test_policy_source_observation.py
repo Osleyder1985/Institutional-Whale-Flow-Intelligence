@@ -13,7 +13,7 @@ from scripts.observe_policy_sources import (
 
 class FakeResponse:
     status = 200
-    def __init__(self, body, headers=None, url="https://example.org/policy.txt"):
+    def __init__(self, body, headers=None, url="https://raw.githubusercontent.com/policy_a/policy.txt"):
         self.body = body
         self.headers = headers or {}
         self.url = url
@@ -42,7 +42,7 @@ class FakeOpener:
 def source(baseline=None):
     item = {
         "document_id": "policy_a", "provider": "Example",
-        "url": "https://example.org/policy.txt", "filename": "policy.txt",
+        "url": "https://raw.githubusercontent.com/policy_a/policy.txt", "filename": "policy.txt",
         "observed_version": "v1", "url_is_mutable": True,
         "redistribution_status": "NOT_ASSESSED",
     }
@@ -75,7 +75,7 @@ class PolicySourceObservationTests(unittest.TestCase):
         self.assertEqual(record["change_status"], "BASELINE_NOT_ESTABLISHED")
 
     def test_source_unavailable_is_review_required_not_revocation(self):
-        error = HTTPError("https://example.org/policy.txt", 404, "Not Found", {}, None)
+        error = HTTPError("https://raw.githubusercontent.com/policy_a/policy.txt", 404, "Not Found", {}, None)
         record = observe_source(source("a" * 64), FakeOpener(error=error))
         self.assertEqual(record["observation_status"], "SOURCE_UNAVAILABLE")
         self.assertEqual(record["change_status"], "REVIEW_REQUIRED")
