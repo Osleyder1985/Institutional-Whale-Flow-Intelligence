@@ -127,6 +127,22 @@ class BinanceVisionArchiveValidatorTests(unittest.TestCase):
         with self.assertRaisesRegex(ArchiveValidationError, "filename does not match"):
             validate_archive(zip_path, checksum, "BTCUSDT", "2026-11-12")
 
+
+    def test_corrupt_zip_is_rejected_after_checksum_matches(self):
+        zip_path = self.root / "BTCUSDT-aggTrades-2026-11-12.zip"
+        zip_path.write_bytes(b"this is not a zip archive")
+        checksum = self.root / (zip_path.name + ".CHECKSUM")
+        checksum.write_text(
+            hashlib.sha256(zip_path.read_bytes()).hexdigest(), encoding="utf-8"
+        )
+        with self.assertRaisesRegex(ArchiveValidationError, "corrupt ZIP"):
+            validate_archive(zip_path, checksum, "BTCUSDT", "2026-11-12")
+
+    def test_empty_csv_is_rejected(self):
+        zip_path, checksum = self._make_archive(rows=[])
+        with self.assertRaisesRegex(ArchiveValidationError, "no data rows"):
+            validate_archive(zip_path, checksum, "BTCUSDT", "2026-11-12")
+
     def test_filename_must_match_symbol_and_date(self):
         zip_path, checksum = self._make_archive()
         with self.assertRaisesRegex(ArchiveValidationError, "archive filename must be"):
