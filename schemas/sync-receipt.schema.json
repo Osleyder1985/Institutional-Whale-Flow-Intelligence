@@ -29,12 +29,12 @@
     "device_id": {
       "type": "string",
       "minLength": 1,
-      "pattern": "\\\\S"
+      "pattern": "\\S"
     },
     "stream_id": {
       "type": "string",
       "minLength": 1,
-      "pattern": "\\\\S"
+      "pattern": "\\S"
     },
     "operation_fingerprint": {
       "type": "string",
