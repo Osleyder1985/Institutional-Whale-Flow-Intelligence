@@ -1,6 +1,10 @@
 import copy
 import hashlib
+import json
 import unittest
+from pathlib import Path
+
+from jsonschema import Draft202012Validator
 
 from iwfi.audit_package_manifest import build_audit_package_manifest
 from iwfi.audit_package_zip import build_audit_package_zip
@@ -46,6 +50,12 @@ class AuditPackageSignatureTests(unittest.TestCase):
 
     def test_detached_signature_verifies_archive_and_inventory(self):
         self.assertEqual(self.verify()["status"], "SIGNED_AUDIT_PACKAGE_VERIFIED")
+
+    def test_signature_conforms_to_versioned_json_schema(self):
+        schema_path = Path(__file__).resolve().parents[1] / "schemas" / "audit-package-signature-v1.0.schema.json"
+        schema = json.loads(schema_path.read_text(encoding="utf-8"))
+        Draft202012Validator.check_schema(schema)
+        Draft202012Validator(schema).validate(self.signature)
 
     def test_archive_byte_mutation_is_rejected(self):
         changed = self.archive + b"tamper"
