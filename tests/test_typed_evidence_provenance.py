@@ -1,7 +1,7 @@
 import unittest
 
 from iwfi.typed_evidence_provenance import (
-    resolve_actor_evidence_as_of,
+    resolve_actor_evidence_as_of,\n    resolve_actor_registry_evidence_as_of,
     resolve_typed_evidence_refs,
 )
 
@@ -120,6 +120,21 @@ class TypedEvidenceProvenanceTests(unittest.TestCase):
             snapshots(), CUTOFF, EVENT, predicate="BENEFICIAL_OWNER")
         self.assertEqual(result["rejected"][0]["reason"],
                          "TRANSFER_DOES_NOT_PROVE_OWNERSHIP_OR_EXECUTION_SIDE")
+
+    def test_actor_registry_v12_integrates_actor_alias_classification_relationship_refs(self):
+        registry = {"contract_version": "1.2.0", "actors": [
+            {"known_at_utc": "2026-11-09T10:00:00Z", "recorded_at_utc": "2026-11-09T10:01:00Z",
+             "valid_from_utc": EVENT, "valid_to_utc": None,
+             "evidence_refs": [{"ref_type": "SOURCE_OBSERVATION", "ref_id": "obs-btc-1"}],
+             "counter_evidence_refs": [],
+             "aliases": [{"known_at_utc": "2026-11-09T10:00:00Z", "recorded_at_utc": "2026-11-09T10:01:00Z",
+                          "valid_from_utc": EVENT, "valid_to_utc": None,
+                          "evidence_refs": [{"ref_type": "SOURCE_OBSERVATION", "ref_id": "obs-btc-1"}]}],
+             "classifications": []}],
+            "relationships": []}
+        result = resolve_actor_registry_evidence_as_of(registry, snapshots(), CUTOFF, EVENT)
+        self.assertEqual(result["status"], "RESOLVED")
+        self.assertEqual(len(result["records"]), 2)
 
     def test_wrong_reference_type_is_rejected(self):
         result = resolve_typed_evidence_refs(
