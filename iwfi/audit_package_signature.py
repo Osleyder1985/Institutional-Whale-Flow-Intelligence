@@ -73,7 +73,8 @@ def sign_audit_package_archive(*, archive_bytes, package_manifest_hash,
 
 def verify_signed_audit_package_archive(*, archive_bytes, signature,
                                         trusted_public_key_pem,
-                                        expected_reconstruction_manifest_hash):
+                                        expected_reconstruction_manifest_hash,
+                                        authorization_context):
     """Verify trusted Ed25519 signature, exact ZIP bytes and package inventory."""
     def fail(reason):
         return {"status": "SIGNATURE_INVALID", "reason": reason}
@@ -103,7 +104,8 @@ def verify_signed_audit_package_archive(*, archive_bytes, signature,
         return fail("SIGNATURE_OR_FORMAT_INVALID")
     package = verify_audit_package_zip(
         archive_bytes=archive_bytes,
-        expected_reconstruction_manifest_hash=expected_reconstruction_manifest_hash)
+        expected_reconstruction_manifest_hash=expected_reconstruction_manifest_hash,
+        authorization_context=authorization_context)
     if package.get("status") != "AUDIT_PACKAGE_VERIFIED":
         return {"status": "PACKAGE_INVALID", "package_result": package}
     if package.get("manifest_hash") != signature.get("package_manifest_hash"):

@@ -1,16 +1,19 @@
-import copy
 import hashlib
 import io
+import json
 import unittest
 import zipfile
+from pathlib import Path
+
+from jsonschema import Draft202012Validator
 
 from iwfi.audit_package_manifest import build_audit_package_manifest
 from iwfi.audit_package_zip import (
-    MANIFEST_PATH, build_audit_package_zip, verify_audit_package_zip,
+    MANIFEST_PATH, RETENTION_PATH, build_audit_package_zip, verify_audit_package_zip,
 )
 
-
 ROOT_HASH = hashlib.sha256(b"synthetic reconstruction manifest").hexdigest()
+EVALUATED = "2026-11-14T13:00:00Z"
 
 
 def fixture():
@@ -20,14 +23,16 @@ def fixture():
         "registry/actor-registry.json": b'{"contract_version":"1.2.0"}',
         "snapshots/evidence-001.bin": b"synthetic evidence bytes",
     }
+    roles = {
+        "reconstruction/manifest-v1.2.json": ("RECONSTRUCTION_MANIFEST", "application/json"),
+        "claims/root-claim.json": ("ROOT_CLAIM", "application/json"),
+        "registry/actor-registry.json": ("ACTOR_REGISTRY", "application/json"),
+        "snapshots/evidence-001.bin": ("EVIDENCE_SNAPSHOT", "application/octet-stream"),
+    }
     artifacts = [
-        {"path": path, "role": role, "media_type": media_type, "content": content}
-        for (path, role, media_type, content) in [
-            ("reconstruction/manifest-v1.2.json", "RECONSTRUCTION_MANIFEST", "application/json", payloads["reconstruction/manifest-v1.2.json"]),
-            ("claims/root-claim.json", "ROOT_CLAIM", "application/json", payloads["claims/root-claim.json"]),
-            ("registry/actor-registry.json", "ACTOR_REGISTRY", "application/json", payloads["registry/actor-registry.json"]),
-            ("snapshots/evidence-001.bin", "EVIDENCE_SNAPSHOT", "application/octet-stream", payloads["snapshots/evidence-001.bin"]),
-        ]
+        {"path": path, "role": roles[path][0], "media_type": roles[path][1],
+         "source_ids": ["source:" + path], "content": content}
+        for path, content in payloads.items()
     ]
     manifest = build_audit_package_manifest(
         package_id="synthetic-audit-package",
@@ -35,40 +40,219 @@ def fixture():
     return manifest, payloads
 
 
+def authorization_context(manifest, evaluated_at=EVALUATED):
+    authorizations, policies, lineage = [], [], {}
+    for index, item in enumerate(manifest["artifacts"]):
+        source = item["source_ids"][0]
+        lineage[source] = []
+        authorizations.append({
+            "authorization_id": "auth-" + str(index),
+            "artifact_path": item["path"],
+            "artifact_sha256": item["sha256"],
+            "source_ids": [source],
+            "action": "RETAIN_LOCAL",
+            "status": "AUTHORIZED",
+            "valid_from_utc": "2026-01-01T00:00:00Z",
+            "expires_at_utc": "2027-01-01T00:00:00Z",
+        })
+        policies.append({
+            "policy_id": "policy-" + str(index),
+            "policy_version": "1.0",
+            "source_id": source,
+            "rights_ref": "synthetic-rights:" + str(index),
+            "status": "ACTIVE",
+            "valid_from_utc": "2026-01-01T00:00:00Z",
+            "expires_at_utc": "2027-01-01T00:00:00Z",
+            "allowed_actions": ["RETAIN_LOCAL"],
+            "prohibited_actions": [],
+        })
+    return {
+        "package_mode": "LOCAL_ONLY",
+        "evaluated_at_utc": evaluated_at,
+        "artifact_authorizations": authorizations,
+        "source_policies": policies,
+        "source_lineage": lineage,
+    }
+
+
+def build(manifest, payloads, context=None):
+    return build_audit_package_zip(
+        manifest=manifest, artifacts_by_path=payloads,
+        authorization_context=context or authorization_context(manifest))
+
+
 class AuditPackageZipTests(unittest.TestCase):
-    def verify(self, archive):
+    def _manifest(self, archive):
+        with zipfile.ZipFile(io.BytesIO(archive), "r") as source:
+            return json.loads(source.read(MANIFEST_PATH).decode("utf-8"))
+
+    def verify(self, archive, context=None, expected=ROOT_HASH):
+        try:
+            manifest = self._manifest(archive)
+        except zipfile.BadZipFile:
+            return verify_audit_package_zip(
+                archive_bytes=archive,
+                expected_reconstruction_manifest_hash=expected,
+                authorization_context=context or {})
         return verify_audit_package_zip(
             archive_bytes=archive,
-            expected_reconstruction_manifest_hash=ROOT_HASH)
+            expected_reconstruction_manifest_hash=expected,
+            authorization_context=context or authorization_context(manifest))
 
-    def test_export_is_byte_for_byte_reproducible(self):
+    def test_export_is_byte_for_byte_reproducible_and_local_only(self):
         manifest, payloads = fixture()
-        first = build_audit_package_zip(manifest=manifest, artifacts_by_path=payloads)
-        second = build_audit_package_zip(manifest=manifest, artifacts_by_path=payloads)
+        first = build(manifest, payloads)
+        second = build(manifest, payloads)
         self.assertEqual(first, second)
-        self.assertEqual(self.verify(first)["status"], "AUDIT_PACKAGE_VERIFIED")
+        result = self.verify(first)
+        self.assertEqual(result["status"], "AUDIT_PACKAGE_VERIFIED")
+        self.assertEqual(result["retention_status"], "RETENTION_AUTHORIZED")
+        self.assertEqual(result["package_mode"], "LOCAL_ONLY")
+        with zipfile.ZipFile(io.BytesIO(first), "r") as archive:
+            decision = json.loads(archive.read(RETENTION_PATH).decode("utf-8"))
+        self.assertEqual(len(decision["authorization_evidence"]["artifact_authorizations"]), 4)
+        schema_path = Path(__file__).resolve().parents[1] / "schemas" / "audit-package-retention-decision-v1.0.schema.json"
+        schema = json.loads(schema_path.read_text(encoding="utf-8"))
+        Draft202012Validator.check_schema(schema)
+        Draft202012Validator(schema).validate(decision)
 
     def test_reconstruction_manifest_payload_must_be_included_and_bound(self):
-        artifacts = [
-            {"path": "claims/root-claim.json", "role": "ROOT_CLAIM",
-             "media_type": "application/json", "content": b'{"claim_id":"synthetic"}'}
-        ]
+        artifacts = [{
+            "path": "claims/root-claim.json", "role": "ROOT_CLAIM",
+            "media_type": "application/json", "content": b'{"claim_id":"synthetic"}'
+        }]
         manifest = build_audit_package_manifest(
             package_id="missing-root-manifest",
             reconstruction_manifest_hash=ROOT_HASH, artifacts=artifacts)
         with self.assertRaisesRegex(ValueError, "reconstruction manifest artifact"):
-            build_audit_package_zip(manifest=manifest, artifacts_by_path={
-                "claims/root-claim.json": b'{"claim_id":"synthetic"}'})
+            build_audit_package_zip(
+                manifest=manifest,
+                artifacts_by_path={"claims/root-claim.json": b'{"claim_id":"synthetic"}'},
+                authorization_context={})
 
     def test_inventory_must_verify_before_export(self):
         manifest, payloads = fixture()
         payloads["claims/root-claim.json"] += b"tamper"
-        with self.assertRaisesRegex(ValueError, "must verify"):
-            build_audit_package_zip(manifest=manifest, artifacts_by_path=payloads)
+        with self.assertRaisesRegex(ValueError, "inventory must verify"):
+            build(manifest, payloads)
+
+    def test_missing_artifact_authorization_rejects_package(self):
+        manifest, payloads = fixture()
+        context = authorization_context(manifest)
+        context["artifact_authorizations"].pop()
+        with self.assertRaisesRegex(ValueError, "ARTIFACT_AUTHORIZATION_INVENTORY_MISMATCH"):
+            build(manifest, payloads, context)
+
+    def test_authorization_cannot_omit_or_substitute_manifest_sources(self):
+        manifest, payloads = fixture()
+        context = authorization_context(manifest)
+        context["artifact_authorizations"][0]["source_ids"] = ["unrelated-source"]
+        context["source_lineage"]["unrelated-source"] = []
+        context["source_policies"].append({
+            "policy_id": "unrelated-policy", "policy_version": "1.0",
+            "source_id": "unrelated-source", "rights_ref": "synthetic-rights:unrelated",
+            "status": "ACTIVE", "valid_from_utc": "2026-01-01T00:00:00Z",
+            "expires_at_utc": "2027-01-01T00:00:00Z",
+            "allowed_actions": ["RETAIN_LOCAL"], "prohibited_actions": [],
+        })
+        with self.assertRaisesRegex(ValueError, "SOURCE_BINDING_MISMATCH"):
+            build(manifest, payloads, context)
+
+    def test_expired_artifact_authorization_rejects_package(self):
+        manifest, payloads = fixture()
+        context = authorization_context(manifest)
+        context["artifact_authorizations"][0]["expires_at_utc"] = "2026-11-14T12:00:00Z"
+        with self.assertRaisesRegex(ValueError, "EXPIRED_OR_NOT_YET_VALID"):
+            build(manifest, payloads, context)
+
+    def test_incomplete_artifact_authorization_rejects_package(self):
+        manifest, payloads = fixture()
+        context = authorization_context(manifest)
+        del context["artifact_authorizations"][0]["expires_at_utc"]
+        with self.assertRaisesRegex(ValueError, "AUTHORIZATION_INCOMPLETE"):
+            build(manifest, payloads, context)
+
+    def test_revoked_artifact_authorization_rejects_package(self):
+        manifest, payloads = fixture()
+        context = authorization_context(manifest)
+        context["artifact_authorizations"][0]["status"] = "REVOKED"
+        with self.assertRaisesRegex(ValueError, "AUTHORIZATION_MISMATCH"):
+            build(manifest, payloads, context)
+
+    def test_expired_source_policy_rejects_package(self):
+        manifest, payloads = fixture()
+        context = authorization_context(manifest)
+        context["source_policies"][0]["expires_at_utc"] = "2026-11-14T12:00:00Z"
+        with self.assertRaisesRegex(ValueError, "SOURCE_POLICY_INACTIVE_OR_EXPIRED"):
+            build(manifest, payloads, context)
+
+    def test_source_lineage_cycle_rejects_package(self):
+        manifest, payloads = fixture()
+        context = authorization_context(manifest)
+        source = context["artifact_authorizations"][0]["source_ids"][0]
+        context["source_lineage"][source] = ["upstream:cycle"]
+        context["source_lineage"]["upstream:cycle"] = [source]
+        with self.assertRaisesRegex(ValueError, "SOURCE_LINEAGE_CYCLE"):
+            build(manifest, payloads, context)
+
+    def test_duplicate_artifact_authorization_rejects_package(self):
+        manifest, payloads = fixture()
+        context = authorization_context(manifest)
+        context["artifact_authorizations"].append(dict(context["artifact_authorizations"][0]))
+        with self.assertRaisesRegex(ValueError, "DUPLICATE_OR_INVALID_ARTIFACT_AUTHORIZATION_ID"):
+            build(manifest, payloads, context)
+
+    def test_contradictory_source_policy_rejects_package(self):
+        manifest, payloads = fixture()
+        context = authorization_context(manifest)
+        context["source_policies"][0]["prohibited_actions"] = ["RETAIN_LOCAL"]
+        with self.assertRaisesRegex(ValueError, "CONTRADICTORY_SOURCE_POLICY"):
+            build(manifest, payloads, context)
+
+    def test_transitive_source_policy_is_required(self):
+        manifest, payloads = fixture()
+        context = authorization_context(manifest)
+        child = context["artifact_authorizations"][0]["source_ids"][0]
+        context["source_lineage"][child] = ["upstream:missing-policy"]
+        context["source_lineage"]["upstream:missing-policy"] = []
+        with self.assertRaisesRegex(ValueError, "SOURCE_POLICY_MISSING"):
+            build(manifest, payloads, context)
+
+    def test_external_distribution_or_sync_permission_is_rejected(self):
+        manifest, payloads = fixture()
+        context = authorization_context(manifest)
+        context["source_policies"][0]["allowed_actions"].append("DISTRIBUTE")
+        with self.assertRaisesRegex(ValueError, "EXTERNAL_DISTRIBUTION_OR_SYNC"):
+            build(manifest, payloads, context)
+
+    def test_non_local_package_mode_is_rejected(self):
+        manifest, payloads = fixture()
+        context = authorization_context(manifest)
+        context["package_mode"] = "DISTRIBUTION"
+        with self.assertRaisesRegex(ValueError, "PACKAGE_MODE_NOT_LOCAL_ONLY"):
+            build(manifest, payloads, context)
+
+    def test_policy_change_after_package_creation_fails_verification(self):
+        manifest, payloads = fixture()
+        context = authorization_context(manifest)
+        archive = build(manifest, payloads, context)
+        changed = authorization_context(manifest)
+        changed["source_policies"][0]["rights_ref"] = "changed-rights-reference"
+        result = self.verify(archive, changed)
+        self.assertEqual(result["reason"], "RETENTION_AUTHORIZATION_FAILED")
+        self.assertEqual(result["retention_result"]["reason"], "AUTHORIZATION_OR_POLICY_CHANGED")
+
+    def test_expiry_after_package_creation_fails_verification(self):
+        manifest, payloads = fixture()
+        archive = build(manifest, payloads)
+        later = authorization_context(manifest, evaluated_at="2027-01-01T00:00:00Z")
+        result = self.verify(archive, later)
+        self.assertEqual(result["reason"], "RETENTION_AUTHORIZATION_FAILED")
+        self.assertIn("EXPIRED", result["retention_result"]["reason"])
 
     def test_archive_mutation_and_truncation_fail(self):
         manifest, payloads = fixture()
-        archive = build_audit_package_zip(manifest=manifest, artifacts_by_path=payloads)
+        archive = build(manifest, payloads)
         self.assertNotEqual(self.verify(archive[:-12])["status"], "AUDIT_PACKAGE_VERIFIED")
         changed = bytearray(archive)
         changed[len(changed) // 2] ^= 0x01
@@ -76,15 +260,14 @@ class AuditPackageZipTests(unittest.TestCase):
 
     def test_wrong_reconstruction_binding_fails(self):
         manifest, payloads = fixture()
-        archive = build_audit_package_zip(manifest=manifest, artifacts_by_path=payloads)
+        archive = build(manifest, payloads)
         other = hashlib.sha256(b"another reconstruction").hexdigest()
-        result = verify_audit_package_zip(
-            archive_bytes=archive, expected_reconstruction_manifest_hash=other)
+        result = self.verify(archive, expected=other)
         self.assertEqual(result["reason"], "INVENTORY_VERIFICATION_FAILED")
 
     def test_duplicate_archive_entries_fail(self):
         manifest, payloads = fixture()
-        archive = build_audit_package_zip(manifest=manifest, artifacts_by_path=payloads)
+        archive = build(manifest, payloads)
         duplicate = io.BytesIO()
         with zipfile.ZipFile(io.BytesIO(archive), "r") as source:
             with zipfile.ZipFile(duplicate, "w", compression=zipfile.ZIP_STORED) as target:
@@ -96,7 +279,7 @@ class AuditPackageZipTests(unittest.TestCase):
 
     def test_path_traversal_archive_entry_is_rejected(self):
         manifest, payloads = fixture()
-        archive = build_audit_package_zip(manifest=manifest, artifacts_by_path=payloads)
+        archive = build(manifest, payloads)
         altered = io.BytesIO()
         with zipfile.ZipFile(io.BytesIO(archive), "r") as source:
             with zipfile.ZipFile(altered, "w", compression=zipfile.ZIP_STORED) as target:
@@ -109,11 +292,11 @@ class AuditPackageZipTests(unittest.TestCase):
                     target.writestr(rewritten, source.read(info))
         self.assertEqual(self.verify(altered.getvalue())["reason"], "UNSAFE_ARCHIVE_PATH")
 
-    def test_manifest_cannot_be_supplied_as_an_artifact(self):
+    def test_control_manifest_paths_are_reserved(self):
         manifest, payloads = fixture()
-        payloads[MANIFEST_PATH] = b"shadow"
+        payloads[RETENTION_PATH] = b"shadow"
         with self.assertRaisesRegex(ValueError, "reserved"):
-            build_audit_package_zip(manifest=manifest, artifacts_by_path=payloads)
+            build(manifest, payloads)
 
 
 if __name__ == "__main__":

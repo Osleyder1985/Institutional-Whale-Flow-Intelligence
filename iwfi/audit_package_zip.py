@@ -1,8 +1,7 @@
 """Deterministic, offline ZIP export and verification for IWFI audit packages.
 
-The ZIP contains a canonical inventory manifest and the exact inventoried
-artifact bytes. ZIP_STORED avoids compressor-version differences across hosts.
-No filesystem extraction, network access, or source capture is performed.
+Only local/in-memory package bytes are produced. No publication, distribution,
+upload, network transfer, or synchronization API is provided.
 """
 from io import BytesIO
 import json
@@ -12,8 +11,12 @@ import zipfile
 from iwfi.audit_package_manifest import (
     verify_audit_package_manifest, _validate_path,
 )
+from iwfi.audit_package_retention import (
+    build_retention_decision, verify_retention_decision,
+)
 
 MANIFEST_PATH = "audit-package-manifest.json"
+RETENTION_PATH = "retention-authorization.json"
 _ARCHIVE_COMPRESSION = zipfile.ZIP_STORED
 _FIXED_TIMESTAMP = (1980, 1, 1, 0, 0, 0)
 
@@ -35,12 +38,12 @@ def _has_bound_reconstruction_manifest(manifest):
             and bound[0].get("sha256") == manifest.get("reconstruction_manifest_hash"))
 
 
-def build_audit_package_zip(*, manifest, artifacts_by_path):
-    """Return deterministic ZIP bytes for a previously built inventory manifest."""
+def build_audit_package_zip(*, manifest, artifacts_by_path, authorization_context):
+    """Build deterministic local ZIP bytes only after current retention authorization."""
     if not isinstance(manifest, dict) or not isinstance(artifacts_by_path, dict):
         raise ValueError("manifest and artifact mapping are required")
-    if MANIFEST_PATH in artifacts_by_path:
-        raise ValueError("artifact path is reserved for the package manifest")
+    if MANIFEST_PATH in artifacts_by_path or RETENTION_PATH in artifacts_by_path:
+        raise ValueError("artifact path is reserved for package control manifests")
     if not _has_bound_reconstruction_manifest(manifest):
         raise ValueError("exact reconstruction manifest artifact must be inventoried and hash-bound")
     expected_hash = manifest.get("reconstruction_manifest_hash")
@@ -49,13 +52,19 @@ def build_audit_package_zip(*, manifest, artifacts_by_path):
         expected_reconstruction_manifest_hash=expected_hash)
     if checked.get("status") != "AUDIT_PACKAGE_VERIFIED":
         raise ValueError("audit package inventory must verify before export")
+    retention_decision = build_retention_decision(
+        manifest=manifest, authorization_context=authorization_context)
+
     output = BytesIO()
     with zipfile.ZipFile(output, "w", compression=_ARCHIVE_COMPRESSION,
                          allowZip64=True) as archive:
-        entries = [(MANIFEST_PATH, _canonical(manifest))]
+        entries = [
+            (MANIFEST_PATH, _canonical(manifest)),
+            (RETENTION_PATH, _canonical(retention_decision)),
+        ]
         entries.extend(sorted(artifacts_by_path.items()))
         for path, content in entries:
-            if path != MANIFEST_PATH:
+            if path not in {MANIFEST_PATH, RETENTION_PATH}:
                 _validate_path(path)
             info = zipfile.ZipInfo(path, date_time=_FIXED_TIMESTAMP)
             info.compress_type = _ARCHIVE_COMPRESSION
@@ -69,10 +78,12 @@ def build_audit_package_zip(*, manifest, artifacts_by_path):
 
 
 def verify_audit_package_zip(*, archive_bytes,
-                             expected_reconstruction_manifest_hash):
-    """Verify ZIP structure, exact inventory and bytes without extracting files."""
+                             expected_reconstruction_manifest_hash,
+                             authorization_context):
+    """Verify exact package bytes and re-evaluate current retention rights offline."""
     def fail(reason, **extra):
         return {"status": "INTEGRITY_FAILED", "reason": reason, **extra}
+
     if not isinstance(archive_bytes, bytes):
         return {"status": "INVALID_INPUT", "reason": "ARCHIVE_BYTES_REQUIRED"}
     try:
@@ -85,14 +96,17 @@ def verify_audit_package_zip(*, archive_bytes,
                 return fail("DUPLICATE_ARCHIVE_ENTRY")
             if MANIFEST_PATH not in names:
                 return fail("PACKAGE_MANIFEST_MISSING")
+            if RETENTION_PATH not in names:
+                return fail("RETENTION_AUTHORIZATION_MISSING")
+
             payloads = {}
             manifest_bytes = None
+            retention_bytes = None
             for info in infos:
                 name = info.filename
                 if info.is_dir() or info.flag_bits & 0x1:
-                    return fail("DIRECTORY_OR_ENCRYPTED_ENTRY_NOT_ALLOWED",
-                                path=name)
-                if name != MANIFEST_PATH:
+                    return fail("DIRECTORY_OR_ENCRYPTED_ENTRY_NOT_ALLOWED", path=name)
+                if name not in {MANIFEST_PATH, RETENTION_PATH}:
                     try:
                         _validate_path(name)
                     except ValueError:
@@ -109,8 +123,11 @@ def verify_audit_package_zip(*, archive_bytes,
                     return fail("ARCHIVE_SIZE_MISMATCH", path=name)
                 if name == MANIFEST_PATH:
                     manifest_bytes = content
+                elif name == RETENTION_PATH:
+                    retention_bytes = content
                 else:
                     payloads[name] = content
+
             try:
                 manifest = json.loads(manifest_bytes.decode("utf-8"))
             except (UnicodeDecodeError, json.JSONDecodeError, TypeError):
@@ -119,16 +136,33 @@ def verify_audit_package_zip(*, archive_bytes,
                 return fail("PACKAGE_MANIFEST_NOT_CANONICAL")
             if not _has_bound_reconstruction_manifest(manifest):
                 return fail("RECONSTRUCTION_MANIFEST_ARTIFACT_MISMATCH")
+            try:
+                retention_decision = json.loads(retention_bytes.decode("utf-8"))
+            except (UnicodeDecodeError, json.JSONDecodeError, TypeError):
+                return fail("RETENTION_AUTHORIZATION_INVALID_JSON")
+            if _canonical(retention_decision) != retention_bytes:
+                return fail("RETENTION_AUTHORIZATION_NOT_CANONICAL")
+
             verified = verify_audit_package_manifest(
                 manifest=manifest, artifacts_by_path=payloads,
                 expected_reconstruction_manifest_hash=expected_reconstruction_manifest_hash)
             if verified.get("status") != "AUDIT_PACKAGE_VERIFIED":
-                return fail("INVENTORY_VERIFICATION_FAILED",
-                            inventory_result=verified)
-            return {"status": "AUDIT_PACKAGE_VERIFIED",
-                    "package_id": manifest.get("package_id"),
-                    "manifest_hash": manifest.get("manifest_hash"),
-                    "artifact_count": verified.get("artifact_count"),
-                    "archive_entry_count": len(infos)}
+                return fail("INVENTORY_VERIFICATION_FAILED", inventory_result=verified)
+
+            retention = verify_retention_decision(
+                decision=retention_decision, manifest=manifest,
+                authorization_context=authorization_context)
+            if retention.get("status") != "RETENTION_AUTHORIZED":
+                return fail("RETENTION_AUTHORIZATION_FAILED", retention_result=retention)
+            return {
+                "status": "AUDIT_PACKAGE_VERIFIED",
+                "retention_status": "RETENTION_AUTHORIZED",
+                "package_mode": "LOCAL_ONLY",
+                "package_id": manifest.get("package_id"),
+                "manifest_hash": manifest.get("manifest_hash"),
+                "artifact_count": verified.get("artifact_count"),
+                "archive_entry_count": len(infos),
+                "retention_result": retention,
+            }
     except (zipfile.BadZipFile, EOFError, RuntimeError, OSError, ValueError):
         return fail("ARCHIVE_INVALID_OR_TRUNCATED")

@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://iwfi.local/schemas/audit-package-retention-decision-v1.0.schema.json",
+  "title": "IWFI Local Audit Package Retention Decision v1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["decision_version", "package_mode", "inventory_manifest_hash", "evaluated_at_utc", "authorization_evidence_sha256", "authorization_evidence", "artifact_decisions", "decision_sha256"],
+  "properties": {
+    "decision_version": { "const": "1.0.0" },
+    "package_mode": { "const": "LOCAL_ONLY" },
+    "inventory_manifest_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "evaluated_at_utc": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$", "format": "date-time" },
+    "authorization_evidence_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "authorization_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["package_mode", "artifact_authorizations", "source_policies", "source_lineage"],
+      "properties": {
+        "package_mode": { "const": "LOCAL_ONLY" },
+        "artifact_authorizations": { "type": "array", "minItems": 1, "items": { "type": "object" } },
+        "source_policies": { "type": "array", "minItems": 1, "items": { "type": "object" } },
+        "source_lineage": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array", "uniqueItems": true,
+            "items": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    },
+    "artifact_decisions": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["artifact_path", "artifact_sha256", "authorization_id", "authorization_sha256", "direct_source_ids", "resolved_source_ids", "source_policy_sha256"],
+        "properties": {
+          "artifact_path": { "type": "string", "minLength": 1 },
+          "artifact_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "authorization_id": { "type": "string", "minLength": 1 },
+          "authorization_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "direct_source_ids": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+          "resolved_source_ids": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+          "source_policy_sha256": { "type": "object", "minProperties": 1, "additionalProperties": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "pattern": "^[a-f0-9]{64}$" } } }
+        }
+      }
+    },
+    "decision_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}
