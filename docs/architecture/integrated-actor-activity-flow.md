@@ -111,6 +111,18 @@ The following IDs remain distinct and are never substituted for one another:
 
 All keys are scoped to their domain. Matching timestamps or quantities do not establish identity across domains.
 
+### Cross-contract reference validation
+
+JSON Schema validates records, but cannot establish that a referenced record exists in another contract's collection. The integration boundary must therefore validate:
+- every Actor Registry `evidence_refs` and `counter_evidence_refs` against the authorized observation/claim evidence index;
+- every Movement source observation and attribution claim reference against the corresponding canonical collections;
+- every TradeExecution `source_observation_ids`, `participant_actor_id` and `attribution_claim_ids` against the exact observation, Actor Registry and claim collections;
+- every ActivityEvent primary typed reference against exactly one existing domain record.
+
+For a DIRECT participant attribution, the claim must explicitly support the actor's relation to that exact execution, be known by the requested as-of time, and be valid at the execution event time. An existing actor ID alone is not attribution evidence. For INFERRED attribution, the inference method and supporting/counterevidence must remain explicit. A claim about an address, exchange deposit or custody relationship does not automatically support a TradeExecution participant.
+
+**Implementation gap:** the current Actor Registry and Trade Execution validators check local structure, temporal rules and (when supplied) actor existence, but do not yet perform full cross-contract claim-to-execution referential validation. This is a required integration-layer test before any named participant can be emitted.
+
 ## 6. Temporal and epistemic propagation
 
 Every stage preserves the original source event time and the time IWFI could know the fact. At minimum the integrated view must retain:
@@ -251,7 +263,7 @@ No event is assigned price impact merely because the price moved after it.
 | #10 Movement | `movement-ledger.schema.json`, Movement Integrity validator | Event locator, source observation references, claim validity and no-trade semantics |
 | #12 Observation resolution | Observation Resolution Policy v1.3.2 | Determinism, strong event identity, duplicates, conflicts and ineligible states |
 | #41 / #51 Actor Registry | `actor-registry.schema.json`, Actor Registry validator | Alias ambiguity, bitemporal lookup, relationship conflict, unknown identity |
-| #43 / #51 Trade Execution | `trade-execution.schema.json`, Trade Execution validator | Individual execution evidence, anonymous participant, separate sides, transfer/aggregate rejection |
+| #43 / #51 Trade Execution | `trade-execution.schema.json`, Trade Execution validator | Individual execution evidence, anonymous participant, separate sides, transfer/aggregate rejection; cross-contract actor/claim resolution remains an integration gap |
 | #42 Entity/wallet resolution | Attribution Claims + entity-resolution component to be specified | No clustering or legal identity inference in current contracts |
 | #44 Positions | PositionSnapshot contract to be specified | Reported holdings remain distinct from executions |
 | #45 Whale balances | Balance/cluster assessment contract to be specified | Cluster remains provisional; no legal identity implication |
