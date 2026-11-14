@@ -158,3 +158,67 @@ Paid access, continuous polling, production ingestion and historical backfill: *
 - Arkham: el anuncio del 2026-09-08 confirma el feed de inteligencia en tiempo real y la retirada del objeto metrics y de `orderBy` en ese endpoint.
 
 Esta revalidación corrige afirmaciones que ya no estaban sustentadas. No sustituye el acceso de cuenta, la prueba de respuestas reales ni la revisión contractual y de retención. **Ningún proveedor queda aprobado.**
+
+
+## 9. Endpoint capability matrix — evidence-level distinctions (2026-11-13)
+
+This matrix separates five capabilities that must not be conflated:
+
+- **Flow/transfer measurement:** aggregate metric or on-chain movement.
+- **Address/entity intelligence:** provider claim about an address or cluster.
+- **Individual execution:** a venue trade/execution record, not merely an order or a flow metric.
+- **Named participant in that execution:** evidence linking a named actor to that exact execution.
+- **Institutional holdings/disclosure:** a position, holding, or fund-flow report with its own reporting period and publication delay.
+
+| Provider / documented endpoint family | Flow or transfer measurement | Address/entity intelligence | Individual execution | Named participant in that execution | Institutional holdings / disclosure | BTC / ETH boundary |
+|---|---|---|---|---|---|---|
+| Arkham Intel API / address intelligence updates | Yes: fund-flow and address-intelligence capabilities are announced; exact endpoint semantics need account docs | Yes: address labels, entity intelligence and update feed; label is a vendor claim, not legal proof | Not established by the cited announcements | Not established | Not established by the cited API announcement; verify any separate fund product | Endpoint-specific BTC and ETH coverage, access and payload schema remain unverified |
+| CryptoQuant on-chain metric catalog | Yes: exchange, miner, entity and inter-entity flow time series | Entity/address clustering is reflected in proprietary metrics; do not assume a named legal actor per row | No individual execution evidence established by the cited API overview | No | Fund & ETF metric family is documented; identify exact vehicle, reporting basis and delay per endpoint | BTC and ETH explicitly listed; on-chain access begins at Professional, daily resolution; Premium adds hourly/per-block |
+| Glassnode exchange/entity metrics | Yes: exchange deposits, withdrawals, netflows, balances and cohort metrics | Yes: exchange labels and proprietary entity clustering; documentation says labels/metrics can be mutable | No individual execution evidence established by the cited metrics | No | Not established by the reviewed exchange/entity endpoints; assess fund products separately | Metric metadata and account tier must confirm each asset/metric. Point-in-Time variants exist for selected metrics |
+| Nansen Smart Money | Yes: Smart Money netflows and aggregated holdings; DEX trade endpoint exists | Yes: curated wallet labels including Fund and Smart Trader; these remain provider classifications | DEX trades are described as trading activity for supported Smart Money wallets; validate exact records and semantics from authorized samples | Potentially wallet-level Smart Money attribution on supported chains; not proof of legal identity or beneficial owner | Fund-labelled holdings/flows are available as provider-classified data, not independently verified institutional filings | Smart Money support includes Ethereum, not Bitcoin. Bitcoin appears only in selected Profiler endpoint support |
+| CoinGlass Spot / On-chain / ETF endpoints | Yes: Spot Coin Netflow exposes taker buy/sell volumes and net inflow; CVD is an aggregate taker buy-minus-sell measure; whale-transfer and ETF-flow endpoints are separate | Not established as named institutional address attribution by the cited endpoints | Spot/futures WebSocket trade streams and trade/order datasets may expose venue-level market events; inspect endpoint schema and venue coverage before treating a record as an individual fill | No named customer/beneficial owner demonstrated by the reviewed public endpoint docs | Yes: BTC/ETH ETF flow endpoints are listed; ETF flows are fund-level aggregates, not customer executions | BTC and ETH appear across relevant categories, but exact endpoint/plan/asset availability must be checked individually; Spot CVD requires Startup or higher, commercial use requires Standard+ |
+
+### 9.1 What the official endpoint documentation actually proves
+
+**CoinGlass — aggregated taker flow is not an identified actor.** The Spot Coin Netflow endpoint describes taker buy volume, taker sell volume and net inflow across selected exchanges and time windows. Spot CVD is calculated as taker buy minus taker sell and accumulated by interval; missing taker-side data can be counted as zero in the documented calculation. These are market-wide/venue-aggregated measures, not participant identities. CoinGlass separately documents spot/futures trade WebSocket channels; those can support market execution observation where the specific feed provides records, but the reviewed docs do not establish customer identity. Startup adds Spot CVD and Coin Flows; Standard is the first plan marked for commercial use and adds WebSocket channels.
+
+**CryptoQuant — strong on-chain coverage, not a trade tape.** Its public API page documents exchange/miner/entity/inter-entity flow metrics and explicit BTC/ETH coverage. These metrics can support flow monitoring and hypotheses, but the public overview does not establish a per-execution participant identity. Professional is the first plan with on-chain API access; the public page describes daily on-chain resolution there, with hourly/per-block windows on Premium.
+
+**Glassnode — useful entity/cohort context, mutable labels.** Its documentation defines entities as clusters estimated using proprietary heuristics and warns that entity-based metrics can change as statistical information is updated. Exchange metrics use labeled exchange addresses that are continuously updated and can also change. Selected Point-in-Time (PiT) metrics are append-only and preserve what was computed at the time, which is materially different from the latest revised series. Deposits to exchanges and net exchange flows remain transfers/aggregates, not executions.
+
+**Nansen — best documented wallet-level Smart Money route for Ethereum, not unified BTC/ETH.** Smart Money exposes netflows, DEX trades and holdings for supported chains including Ethereum. The chain matrix does not include Bitcoin for Smart Money. The general chain catalog lists Bitcoin for selected Profiler endpoints, which must not be represented as BTC Smart Money. Holdings are explicitly aggregated rather than per-wallet breakdowns. A provider label such as Fund or Smart Trader is not independently verified legal identity.
+
+**Arkham — address/entity intelligence candidate, execution attribution unproven.** Its API announcements document entity labels, fund-flow data and a real-time address-intelligence updates feed. The September 8 update says the feed includes new, updated and deleted intelligence, while retiring its metrics object and orderBy fields from that endpoint. Public announcements do not establish that the API identifies the customer or beneficial owner behind a specific exchange execution.
+
+### 9.2 First-slice implications
+
+1. There is no single publicly documented provider in this review that proves, for both BTC and ETH, the full chain **named institution → exact individual execution → participant BUY/SELL → beneficial owner**.
+2. CryptoQuant is the strongest documented candidate for BTC+ETH on-chain flow coverage, but its Professional tier is paid and its flow metrics do not prove individual buys/sells.
+3. Arkham is a candidate for entity/address intelligence, but it requires account-level endpoint docs and samples before any capability is accepted.
+4. Nansen can be a separate Ethereum-only Smart Money evaluation; it cannot be the single BTC+ETH first source.
+5. CoinGlass can support market microstructure, taker-side aggregates, trade feeds and ETF flow monitoring, but those capabilities do not name the customer behind a venue execution.
+6. Glassnode can add exchange/entity cohort and Point-in-Time context, but current account entitlement and exact asset/metric access remain unverified.
+7. Therefore, the first vertical slice must not be described as “institutional buy/sell detection” unless an authorized source sample actually links an identified participant to an individual execution. Until then, the valid outputs are separately typed: observed transfer, aggregate flow, venue execution with unknown participant, provider-labelled address/entity, or delayed holdings/disclosure.
+
+## 10. Additional official references for the capability matrix
+
+- CoinGlass API overview and endpoint categories: https://docs.coinglass.com/reference/getting-started-with-your-api
+- CoinGlass endpoint overview and minimum plan by endpoint: https://docs.coinglass.com/reference/endpoint-overview
+- CoinGlass Spot Coin Netflow semantics: https://docs.coinglass.com/reference/spot-coin-netflow
+- CoinGlass Spot CVD calculation and plan access: https://docs.coinglass.com/reference/spot-cvd-history
+- CoinGlass API authentication and key security: https://docs.coinglass.com/reference/authentication
+- CryptoQuant Data API, asset coverage and plan gates: https://cryptoquant.com/apis
+- Glassnode exchange deposit/netflow definitions and mutable labels: https://docs.glassnode.com/basic-api/endpoints/transactions
+- Glassnode entity clustering description: https://docs.glassnode.com/basic-api/endpoints/entities
+- Glassnode Point-in-Time exchange netflow variants: https://docs.glassnode.com/basic-api/endpoints/pit
+- Glassnode exchange-label methodology and limitations: https://docs.glassnode.com/further-information/exchange-data-transparency-notice
+- Nansen Smart Money endpoints and supported chains: https://docs.nansen.ai/api/smart-money
+- Nansen holdings endpoint (aggregated balances): https://docs.nansen.ai/api/smart-money/holdings
+- Nansen general chain support by endpoint: https://docs.nansen.ai/reference/chains
+- Arkham real-time address intelligence update: https://arkm.com/announcements/arkham-api-upgrade-real-time-intel
+
+## 11. Revised recommendation and approval state
+
+**Recommendation:** do not approve a single provider yet. Treat provider selection as a capability-specific decision rather than choosing a vendor brand for the entire product. The most plausible eventual combination is a source for BTC+ETH on-chain flow metrics, a separate address/entity intelligence source, venue trade feeds for anonymous executions, and official fund/exchange disclosures. This is an architecture hypothesis, not an approved integration plan; every source still requires endpoint-level rights and samples.
+
+**No approval change:** no API key, account entitlement, paid plan, provider sample, polling, backfill or raw-payload retention has been authorized or tested by this documentation update.
