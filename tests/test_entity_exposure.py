@@ -169,6 +169,19 @@ class EntityExposureTests(unittest.TestCase):
         self.assertEqual(row["unit"], "wei")
         self.assertEqual(row["known_controlled_address_exposure_atomic"], 10**18)
 
+    def test_future_snapshot_is_excluded_at_knowledge_cutoff(self):
+        item = snapshot("future", "2026-11-16T00:00:00Z", [("bc1qaddress1", 1000)])
+        result = aggregate([item], [claim("c1", "bc1qaddress1")])
+        self.assertEqual(result["histories"], [])
+        self.assertEqual(result["excluded"]["future_snapshot_at_cutoff"], 1)
+
+    def test_snapshot_recorded_before_its_snapshot_time_is_excluded(self):
+        item = snapshot("bad-time", "2026-11-10T00:00:00Z", [("bc1qaddress1", 1000)])
+        item["recorded_at_utc"] = "2026-11-09T23:59:59Z"
+        result = aggregate([item], [claim("c1", "bc1qaddress1")])
+        self.assertEqual(result["histories"], [])
+        self.assertEqual(result["excluded"]["recorded_before_snapshot"], 1)
+
     def test_duplicate_snapshot_ids_fail_closed(self):
         item = snapshot("same", "2026-11-01T00:00:00Z", [("bc1qaddress1", 1000)])
         with self.assertRaisesRegex(ValueError, "duplicate snapshot_batch_id"):
