@@ -61,6 +61,8 @@ def validate_trade_execution(execution, source_evidence_ids=None, actor_ids=None
             errors.append(f"non-execution evidence is inadmissible: {item.get('evidence_type')}")
         if item.get("granularity") != "INDIVIDUAL_EXECUTION":
             errors.append("source evidence must describe an individual execution")
+    if set(refs) != evidence_ids:
+        errors.append("source_observation_ids must match source_evidence IDs")
     times = [execution.get(name) for name in ("event_time_utc", "published_at_utc", "available_at_utc", "ingested_at_utc", "computed_at_utc")]
     parsed = [_time(value) for value in times]
     names = ("event_time_utc", "published_at_utc", "available_at_utc", "ingested_at_utc", "computed_at_utc")
