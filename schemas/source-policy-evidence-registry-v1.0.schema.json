@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://iwfi.local/schemas/source-policy-evidence-registry-v1.0.schema.json",
+  "title": "IWFI Source Policy Evidence Registry v1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["registry_version", "default_status", "sources"],
+  "properties": {
+    "registry_version": { "const": "1.0.0" },
+    "default_status": { "const": "UNASSESSED" },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["source_id", "provider_name", "assessment_status", "policies"],
+        "properties": {
+          "source_id": { "type": "string", "minLength": 1 },
+          "provider_name": { "type": "string", "minLength": 1 },
+          "assessment_status": { "enum": ["UNASSESSED", "PENDING_EVIDENCE", "UNDER_REVIEW", "APPROVED", "REJECTED", "EXPIRED", "REVOKED"] },
+          "policies": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["policy_id", "policy_version", "issuer", "document_ref", "document_sha256", "retrieved_at_utc", "reviewed_at_utc", "review_status", "reviewer_id", "review_scope", "allowed_actions", "prohibited_actions", "valid_from_utc", "expires_at_utc"],
+              "properties": {
+                "policy_id": { "type": "string", "minLength": 1 },
+                "policy_version": { "type": "string", "minLength": 1 },
+                "issuer": { "type": "string", "minLength": 1 },
+                "document_ref": { "type": "string", "minLength": 1 },
+                "document_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+                "retrieved_at_utc": { "type": "string", "format": "date-time" },
+                "reviewed_at_utc": { "type": "string", "format": "date-time" },
+                "review_status": { "const": "VERIFIED" },
+                "reviewer_id": { "type": "string", "minLength": 1 },
+                "review_scope": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+                "allowed_actions": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+                "prohibited_actions": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+                "valid_from_utc": { "type": "string", "format": "date-time" },
+                "expires_at_utc": { "type": "string", "format": "date-time" }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
