@@ -9,7 +9,7 @@ from iwfi.execution_participant_roles import (
     validate_execution_participant_roles,
 )
 
-_UTC = re.compile(r"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$")
+_UTC = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
 _ALLOWED_IDENTITY = {"VERIFIED", "PROVIDER_LABELLED", "INFERRED", "UNKNOWN", "DISPUTED"}
 
 
