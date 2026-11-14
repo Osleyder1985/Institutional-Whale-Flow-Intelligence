@@ -63,10 +63,21 @@ class PolicyFindingValidationTests(unittest.TestCase):
         self.review_path.write_text(json.dumps(self.review), encoding="utf-8")
 
     def test_exact_snapshot_and_text_locator_are_verified(self):
-        report = validate_policy_findings(self.bundle_path, self.review_path)
+        report = validate_policy_findings(self.bundle_path, self.review_path, self.evidence_dir)
         self.assertEqual(report["validation_status"], "ALL_REFERENCES_VERIFIED")
         self.assertEqual(report["findings"][0]["reference_status"], "REFERENCE_VERIFIED")
         self.assertTrue(report["reference_verification_only"])
+
+    def test_tampered_bundle_text_is_rejected_against_original_snapshot(self):
+        self.bundle["documents"][0]["text"] = "Forged source text."
+        self.write_inputs()
+        with self.assertRaisesRegex(FindingValidationError, "EXTRACTION_BUNDLE_DOES_NOT_MATCH_ORIGINAL_SNAPSHOTS"):
+            validate_policy_findings(self.bundle_path, self.review_path, self.evidence_dir)
+
+    def test_original_snapshot_change_is_rejected_by_capture_manifest(self):
+        (self.evidence_dir / "policy_a.md").write_text("Changed original.", encoding="utf-8")
+        with self.assertRaisesRegex(FindingValidationError, "ORIGINAL_SNAPSHOT_RECONSTRUCTION_FAILED"):
+            validate_policy_findings(self.bundle_path, self.review_path, self.evidence_dir)
 
     def test_snapshot_hash_mismatch_rejected(self):
         self.review["findings"][0]["source"]["snapshot_sha256"] = "a" * 64
