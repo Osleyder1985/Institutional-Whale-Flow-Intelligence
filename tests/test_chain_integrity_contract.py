@@ -232,5 +232,23 @@ class ChainIntegrityContractTests(unittest.TestCase):
         self.assertEqual(first["policy_version"], POLICY_VERSION)
 
 
+    def test_reorg_timestamp_order_handles_fractional_seconds(self):
+        from iwfi.chain_integrity import assess_chain_observations
+        old = self._record("old", "BLOCK_INCLUDED", block="b" * 64, status="NOT_ACTIVE")
+        new = self._record("new", "BLOCK_INCLUDED", block="c" * 64, status="ACTIVE")
+        old["observed_at_utc"] = "2026-11-13T12:00:00Z"
+        new["observed_at_utc"] = "2026-11-13T12:00:00.100Z"
+        self.assertEqual(assess_chain_observations([old, new])["status"], "REOBSERVED")
+
+    def test_fingerprint_changes_when_evidence_content_changes(self):
+        from iwfi.chain_integrity import assess_chain_observations
+        record = self._record("a", "BLOCK_INCLUDED", status="ACTIVE")
+        record["event_locator"] = {"kind": "UTXO_VOUT", "value": "0"}
+        first = assess_chain_observations([record])["assessment_fingerprint"]
+        record["event_locator"]["value"] = "1"
+        second = assess_chain_observations([record])["assessment_fingerprint"]
+        self.assertNotEqual(first, second)
+
+
 if __name__ == "__main__":
     unittest.main()
