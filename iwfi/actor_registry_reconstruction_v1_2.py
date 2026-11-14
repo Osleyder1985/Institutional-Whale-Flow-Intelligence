@@ -131,6 +131,11 @@ def verify_actor_registry_reconstruction_manifest_v1_2(
             return fail("ROOT_CLAIM_MEDIA_TYPE_UNSUPPORTED")
         if root_claim_snapshot_descriptor.get("payload_retention") != "RETAINED":
             return fail("ROOT_CLAIM_PAYLOAD_NOT_RETAINED")
+        if verify_snapshot_payload(root_claim_snapshot_descriptor, root_claim_payload).get("status") != "HASH_VERIFIED":
+            return fail("ROOT_CLAIM_SNAPSHOT_HASH_MISMATCH")
+        root_claim = json.loads(root_claim_payload.decode("utf-8"))
+        if not isinstance(root_claim, dict):
+            return fail("ROOT_CLAIM_DOCUMENT_INVALID")
         cutoff = _time(knowledge_cutoff_utc)
         if _time(root_claim_snapshot_descriptor.get("retrieved_at_utc")) > cutoff:
             return fail("ROOT_CLAIM_SNAPSHOT_AFTER_CUTOFF")
@@ -141,11 +146,6 @@ def verify_actor_registry_reconstruction_manifest_v1_2(
             return fail("ROOT_CLAIM_VALID_TIME_BEFORE_INTERVAL")
         if root_claim.get("valid_to_utc") is not None and valid_time > _time(root_claim["valid_to_utc"]):
             return fail("ROOT_CLAIM_VALID_TIME_AFTER_INTERVAL")
-        if verify_snapshot_payload(root_claim_snapshot_descriptor, root_claim_payload).get("status") != "HASH_VERIFIED":
-            return fail("ROOT_CLAIM_SNAPSHOT_HASH_MISMATCH")
-        root_claim = json.loads(root_claim_payload.decode("utf-8"))
-        if not isinstance(root_claim, dict):
-            return fail("ROOT_CLAIM_DOCUMENT_INVALID")
         if (_sha(_canonical(root_claim)) != manifest.get("root_claim_hash")
                 or root_claim.get("claim_id") != manifest.get("root_claim_id")
                 or root_claim.get("contract_version") != manifest.get("root_claim_contract_version")):
