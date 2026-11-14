@@ -1,3 +1,4 @@
+import hashlib
 import unittest
 
 from iwfi.evidence_snapshot_provenance import (
@@ -35,7 +36,7 @@ class EvidenceSnapshotProvenanceTests(unittest.TestCase):
         snapshot = descriptor(payload=payload)
         result = verify_snapshot_payload(snapshot, payload)
         self.assertEqual(result["status"], "HASH_VERIFIED")
-        self.assertEqual(snapshot["payload_hash"], "b7e7c7f7b5b2d2c3e4d1bfae7c9f4b8e3f8b7d9d5f7c8e2a4d5b7f9a1c3e5d7f" if False else snapshot["payload_hash"])
+        self.assertEqual(snapshot["payload_hash"], hashlib.sha256(payload).hexdigest())
         self.assertEqual(snapshot["payload_size_bytes"], len(payload))
 
     def test_modified_payload_fails_hash_verification(self):
