@@ -41,6 +41,10 @@ def delete_artifacts(root, artifact_id, dependent_artifact_ids_reviewed,
     root = Path(root)
     if root.is_symlink() or not root.exists() or not root.is_dir():
         raise ArtifactDeletionError("storage root must be an existing, non-symlink local directory")
+    if not isinstance(source_policy, dict) or not isinstance(retention_policy, dict):
+        raise ArtifactDeletionError("source and retention policies must be objects")
+    if not isinstance(artifact_id, str) or not _SAFE_ID.fullmatch(artifact_id):
+        raise ArtifactDeletionError("unsafe artifact_id")
     if not isinstance(deletion_id, str) or not _SAFE_ID.fullmatch(deletion_id):
         raise ArtifactDeletionError("unsafe deletion_id")
     if not isinstance(deletion_method, str) or not deletion_method.strip():
@@ -60,6 +64,13 @@ def delete_artifacts(root, artifact_id, dependent_artifact_ids_reviewed,
         raise ArtifactDeletionError("reviewed_at_utc must use YYYY-MM-DDTHH:MM:SSZ") from exc
     if reviewed.strftime("%Y-%m-%dT%H:%M:%SZ") != reviewed_at_utc:
         raise ArtifactDeletionError("reviewed_at_utc is not a valid UTC timestamp")
+
+    audit_dir = root / "_deletion_audit"
+    if audit_dir.is_symlink():
+        raise ArtifactDeletionError("deletion audit directory cannot be a symlink")
+    audit_path = audit_dir / f"{deletion_id}.json"
+    if audit_path.exists():
+        raise ArtifactDeletionError("deletion audit ID already exists")
 
     records = {}
     paths = {}
@@ -122,11 +133,7 @@ def delete_artifacts(root, artifact_id, dependent_artifact_ids_reviewed,
     audit_auth = authorize_artifact_write(source_policy, retention_policy, "LOG")
     if not audit_auth["allowed"]:
         raise ArtifactDeletionError("cannot retain deletion audit: " + "; ".join(audit_auth["errors"]))
-    audit_dir = root / "_deletion_audit"
-    if audit_dir.is_symlink():
-        raise ArtifactDeletionError("deletion audit directory cannot be a symlink")
     audit_dir.mkdir(mode=0o700, exist_ok=True)
-    audit_path = audit_dir / f"{deletion_id}.json"
     try:
         with audit_path.open("x", encoding="utf-8", newline="") as stream:
             stream.write(json.dumps(audit, sort_keys=True, separators=(",", ":")) + "\n")
