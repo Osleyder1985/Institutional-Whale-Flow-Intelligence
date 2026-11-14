@@ -15,6 +15,7 @@ ROOT_HASH = hashlib.sha256(b"synthetic reconstruction manifest").hexdigest()
 
 def fixture():
     payloads = {
+        "reconstruction/manifest-v1.2.json": b"synthetic reconstruction manifest",
         "claims/root-claim.json": b'{"claim_id":"synthetic"}',
         "registry/actor-registry.json": b'{"contract_version":"1.2.0"}',
         "snapshots/evidence-001.bin": b"synthetic evidence bytes",
