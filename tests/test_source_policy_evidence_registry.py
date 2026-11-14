@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def _extract_documented_source_ids(markdown):
-    return re.findall(r"^\\| `([^`]+)` \\|", markdown, flags=re.MULTILINE)
+    return re.findall(r"^\| `([^`]+)` \|", markdown, flags=re.MULTILINE)
 
 
 def _assert_source_inventory_matches(registry_ids, documented_ids):
