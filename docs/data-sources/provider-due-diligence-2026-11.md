@@ -298,3 +298,60 @@ The system must represent the actor as UNKNOWN where evidence does not establish
 
 **Decision:** this zero-cost policy supersedes any earlier suggestion to evaluate or use CryptoQuant Professional, paid CoinGlass tiers, Glassnode paid API, or any paid vendor plan. No provider API or account is approved by this document. No paid service, credit purchase, polling or backfill is authorized.
 
+
+
+## 13. Binance public Spot source review — 2026-11-14
+
+This section separates the historical Binance Vision archive from the public Spot market-data API. Their access methods and governing terms must not be conflated.
+
+### 13.1 Historical archive: documented access and use boundary
+
+Official Binance Public Data documentation states:
+- Spot trade archives are sourced from the Spot historical-trades endpoint and contain trade ID, price, quantity, quote quantity, timestamp, `isBuyerMaker`, and `isBestMatch`.
+- Spot aggregate-trade archives contain aggregate trade ID, price, quantity, first/last trade IDs, timestamp, `isBuyerMaker`, and `isBestMatch`.
+- Daily files are published the next day; monthly files are published on the first Monday of the month.
+- Spot archive timestamps from 2025-01-01 onward are in microseconds; older records use milliseconds. The ingestion contract must preserve source units and normalize only with explicit source-version rules.
+- Archive files can be updated after publication; checksum files are provided. A checksum must be verified and archive revisions must not silently overwrite prior observations.
+
+Official Vision Dataset Terms (version 1.0, updated 2026-08-26) state:
+- Datasets are available free of charge.
+- The stated license is CC BY-NC-SA 4.0, subject to the additional Vision Dataset Terms.
+- Permitted non-commercial purposes include academic research, non-monetized open educational projects, personal non-production historical backtesting, and non-commercial open-source data-science evaluations.
+- Commercial use requires a separate written enterprise data license.
+- The terms prohibit attempts to de-anonymize users from transaction identifiers and prohibit circumventing rate limits or impairing platform operations.
+- Derivative work redistribution must preserve attribution and the specified license conditions.
+
+**Preliminary decision for the user's declared personal, non-commercial research:** the historical archive appears to fit the stated personal non-production research category, provided the project remains within all Vision Dataset Terms and the incorporated CC BY-NC-SA obligations. This is a source-specific preliminary assessment, not legal advice or authorization for a commercial/live product. No redistribution of raw data, de-anonymization, or commercial use is approved.
+
+### 13.2 Live public Spot API: capability is documented; terms approval remains open
+
+Binance's Spot REST documentation identifies `https://data-api.binance.vision` as the market-data-only base URL and lists public endpoints including `/api/v3/trades`, `/api/v3/aggTrades`, `/api/v3/depth`, `/api/v3/klines`, and ticker endpoints. The market-data-only FAQ states these requests do not require an API key.
+
+However, the Vision Dataset Terms are specifically presented as terms for the Binance Vision Datasets. They must not automatically be treated as a complete legal review of every live public API endpoint. The applicable terms for automated live API use, local retention and the intended personal research workflow must be separately confirmed before any live API adapter is approved or activated.
+
+The REST API documentation states timestamps are milliseconds by default and supports microsecond response timestamps through the `X-MBX-TIME-UNIT` header. It documents HTTP 429 for request-rate violations and HTTP 418 for an IP ban after continuing to send requests following 429. An adapter must respect returned rate-limit information and stop/back off; it must not retry in a way that circumvents limits.
+
+### 13.3 What the trade fields can and cannot establish
+
+- A Spot trade record is evidence that a trade was executed on Binance's venue at the recorded price, quantity and time.
+- `isBuyerMaker` indicates whether the buyer was the maker. When true, the seller was the taker/aggressor; when false, the buyer was the taker/aggressor. This is venue-side aggressor direction, not the legal identity of either counterparty.
+- The public trade record does not disclose the customer identity, beneficial owner, bank, fund, institution, or whale behind either side.
+- Binance defines an aggregate trade as one or more individual trades from the same taker order filled at the same time and price. Therefore, aggTrades must not be represented as a one-row-per-individual-fill feed.
+- Neither the individual trade feed nor aggressor-side inference identifies the institution that initiated the order. Participant attribution remains UNKNOWN unless separate evidence establishes the participant for that specific execution.
+
+### 13.4 Source decision
+
+| Source | Capability decision | Cost decision | Terms decision | IWFI activation |
+|---|---|---|---|---|
+| Binance Vision historical Spot trade archive | Candidate for historical venue-execution observations for BTCUSDT and ETHUSDT | Free of charge under published Vision Dataset Terms | Preliminary fit for personal non-production research only; comply with CC BY-NC-SA 4.0 and additional terms | NOT YET APPROVED; sample validation and retention design remain pending |
+| Binance live public Spot market-data API | Public trade/depth/market data endpoints documented without API key | No endpoint charge is documented for the market-data-only route; quota/operational limits still apply | Applicable terms for automated live API access and retention not yet separately cleared | NOT APPROVED pending terms review |
+
+### 13.5 Official references
+
+- Spot REST API: https://developers.binance.com/en/docs/products/spot/rest-api
+- Market Data Only FAQ: https://github.com/binance/binance-spot-api-docs/blob/master/faqs/market_data_only.md
+- Spot API Glossary (`isBuyerMaker`, `aggTrade`): https://developers.binance.com/en/docs/products/spot/faqs/spot_glossary
+- Binance Public Data archive documentation: https://github.com/binance/binance-public-data/blob/master/README.md
+- Binance Vision Dataset Terms: https://github.com/binance/binance-public-data/blob/master/TERMS_AND_CONDITIONS.md
+
+**Decision:** Binance Vision historical Spot trades are the strongest documented zero-price historical market-execution candidate found so far for the personal non-production research scope. This does not identify institutions and does not approve live API polling. Issue #3 remains open until BTC/ETH samples, checksums, timestamp transitions, archive revisions, applicable terms and retention handling are tested and recorded.
