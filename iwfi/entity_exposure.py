@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from datetime import datetime
-from decimal import Decimal
+from fractions import Fraction
 import re
 
 from iwfi.attribution_integrity import validate_claim_collection
@@ -254,7 +254,7 @@ def aggregate_entity_exposure_history(snapshots, claims, known_at_utc):
                     and current["coverage_status"] == "COMPLETE"):
                 total_delta = current["total_entity_exposure_atomic"] - previous["total_entity_exposure_atomic"]
                 if previous["total_entity_exposure_atomic"] > 0:
-                    relative_change = str(Decimal(total_delta) / Decimal(previous["total_entity_exposure_atomic"]))
+                    relative_change = str(Fraction(total_delta, previous["total_entity_exposure_atomic"]))
                 direction = (
                     "NET_BALANCE_INCREASE" if total_delta > 0
                     else "NET_BALANCE_DECREASE" if total_delta < 0
