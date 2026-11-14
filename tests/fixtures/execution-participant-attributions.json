@@ -1,0 +1,48 @@
+{
+  "contract_version": "1.0.0",
+  "claims": [
+    {
+      "contract_version": "1.0.0",
+      "attribution_id": "claim-execution-eth-001",
+      "execution_id": "eth-execution-001",
+      "actor_id": "actor-fund-northstar-btc",
+      "candidate_actor_ids": [],
+      "attribution_status": "DIRECT",
+      "participant_side": "BUY",
+      "attribution_method": "OFFICIAL_NAMED_DISCLOSURE",
+      "recorded_at_utc": "2026-02-11T12:00:00Z",
+      "known_at_utc": "2026-02-11T11:30:00Z",
+      "valid_from_utc": "2026-02-11T11:00:00Z",
+      "valid_to_utc": "2026-02-11T11:00:00Z",
+      "source_observation_ids": [
+        "official-execution-disclosure-eth-001"
+      ],
+      "supporting_evidence": [
+        {
+          "evidence_type": "OFFICIAL_NAMED_EXECUTION_DISCLOSURE",
+          "source": "synthetic-official-disclosure",
+          "record_ref": "synthetic:eth:participant-001",
+          "observation_id": "official-execution-disclosure-eth-001"
+        }
+      ],
+      "counter_evidence": []
+    },
+    {
+      "contract_version": "1.0.0",
+      "attribution_id": "claim-execution-btc-unknown",
+      "execution_id": "btc-execution-001",
+      "actor_id": null,
+      "candidate_actor_ids": [],
+      "attribution_status": "UNKNOWN",
+      "participant_side": "UNKNOWN",
+      "attribution_method": "NONE",
+      "recorded_at_utc": "2026-01-10T10:00:04Z",
+      "known_at_utc": "2026-01-10T10:00:04Z",
+      "valid_from_utc": null,
+      "valid_to_utc": null,
+      "source_observation_ids": [],
+      "supporting_evidence": [],
+      "counter_evidence": []
+    }
+  ]
+}
