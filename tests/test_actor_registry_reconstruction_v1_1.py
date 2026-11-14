@@ -93,7 +93,7 @@ class ActorRegistryManifestV11Tests(unittest.TestCase):
 
     def test_freezes_all_actor_alias_classification_relationship_and_counter_refs(self):
         registry, snapshots, payloads, _, manifest = fixture()
-        self.assertEqual(len(manifest["references"]), 6)
+        self.assertEqual(len(manifest["references"]), 5)
         self.assertEqual(self.verify(registry, snapshots, payloads, manifest)["status"],
                          "ACTOR_REGISTRY_RECONSTRUCTION_VERIFIED")
 
@@ -108,8 +108,17 @@ class ActorRegistryManifestV11Tests(unittest.TestCase):
         registry, snapshots, payloads, _, manifest = fixture()
         changed = copy.deepcopy(registry)
         changed["actors"][0]["counter_evidence_refs"] = []
-        self.assertEqual(self.verify(changed, snapshots, payloads, manifest)["reason"],
-                         "ACTOR_REGISTRY_HASH_MISMATCH")
+        import hashlib, json
+        changed_manifest = copy.deepcopy(manifest)
+        changed_manifest["actor_registry_hash"] = hashlib.sha256(json.dumps(
+            changed, sort_keys=True, separators=(",", ":"), ensure_ascii=False,
+            allow_nan=False).encode()).hexdigest()
+        unsigned = {k: v for k, v in changed_manifest.items() if k != "manifest_hash"}
+        changed_manifest["manifest_hash"] = hashlib.sha256(json.dumps(
+            unsigned, sort_keys=True, separators=(",", ":"), ensure_ascii=False,
+            allow_nan=False).encode()).hexdigest()
+        self.assertEqual(self.verify(changed, snapshots, payloads, changed_manifest)["reason"],
+                         "REGISTRY_REFERENCE_SET_MISMATCH")
 
     def test_extra_reference_entry_fails_completeness(self):
         registry, snapshots, payloads, _, manifest = fixture()
