@@ -133,6 +133,18 @@ class ActorRegistryManifestV11Tests(unittest.TestCase):
         self.assertEqual(self.verify(registry, snapshots, payloads, changed)["reason"],
                          "DUPLICATE_REFERENCE_ENTRY")
 
+    def test_hash_only_snapshot_cannot_be_declared_reconstructable(self):
+        registry, snapshots, _, mapping, _ = fixture()
+        descriptors = list(snapshots.values())
+        descriptors[0] = dict(descriptors[0], payload_hash=None)
+        with self.assertRaisesRegex(ValueError, "verifiable SHA-256"):
+            build_actor_registry_reconstruction_manifest_v1_1(
+                actor_registry=registry, snapshot_descriptors=descriptors,
+                reference_snapshot_map=mapping, knowledge_cutoff_utc=CUTOFF,
+                valid_time_utc=VALID, algorithm_id="test", algorithm_version="1",
+                parameters={}, root_claim_id="root", root_claim_hash="c"*64,
+                root_claim_contract_version="1.0.0")
+
     def test_missing_mapping_rejected_at_build(self):
         registry, snapshots, _, mapping, _ = fixture()
         mapping.pop("SOURCE_OBSERVATION:obs-btc-counter")
