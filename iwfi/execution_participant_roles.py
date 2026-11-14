@@ -206,6 +206,57 @@ def validate_execution_participant_roles(registry, trades, actor_ids, observatio
     return sorted(set(errors))
 
 
+def validate_execution_participant_role_links(execution, registry, actor_ids, observation_ids):
+    """Validate the bidirectional link between TradeExecution v1.1 and role claims."""
+    if not isinstance(execution, dict) or execution.get("contract_version") != "1.1.0":
+        return ["unsupported TradeExecution contract version"]
+    execution_id = execution.get("execution_id")
+    if not _nonempty(execution_id):
+        return ["execution has invalid execution_id"]
+    refs = execution.get("participant_role_claim_ids")
+    if not isinstance(refs, list) or any(not _nonempty(value) for value in refs):
+        return ["participant_role_claim_ids must be a list of non-empty IDs"]
+    if len(refs) != len(set(refs)):
+        return ["duplicate participant_role_claim_ids"]
+    if (
+        execution.get("participant_attribution_status") != "UNKNOWN"
+        or execution.get("participant_actor_id") is not None
+        or execution.get("participant_side") != "UNKNOWN"
+        or execution.get("attribution_claim_ids") != []
+    ):
+        return ["TradeExecution v1.1 legacy singular attribution fields must remain UNKNOWN/empty"]
+
+    if not isinstance(registry, dict) or registry.get("contract_version") != "1.1.0":
+        return ["unsupported participant role claim registry"]
+    claims = registry.get("claims")
+    if not isinstance(claims, list):
+        return ["participant role claims must be a list"]
+    relevant = []
+    for index, claim in enumerate(claims):
+        if not isinstance(claim, dict):
+            return [f"claims[{index}] must be an object"]
+        if claim.get("execution_id") == execution_id:
+            relevant.append(claim)
+    claim_ids = [claim.get("claim_id") for claim in relevant]
+    if any(not _nonempty(value) for value in claim_ids):
+        return ["execution has a role claim with invalid claim_id"]
+    if len(claim_ids) != len(set(claim_ids)):
+        return ["duplicate role claim IDs for execution"]
+    if set(refs) != set(claim_ids):
+        missing = sorted(set(claim_ids) - set(refs))
+        dangling = sorted(set(refs) - set(claim_ids))
+        return [
+            f"execution role claim references incomplete: missing={missing}, dangling={dangling}"
+        ]
+    validation_errors = validate_execution_participant_roles(
+        {"contract_version": "1.1.0", "claims": relevant},
+        [execution],
+        actor_ids,
+        observation_ids,
+    )
+    return sorted(set(validation_errors))
+
+
 def resolve_execution_participants(registry, trade, as_of_utc, actor_ids, observation_ids):
     """Resolve claims visible to the system by cutoff; malformed eligible claims cause abstention."""
     as_of = _time(as_of_utc)
