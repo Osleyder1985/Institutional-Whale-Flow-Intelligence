@@ -17,10 +17,10 @@ Address claims are resolved at the snapshot time and knowledge cutoff. Only VERI
 
 Two values are kept distinct:
 
-- `known_address_exposure_atomic`: sum of balances for addresses that are admissibly attributed to the scope entity.
-- `total_entity_exposure_atomic`: emitted only when the inventory itself has reviewed evidence of completeness, expected and observed address counts agree, there are zero inventory gaps, and every address in the batch resolves to the same scope entity.
+- `known_controlled_address_exposure_atomic`: sum of balances for addresses that are admissibly attributed to the scope entity.
+- `total_controlled_address_exposure_atomic`: emitted only when the inventory itself has reviewed evidence of completeness, expected and observed address counts agree, there are zero inventory gaps, and every address in the batch resolves to the same scope entity.
 
-A partial or unresolved inventory never becomes a total entity exposure. A controlled address is not proof of beneficial ownership. Custodial customer funds must not be described as proprietary treasury.
+A partial or unresolved inventory never becomes a total controlled-address exposure. A controlled address is not proof of beneficial ownership. Custodial customer funds must not be described as proprietary treasury.
 
 ## Historical changes
 
