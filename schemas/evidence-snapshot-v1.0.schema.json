@@ -19,7 +19,8 @@
     "payload_size_bytes",
     "canonicalization_version",
     "storage_ref",
-    "rights_policy_ref"
+    "rights_policy_ref",
+    "recorded_at_utc"
   ],
   "properties": {
     "contract_version": {
