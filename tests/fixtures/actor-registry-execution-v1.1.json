@@ -1,0 +1,207 @@
+{
+  "contract_version": "1.1.0",
+  "actors": [
+    {
+      "contract_version": "1.1.0",
+      "actor_id": "synthetic-eth-buyer-a",
+      "actor_type": "FUND",
+      "display_name": "synthetic-eth-buyer-a",
+      "identity_status": "VERIFIED",
+      "jurisdiction": null,
+      "recorded_at_utc": "2026-02-11T12:00:02Z",
+      "known_at_utc": "2026-02-11T12:00:00Z",
+      "valid_from_utc": "2020-01-01T00:00:00Z",
+      "valid_to_utc": null,
+      "aliases": [],
+      "classifications": [],
+      "coverage": [],
+      "evidence_refs": [
+        "synthetic-actor-record"
+      ],
+      "counter_evidence_refs": []
+    },
+    {
+      "contract_version": "1.1.0",
+      "actor_id": "synthetic-eth-broker",
+      "actor_type": "FUND",
+      "display_name": "synthetic-eth-broker",
+      "identity_status": "VERIFIED",
+      "jurisdiction": null,
+      "recorded_at_utc": "2026-02-11T12:00:02Z",
+      "known_at_utc": "2026-02-11T12:00:00Z",
+      "valid_from_utc": "2020-01-01T00:00:00Z",
+      "valid_to_utc": null,
+      "aliases": [],
+      "classifications": [],
+      "coverage": [],
+      "evidence_refs": [
+        "synthetic-actor-record"
+      ],
+      "counter_evidence_refs": []
+    },
+    {
+      "contract_version": "1.1.0",
+      "actor_id": "synthetic-eth-venue",
+      "actor_type": "FUND",
+      "display_name": "synthetic-eth-venue",
+      "identity_status": "VERIFIED",
+      "jurisdiction": null,
+      "recorded_at_utc": "2026-02-11T12:00:02Z",
+      "known_at_utc": "2026-02-11T12:00:00Z",
+      "valid_from_utc": "2020-01-01T00:00:00Z",
+      "valid_to_utc": null,
+      "aliases": [],
+      "classifications": [],
+      "coverage": [],
+      "evidence_refs": [
+        "synthetic-actor-record"
+      ],
+      "counter_evidence_refs": []
+    },
+    {
+      "contract_version": "1.1.0",
+      "actor_id": "synthetic-eth-custodian",
+      "actor_type": "FUND",
+      "display_name": "synthetic-eth-custodian",
+      "identity_status": "VERIFIED",
+      "jurisdiction": null,
+      "recorded_at_utc": "2026-02-11T12:00:02Z",
+      "known_at_utc": "2026-02-11T12:00:00Z",
+      "valid_from_utc": "2020-01-01T00:00:00Z",
+      "valid_to_utc": null,
+      "aliases": [],
+      "classifications": [],
+      "coverage": [],
+      "evidence_refs": [
+        "synthetic-actor-record"
+      ],
+      "counter_evidence_refs": []
+    },
+    {
+      "contract_version": "1.1.0",
+      "actor_id": "synthetic-eth-fund",
+      "actor_type": "FUND",
+      "display_name": "synthetic-eth-fund",
+      "identity_status": "VERIFIED",
+      "jurisdiction": null,
+      "recorded_at_utc": "2026-02-11T12:00:02Z",
+      "known_at_utc": "2026-02-11T12:00:00Z",
+      "valid_from_utc": "2020-01-01T00:00:00Z",
+      "valid_to_utc": null,
+      "aliases": [],
+      "classifications": [],
+      "coverage": [],
+      "evidence_refs": [
+        "synthetic-actor-record"
+      ],
+      "counter_evidence_refs": []
+    },
+    {
+      "contract_version": "1.1.0",
+      "actor_id": "synthetic-eth-manager",
+      "actor_type": "FUND",
+      "display_name": "synthetic-eth-manager",
+      "identity_status": "VERIFIED",
+      "jurisdiction": null,
+      "recorded_at_utc": "2026-02-11T12:00:02Z",
+      "known_at_utc": "2026-02-11T12:00:00Z",
+      "valid_from_utc": "2020-01-01T00:00:00Z",
+      "valid_to_utc": null,
+      "aliases": [
+        {
+          "value": "Synthetic ETH Manager",
+          "alias_type": "LEGAL_NAME",
+          "scope": "global",
+          "known_at_utc": "2026-02-11T12:00:00Z",
+          "recorded_at_utc": "2026-02-11T12:00:02Z",
+          "valid_from_utc": "2020-01-01T00:00:00Z",
+          "valid_to_utc": null,
+          "evidence_refs": [
+            "synthetic-manager-alias"
+          ]
+        }
+      ],
+      "classifications": [
+        {
+          "classification": "ASSET_MANAGER",
+          "status": "VERIFIED",
+          "method": "OFFICIAL_REGISTRY",
+          "known_at_utc": "2026-02-11T12:00:00Z",
+          "recorded_at_utc": "2026-02-11T12:00:02Z",
+          "valid_from_utc": "2020-01-01T00:00:00Z",
+          "valid_to_utc": null,
+          "evidence_refs": [
+            "synthetic-manager-classification"
+          ]
+        }
+      ],
+      "coverage": [],
+      "evidence_refs": [
+        "synthetic-actor-record"
+      ],
+      "counter_evidence_refs": []
+    },
+    {
+      "contract_version": "1.1.0",
+      "actor_id": "synthetic-eth-buyer-b",
+      "actor_type": "FUND",
+      "display_name": "synthetic-eth-buyer-b",
+      "identity_status": "VERIFIED",
+      "jurisdiction": null,
+      "recorded_at_utc": "2026-02-11T12:00:02Z",
+      "known_at_utc": "2026-02-11T12:00:00Z",
+      "valid_from_utc": "2020-01-01T00:00:00Z",
+      "valid_to_utc": null,
+      "aliases": [],
+      "classifications": [],
+      "coverage": [],
+      "evidence_refs": [
+        "synthetic-actor-record"
+      ],
+      "counter_evidence_refs": []
+    },
+    {
+      "contract_version": "1.1.0",
+      "actor_id": "synthetic-btc-historical-whale",
+      "actor_type": "WHALE_CLUSTER",
+      "display_name": "Synthetic historical BTC whale",
+      "identity_status": "VERIFIED",
+      "jurisdiction": null,
+      "recorded_at_utc": "2020-01-03T00:00:00Z",
+      "known_at_utc": "2020-01-02T00:00:00Z",
+      "valid_from_utc": "2017-01-01T00:00:00Z",
+      "valid_to_utc": "2022-12-31T00:00:00Z",
+      "aliases": [],
+      "classifications": [],
+      "coverage": [
+        {
+          "asset": "BTC",
+          "network": "bitcoin-mainnet",
+          "activity_type": "BALANCE_CLUSTER",
+          "coverage_status": "PARTIAL"
+        }
+      ],
+      "evidence_refs": [
+        "synthetic-btc-historical-identity"
+      ],
+      "counter_evidence_refs": []
+    }
+  ],
+  "relationships": [
+    {
+      "relationship_id": "synthetic-manager-manages-fund",
+      "subject_actor_id": "synthetic-eth-manager",
+      "object_actor_id": "synthetic-eth-fund",
+      "relationship_type": "MANAGES",
+      "status": "VERIFIED",
+      "known_at_utc": "2026-02-11T12:00:00Z",
+      "recorded_at_utc": "2026-02-11T12:00:02Z",
+      "valid_from_utc": "2020-01-01T00:00:00Z",
+      "valid_to_utc": null,
+      "evidence_refs": [
+        "synthetic-management-record"
+      ],
+      "counter_evidence_refs": []
+    }
+  ]
+}

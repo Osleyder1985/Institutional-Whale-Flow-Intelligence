@@ -167,6 +167,16 @@
           "items": {
             "$ref": "#/$defs/evidence"
           }
+        },
+        "required_relationship_ids": {
+          "type": "array",
+          "description": "Direct Actor Registry relationship IDs required as explicit prerequisites for this participant attribution; no transitive inference.",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\\\S"
+          },
+          "uniqueItems": true
         }
       },
       "allOf": [
