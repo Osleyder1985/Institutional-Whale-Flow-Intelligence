@@ -19,7 +19,7 @@ The implementation does not pair inputs with outputs, assign change heuristicall
 - Only VERIFIED + REVIEWED CONTROLLED_BY claims with evidence, no counterevidence, both validity bounds and a valid event-time interval are admitted.
 - Provider labels, inferred claims, OPERATED_BY, custody, association and unknown claims do not establish economic control.
 - Conflicted/disputed addresses remain unattributed.
-- Claims recorded after known_at_utc do not rewrite the earlier knowledge state.
+- Claims or reviews recorded after known_at_utc do not rewrite the earlier knowledge state.
 - All values are integer satoshis; no binary floating point is used.
 - The transaction is accepted for accounting only if sum(inputs) = sum(outputs) + fee.
 - Fees are reported once per transaction and are not allocated to an entity.
