@@ -21,6 +21,8 @@ class ExecutionParticipantRoleTests(unittest.TestCase):
         cls.trades = json.loads((FIXTURES / "execution-participant-role-trades.json").read_text(encoding="utf-8"))
         cls.actors = json.loads((FIXTURES / "execution-participant-role-actors.json").read_text(encoding="utf-8"))
         cls.schema = json.loads((ROOT.parent / "schemas" / "execution-participant-role-claim.schema.json").read_text(encoding="utf-8"))
+        cls.trade_v11 = json.loads((FIXTURES / "trade-execution-v1.1.json").read_text(encoding="utf-8"))
+        cls.trade_v11_schema = json.loads((ROOT.parent / "schemas" / "trade-execution-v1.1.schema.json").read_text(encoding="utf-8"))
         cls.actor_ids = [item["actor_id"] for item in cls.actors["actors"]]
         cls.observation_ids = [
             "obs-eth-buyer", "obs-eth-broker", "obs-eth-venue",
@@ -255,6 +257,34 @@ class ExecutionParticipantRoleTests(unittest.TestCase):
         registry["claims"][0]["actor_id"] = "   "
         validator = Draft202012Validator(self.schema, format_checker=FormatChecker())
         self.assertTrue(list(validator.iter_errors(registry)))
+
+
+    def test_trade_execution_v11_schema_and_role_claim_links_validate(self):
+        Draft202012Validator.check_schema(self.trade_v11_schema)
+        validator = Draft202012Validator(self.trade_v11_schema, format_checker=FormatChecker())
+        self.assertEqual(list(validator.iter_errors(self.trade_v11)), [])
+        self.assertEqual(
+            validate_execution_participant_role_links(
+                self.trade_v11, self.registry, self.actor_ids, self.observation_ids
+            ),
+            []
+        )
+
+    def test_trade_execution_v11_rejects_missing_role_claim_reference(self):
+        execution = copy.deepcopy(self.trade_v11)
+        execution["participant_role_claim_ids"].pop()
+        errors = validate_execution_participant_role_links(
+            execution, self.registry, self.actor_ids, self.observation_ids
+        )
+        self.assertTrue(any("references incomplete" in item for item in errors))
+
+    def test_trade_execution_v11_rejects_legacy_singular_attribution(self):
+        execution = copy.deepcopy(self.trade_v11)
+        execution["participant_actor_id"] = "synthetic-eth-buyer-a"
+        errors = validate_execution_participant_role_links(
+            execution, self.registry, self.actor_ids, self.observation_ids
+        )
+        self.assertTrue(any("legacy singular attribution" in item for item in errors))
 
 
 if __name__ == "__main__":
