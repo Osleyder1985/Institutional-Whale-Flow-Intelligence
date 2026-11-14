@@ -1,5 +1,7 @@
 # IWFI Integrated Actor Activity Flow — Architecture Contract
 
+Version: 1.0.0
+
 Status: proposed integration architecture for Issue #50. This document composes merged contracts; it does not authorize provider access or production ingestion.
 
 ## 1. Architectural objective
