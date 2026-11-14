@@ -77,7 +77,7 @@ def main(argv=None):
     try:
         report = inspect_storage_root(args.path)
     except (OSError, ValueError) as exc:
-        parser.exit(2, f"preflight blocked: {exc}\\n")
+        parser.exit(2, f"preflight blocked: {exc}\n")
     print(json.dumps(report, indent=2, sort_keys=True))
     return 0
 
