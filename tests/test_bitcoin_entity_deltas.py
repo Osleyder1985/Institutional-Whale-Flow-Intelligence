@@ -240,12 +240,20 @@ class BitcoinEntityDeltaTests(unittest.TestCase):
             fee=10,
         )
         tx["event_time_utc"] = "2022-11-22T23:59:59Z"
-        result = aggregate([tx], [real_claim])
+        result = aggregate_bitcoin_entity_deltas(
+            [tx], [real_claim],
+            "2022-11-22T23:59:58Z", "2022-11-23T00:00:01Z",
+            "2026-11-14T16:27:15Z",
+        )
         self.assertEqual(result["entities"][0]["entity_id"], "entity-binance")
         self.assertEqual(result["entities"][0]["observed_address_delta_sats"], -1000)
 
         tx["event_time_utc"] = "2022-11-23T00:00:00Z"
-        result_after = aggregate([tx], [real_claim])
+        result_after = aggregate_bitcoin_entity_deltas(
+            [tx], [real_claim],
+            "2022-11-22T23:59:58Z", "2022-11-23T00:00:01Z",
+            "2026-11-14T16:27:15Z",
+        )
         self.assertEqual(result_after["entities"], [])
 
     def test_schema_accepts_valid_synthetic_transaction(self):
