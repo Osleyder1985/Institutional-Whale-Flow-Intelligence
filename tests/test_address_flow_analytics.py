@@ -101,6 +101,12 @@ class AddressFlowAnalyticsTests(unittest.TestCase):
         result = self.analyze([row])
         self.assertEqual({item["address"] for item in result["addresses"]}, {"0xabc", "0xdef"})
 
+    def test_unsupported_movement_contract_version_is_rejected(self):
+        row = movement()
+        row["contract_version"] = "2.0.0"
+        with self.assertRaisesRegex(AddressFlowAnalyticsError, "unsupported contract_version"):
+            self.analyze([row])
+
     def test_duplicate_movement_ids_fail_closed(self):
         row = movement()
         with self.assertRaisesRegex(AddressFlowAnalyticsError, "duplicate movement_id"):
