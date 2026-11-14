@@ -4,7 +4,9 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import re
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.error import HTTPError, URLError
@@ -15,6 +17,7 @@ from urllib.request import HTTPRedirectHandler, Request, build_opener
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_REGISTRY = ROOT / "data" / "policy-document-sources-v1.0.json"
 CHUNK_SIZE = 1024 * 1024
+ALLOWED_SOURCE_HOSTS = {"raw.githubusercontent.com", "creativecommons.org", "bin.bnbstatic.com"}
 SHA256_RE = re.compile(r"^[a-f0-9]{64}$")
 
 
@@ -58,7 +61,7 @@ def load_registry(path=DEFAULT_REGISTRY):
         url = item.get("url")
         parsed = urlparse(url) if isinstance(url, str) else None
         if (not isinstance(source_id, str) or not source_id or source_id in result
-                or parsed is None or parsed.scheme != "https" or not parsed.hostname
+                or parsed is None or parsed.scheme != "https" or parsed.hostname not in ALLOWED_SOURCE_HOSTS
                 or parsed.username or parsed.password or parsed.fragment
                 or not isinstance(item.get("filename"), str)
                 or not isinstance(item.get("provider"), str)):
@@ -155,18 +158,28 @@ def observe_source(source, opener=None, observed_at=None):
 
 def write_observation(record, output_dir):
     output_dir = Path(output_dir).expanduser().resolve()
+    repository_root = ROOT.resolve()
+    if output_dir == repository_root or repository_root in output_dir.parents:
+        raise ObservationError("OBSERVATION_OUTPUT_INSIDE_REPOSITORY")
     output_dir.mkdir(parents=True, exist_ok=True)
     timestamp = re.sub(r"[^0-9TZ]", "-", record["observed_at_utc"])
     path = output_dir / f'{record["document_id"]}__{timestamp}.json'
-    data = (json.dumps(record, ensure_ascii=False, indent=2, sort_keys=True) + "\n").encode("utf-8")
+    data = (json.dumps(record, ensure_ascii=False, indent=2, sort_keys=True) + "\\n").encode("utf-8")
+    fd, temporary = tempfile.mkstemp(prefix=".iwfi-observation-", suffix=".tmp", dir=str(output_dir))
     try:
-        with path.open("xb") as stream:
+        with os.fdopen(fd, "wb") as stream:
             stream.write(data)
             stream.flush()
+            os.fsync(stream.fileno())
+        os.link(temporary, path)
     except FileExistsError as exc:
         raise ObservationError("OBSERVATION_ALREADY_EXISTS") from exc
+    finally:
+        try:
+            os.unlink(temporary)
+        except FileNotFoundError:
+            pass
     return path
-
 
 def run_observations(registry_path, output_dir, source_ids=None, opener_factory=None, observed_at=None):
     registry = load_registry(registry_path)
