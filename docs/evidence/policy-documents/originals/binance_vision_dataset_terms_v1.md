@@ -1,14 +1,8 @@
 # BINANCE VISION DATASET TERMS
 
-**Version:** 1.0  
-**Last Updated:** August 26, 2026
+**Version:** 1.0
 
-> Source: Binance, `binance/binance-public-data`, `TERMS_AND_CONDITIONS.md`.  
-> Original URL: https://github.com/binance/binance-public-data/blob/master/TERMS_AND_CONDITIONS.md  
-> Raw URL: https://raw.githubusercontent.com/binance/binance-public-data/master/TERMS_AND_CONDITIONS.md  
-> Captured into IWFI evidence repository from the official Binance public-data repository on 2026-11-14.  
-> SHA-256 of the locally captured source snapshot: `99c4921dbe023cd68c1a447775707d621453cc78aec6ac0bfe2e6c06a5114ee0`.  
-> This file preserves the source text and Markdown structure. It is not an IWFI-authored policy or legal opinion. Binance retains its rights and marks.
+**Last Updated: August 26, 2026**
 
 ## 1. INTRODUCTION
 
