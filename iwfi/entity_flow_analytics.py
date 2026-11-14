@@ -225,6 +225,13 @@ def aggregate_entity_flows(movements, claims, start_time_utc, end_time_utc,
             stats["excluded"]["unsupported_asset"] += 1
             continue
 
+        # A Bitcoin UTXO_VOUT identifies a recipient output, not a unique
+        # sender. Do not manufacture directed from->to flows until the
+        # transaction-level input/output accounting contract is implemented.
+        if network_id == "bitcoin-mainnet":
+            stats["excluded"]["unsupported_utxo_accounting"] += 1
+            continue
+
         source = _resolve_address(transfer.get("from_address"), network_id, event_time, cutoff, claim_index)
         target = _resolve_address(transfer.get("to_address"), network_id, event_time, cutoff, claim_index)
         for resolution in (source, target):
