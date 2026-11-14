@@ -7,7 +7,7 @@ This registry is the intake boundary for provider-specific retention rights. Emp
 ## Evidence required for every policy
 
 - Stable source and provider identifiers.
-- Policy identifier and version, issuing authority, and stable document reference.
+- Policy identifier and version, issuing authority, rights reference, active/revoked state, and stable document reference.
 - SHA-256 of the exact original policy document snapshot.
 - UTC retrieval and review timestamps.
 - Explicit VERIFIED review state, reviewer identifier, and reviewed scope.
@@ -17,7 +17,7 @@ A policy without the original document snapshot and matching SHA-256 remains UNA
 
 ## Approval rules
 
-APPROVED is a review outcome, not an automatic default. It may only be assigned after the source's applicable terms have been reviewed for the exact IWFI use: local retention, historical snapshots, derived artifacts, reconstruction, and any limits on duration, volume, attribution, or onward use. Ambiguity, conflicting terms, missing clauses, or an unverified issuer leaves the source unapproved.
+APPROVED is a review outcome, not an automatic default, and the schema rejects an APPROVED provider entry with an empty policy list. It may only be assigned after the source's applicable terms have been reviewed for the exact IWFI use: local retention, historical snapshots, derived artifacts, reconstruction, and any limits on duration, volume, attribution, or onward use. Ambiguity, conflicting terms, missing clauses, or an unverified issuer leaves the source unapproved.
 
 No approval is inherited between providers, products, endpoints, data types, or time periods. Any changed document hash, new policy version, revocation, or expiry invalidates the prior approval and requires a new review.
 
