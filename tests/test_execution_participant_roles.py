@@ -170,5 +170,65 @@ class ExecutionParticipantRoleTests(unittest.TestCase):
         self.assertIsNone(buyer["actor_id"])
 
 
+    def test_recorded_after_cutoff_is_not_visible_even_if_known_at_is_earlier(self):
+        result = resolve_execution_participants(
+            self.registry, self.trades[1], "2026-02-11T12:00:01Z",
+            self.actor_ids, self.observation_ids
+        )
+        self.assertEqual(result["status"], "RESOLVED")
+        self.assertEqual(result["participants"], [])
+
+    def test_invalid_actor_reference_causes_resolver_abstention(self):
+        registry = copy.deepcopy(self.registry)
+        registry["claims"][0]["actor_id"] = "actor-not-in-registry"
+        result = resolve_execution_participants(
+            registry, self.trades[1], "2026-02-11T12:30:00Z",
+            self.actor_ids, self.observation_ids
+        )
+        self.assertEqual(result["status"], "INVALID_INPUT")
+        self.assertEqual(result["participants"], [])
+
+    def test_invalid_evidence_observation_causes_resolver_abstention(self):
+        registry = copy.deepcopy(self.registry)
+        registry["claims"][0]["source_observation_ids"] = ["observation-not-in-ledger"]
+        registry["claims"][0]["supporting_evidence"][0]["observation_id"] = "observation-not-in-ledger"
+        result = resolve_execution_participants(
+            registry, self.trades[1], "2026-02-11T12:30:00Z",
+            self.actor_ids, self.observation_ids
+        )
+        self.assertEqual(result["status"], "INVALID_INPUT")
+        self.assertEqual(result["participants"], [])
+
+    def test_unknown_identity_does_not_conflict_with_same_known_role_side(self):
+        registry = copy.deepcopy(self.registry)
+        unknown_buyer = {
+            "contract_version": "1.1.0",
+            "claim_id": "claim-eth-buyer-identity-unknown",
+            "trade_id": "synthetic-eth-trade-multi-role",
+            "actor_id": None,
+            "candidate_actor_ids": [],
+            "participant_role": "BUYER",
+            "participant_side": "BUY",
+            "epistemic_status": "UNKNOWN",
+            "attribution_method": "NONE",
+            "recorded_at_utc": "2026-02-11T12:00:03Z",
+            "known_at_utc": "2026-02-11T12:00:00Z",
+            "valid_from_utc": None,
+            "valid_to_utc": None,
+            "source_observation_ids": [],
+            "supporting_evidence": [],
+            "counter_evidence": []
+        }
+        registry["claims"].append(unknown_buyer)
+        result = resolve_execution_participants(
+            registry, self.trades[1], "2026-02-11T12:30:00Z",
+            self.actor_ids, self.observation_ids
+        )
+        buyer = next(item for item in result["participants"] if item["participant_role"] == "BUYER")
+        self.assertEqual(buyer["status"], "DIRECT")
+        self.assertEqual(buyer["actor_id"], "synthetic-eth-buyer-a")
+        self.assertEqual(buyer["participant_side"], "BUY")
+
+
 if __name__ == "__main__":
     unittest.main()
