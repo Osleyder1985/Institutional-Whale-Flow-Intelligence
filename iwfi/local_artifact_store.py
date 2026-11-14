@@ -12,7 +12,7 @@ _SAFE_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 _REQUIRED_RECORD_FIELDS = (
     "record_version", "artifact_id", "artifact_type", "source_id", "source_url", "acquired_at_utc",
     "local_sha256", "terms_reviewed_at_utc", "purpose", "retention_policy_id",
-    "revision_id", "storage_scope", "cloud_sync_allowed",
+    "revision_id", "storage_scope", "cloud_sync_allowed", "depends_on_artifact_ids",
 )
 
 
