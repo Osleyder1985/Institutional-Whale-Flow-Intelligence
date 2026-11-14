@@ -9,7 +9,7 @@ Each snapshot batch contains:
 - snapshot time, recording time, block height/hash and canonicality/confirmation;
 - one address balance per record, in satoshis (BTC) or wei (ETH);
 - a source observation reference for every address balance;
-- an inventory-coverage declaration with expected/observed/unresolved address counts, evidence reference and review provenance.
+- an inventory-coverage declaration with expected/observed/unresolved address counts, evidence reference and review provenance; the inventory review must occur at or after the snapshot time and no later than the knowledge cutoff.
 
 Address claims are resolved at the snapshot time and knowledge cutoff. Only VERIFIED + REVIEWED CONTROLLED_BY claims with supporting evidence, no counterevidence, known validity bounds and both recorded/reviewed timestamps at or before the cutoff are admitted.
 
@@ -25,7 +25,7 @@ A partial or unresolved inventory never becomes a total controlled-address expos
 ## Historical changes
 
 For adjacent snapshots of the same entity and asset:
-- known-address delta is emitted only when the same non-empty attributed address set is present in both snapshots;
+- known controlled-address delta is emitted only when the same non-empty attributed address set is present in both snapshots;
 - total entity delta and relative change are emitted only when both snapshots have complete coverage;
 - candidate direction is a descriptive net balance increase/decrease/flat state, not proof of purchases, sales, intent or market accumulation/distribution;
 - every candidate remains `NOT_CALIBRATED`; no thresholds, probabilities or trading signals are invented.
