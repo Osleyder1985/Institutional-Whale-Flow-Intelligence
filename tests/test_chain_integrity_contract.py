@@ -29,10 +29,11 @@ class ChainIntegrityContractTests(unittest.TestCase):
                     "observation_id": scenario["scenario_id"] + "-" + str(index),
                     "network_id": scenario["network_id"],
                     "source": {"kind": "SELF_HOSTED_NODE", "source_id": "fixture-node", "view_id": "fixture-view", "method": "synthetic-fixture"},
-                    "transaction_id": observation["transaction_id"],
+                    "transaction_id": observation.get("transaction_id"),
                     "observation_kind": observation["observation_kind"],
                     "observed_at_utc": "2026-11-13T12:00:00Z",
                     "inclusion": observation.get("inclusion"),
+                    "checkpoint": observation.get("checkpoint"),
                     "source_asserted_chain_status": observation.get("source_asserted_chain_status"),
                     "source_asserted_head_tag": observation.get("source_asserted_head_tag"),
                     "event_locator": None,
@@ -78,7 +79,7 @@ class ChainIntegrityContractTests(unittest.TestCase):
         checkpoint = next(x for x in scenario["observations"] if x["observation_kind"] == "FINALITY_CHECKPOINT")
         inclusion = next(x for x in scenario["observations"] if x["observation_kind"] == "BLOCK_INCLUDED")
         self.assertEqual(checkpoint.get("source_asserted_head_tag"), "finalized")
-        self.assertGreaterEqual(checkpoint["inclusion"]["block_height"], inclusion["inclusion"]["block_height"])
+        self.assertGreaterEqual(checkpoint["checkpoint"]["block_height"], inclusion["inclusion"]["block_height"])
 
 
     def _record(self, observation_id, kind, tx="a" * 64, height=100, block="b" * 64, status="UNKNOWN", network="bitcoin-mainnet", source="node-a", tag=None):
