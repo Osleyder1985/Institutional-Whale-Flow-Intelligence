@@ -63,6 +63,17 @@ class PolicySourceObservationTests(unittest.TestCase):
         self.assertEqual(record["etag"], '"new-etag"')
         self.assertEqual(record["sha256"], hashlib.sha256(body).hexdigest())
 
+    def test_metadata_change_is_reported_when_body_hash_is_unchanged(self):
+        body = b"policy-v1"
+        item = source(hashlib.sha256(body).hexdigest())
+        item["baseline_etag"] = '"old-etag"'
+        record = observe_source(
+            item,
+            FakeOpener(FakeResponse(body, {"ETag": '"new-etag"'})),
+        )
+        self.assertEqual(record["change_status"], "METADATA_CHANGED")
+        self.assertEqual(record["sha256"], hashlib.sha256(body).hexdigest())
+
     def test_changed_bytes_are_flagged_without_replacing_baseline(self):
         baseline = hashlib.sha256(b"old").hexdigest()
         record = observe_source(source(baseline), FakeOpener(FakeResponse(b"new")))
