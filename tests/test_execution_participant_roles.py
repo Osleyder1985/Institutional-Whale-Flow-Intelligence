@@ -135,5 +135,40 @@ class ExecutionParticipantRoleTests(unittest.TestCase):
         self.assertEqual(result["participants"], [])
 
 
+    def test_unknown_buyer_identity_can_preserve_buyer_side_without_naming_actor(self):
+        registry = {"contract_version": "1.1.0", "claims": [{
+            "contract_version": "1.1.0",
+            "claim_id": "claim-btc-buyer-identity-unknown",
+            "trade_id": "synthetic-btc-trade-aggressor-only",
+            "actor_id": None,
+            "candidate_actor_ids": [],
+            "participant_role": "BUYER",
+            "participant_side": "BUY",
+            "epistemic_status": "UNKNOWN",
+            "attribution_method": "NONE",
+            "recorded_at_utc": "2026-01-10T10:00:05Z",
+            "known_at_utc": "2026-01-10T10:00:04Z",
+            "valid_from_utc": None,
+            "valid_to_utc": None,
+            "source_observation_ids": [],
+            "supporting_evidence": [],
+            "counter_evidence": []
+        }]}
+        validator = Draft202012Validator(self.schema, format_checker=FormatChecker())
+        self.assertEqual(list(validator.iter_errors(registry)), [])
+        errors = validate_execution_participant_roles(
+            registry, self.trades, self.actor_ids, self.observation_ids
+        )
+        self.assertEqual(errors, [])
+        result = resolve_execution_participants(
+            registry, self.trades[0], "2026-01-10T10:00:10Z"
+        )
+        buyer = result["participants"][0]
+        self.assertEqual(buyer["participant_role"], "BUYER")
+        self.assertEqual(buyer["participant_side"], "BUY")
+        self.assertEqual(buyer["status"], "UNKNOWN")
+        self.assertIsNone(buyer["actor_id"])
+
+
 if __name__ == "__main__":
     unittest.main()
