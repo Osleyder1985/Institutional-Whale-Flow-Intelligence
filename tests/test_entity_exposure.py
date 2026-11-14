@@ -140,11 +140,14 @@ class EntityExposureTests(unittest.TestCase):
         self.assertIsNone(result["histories"][0]["snapshots"][0]["total_entity_exposure_atomic"])
 
     def test_known_address_delta_requires_same_attributed_address_set(self):
-        claims = [claim("c1", "bc1qaddress1")]
+        claims = [
+            claim("c1", "bc1qaddress1"),
+            claim("c2", "bc1qaddress2"),
+        ]
         first = snapshot("s1", "2026-11-01T00:00:00Z", [("bc1qaddress1", 1000)],
                          coverage="PARTIAL")
         second = snapshot("s2", "2026-11-02T00:00:00Z",
-                          [("bc1qaddress1", 1200), ("bc1qaddress2", 500)],
+                          [("bc1qaddress2", 1200)],
                           coverage="PARTIAL")
         result = aggregate([first, second], claims)
         change = result["histories"][0]["changes"][0]
@@ -172,6 +175,15 @@ class EntityExposureTests(unittest.TestCase):
         second = snapshot("s2", "2026-11-01T00:00:00Z", [("bc1qaddress1", 1100)])
         with self.assertRaisesRegex(ValueError, "duplicate snapshot time"):
             aggregate([first, second], [claim("c1", "bc1qaddress1")])
+
+    def test_schema_rejects_btc_snapshot_with_wei_unit(self):
+        from jsonschema import Draft202012Validator, FormatChecker
+        root = Path(__file__).resolve().parent.parent
+        schema = json.loads((root / "schemas" / "entity-exposure-snapshot.schema.json").read_text(encoding="utf-8"))
+        item = snapshot("s1", "2026-11-01T00:00:00Z", [("bc1qaddress1", 1000)])
+        item["addresses"][0]["unit"] = "wei"
+        errors = list(Draft202012Validator(schema, format_checker=FormatChecker()).iter_errors(item))
+        self.assertTrue(errors)
 
     def test_snapshot_schema_accepts_valid_synthetic_snapshot(self):
         from jsonschema import Draft202012Validator, FormatChecker
