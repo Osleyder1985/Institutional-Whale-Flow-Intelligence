@@ -7,7 +7,8 @@ import re
 import shutil
 
 from iwfi.local_artifact_inventory import (
-    ArtifactInventoryError, build_local_artifact_inventory, dependent_artifact_ids_for,\n    related_backup_artifact_ids_for,
+    ArtifactInventoryError, build_local_artifact_inventory, dependent_artifact_ids_for,
+    related_backup_artifact_ids_for,
 )
 from iwfi.retention_policy import authorize_artifact_write, retention_policy_errors
 from iwfi.source_use_guard import source_use_policy_errors
@@ -84,7 +85,9 @@ def delete_artifacts(root, artifact_id, dependent_artifact_ids_reviewed,
     except ArtifactInventoryError as exc:
         raise ArtifactDeletionError("local artifact inventory incomplete: " + str(exc)) from exc
     expected_dependents = dependent_artifact_ids_for(inventory, artifact_id)
-    expected_backups = inventory["backup_artifact_ids"]\n    related_backups = related_backup_artifact_ids_for(inventory, artifact_id)\n    deletion_ids = [artifact_id] + expected_dependents + related_backups
+    expected_backups = inventory["backup_artifact_ids"]
+    related_backups = related_backup_artifact_ids_for(inventory, artifact_id)
+    deletion_ids = [artifact_id] + expected_dependents + related_backups
     if set(dependent_artifact_ids_reviewed) != set(expected_dependents):
         raise ArtifactDeletionError(
             "dependency review does not match complete local inventory; expected: "
@@ -146,7 +149,8 @@ def delete_artifacts(root, artifact_id, dependent_artifact_ids_reviewed,
     }
     try:
         with started_path.open("x", encoding="utf-8", newline="") as stream:
-            stream.write(json.dumps(started_audit, sort_keys=True, separators=(",", ":")) + "\n")
+            stream.write(json.dumps(started_audit, sort_keys=True, separators=(",", ":")) + "
+")
             stream.flush()
             os.fsync(stream.fileno())
     except FileExistsError as exc:
@@ -192,7 +196,8 @@ def delete_artifacts(root, artifact_id, dependent_artifact_ids_reviewed,
     }
     try:
         with completed_path.open("x", encoding="utf-8", newline="") as stream:
-            stream.write(json.dumps(audit, sort_keys=True, separators=(",", ":")) + "\n")
+            stream.write(json.dumps(audit, sort_keys=True, separators=(",", ":")) + "
+")
             stream.flush()
             os.fsync(stream.fileno())
     except FileExistsError as exc:
