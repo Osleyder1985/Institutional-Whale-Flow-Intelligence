@@ -77,6 +77,13 @@ class LocalDocumentAcquisitionTests(unittest.TestCase):
         with self.assertRaisesRegex(AcquisitionError, "URL_NOT_ALLOWLISTED"):
             _validate_url("https://creativecommons.org/other.txt")
 
+    def test_source_manifest_rejects_unregistered_url_on_allowed_host(self):
+        from scripts.acquire_policy_documents import SOURCE_MANIFEST_PATH
+        payload = json.loads(SOURCE_MANIFEST_PATH.read_text(encoding="utf-8"))
+        payload["documents"][1]["url"] = "https://creativecommons.org/another/path.txt"
+        with self.assertRaisesRegex(AcquisitionError, "SOURCE_URL_NOT_ALLOWLISTED"):
+            load_source_manifest_payload(payload)
+
     def test_source_manifest_must_be_complete_and_unique(self):
         from scripts.acquire_policy_documents import SOURCE_MANIFEST_PATH
         payload = json.loads(SOURCE_MANIFEST_PATH.read_text(encoding="utf-8"))
