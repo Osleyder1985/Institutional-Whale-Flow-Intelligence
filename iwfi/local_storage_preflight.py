@@ -33,14 +33,19 @@ def inspect_storage_root(path):
             except OSError:
                 continue
 
+    # Inspect the caller-supplied path before resolving it. Resolving first erases
+    # symlink/junction components from the path and can hide a synchronized ancestor.
+    lexical_root = Path(os.path.abspath(root))
     reparse_paths = []
-    for parent in (resolved, *resolved.parents):
+    for parent in (lexical_root, *lexical_root.parents):
         try:
-            attributes = getattr(parent.stat(), "st_file_attributes", 0)
-            if attributes & _REPARSE_POINT:
+            metadata = parent.lstat()
+            attributes = getattr(metadata, "st_file_attributes", 0)
+            if parent.is_symlink() or attributes & _REPARSE_POINT:
                 reparse_paths.append(str(parent))
         except OSError:
-            reparse_paths.append(str(parent))
+            # An ancestor that cannot be inspected is a review blocker, not a clean result.
+            reparse_paths.append(str(parent) + " (inspection failed)")
 
     risks = []
     if marker_hits:
