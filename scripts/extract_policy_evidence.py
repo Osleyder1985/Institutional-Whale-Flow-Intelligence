@@ -8,6 +8,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import re
 from pathlib import Path
 from typing import Any
@@ -201,9 +202,10 @@ def write_bundle(bundle: dict[str, Any], output_path: str | Path) -> Path:
         with temporary.open("xb") as stream:
             stream.write(data)
             stream.flush()
-        temporary.replace(output_path)
+            os.fsync(stream.fileno())
+        os.link(temporary, output_path)
     except FileExistsError as exc:
-        raise EvidenceExtractionError("OUTPUT_TEMPORARY_FILE_ALREADY_EXISTS") from exc
+        raise EvidenceExtractionError("OUTPUT_BUNDLE_ALREADY_EXISTS") from exc
     finally:
         try:
             temporary.unlink()
