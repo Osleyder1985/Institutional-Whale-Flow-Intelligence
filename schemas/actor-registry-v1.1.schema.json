@@ -54,7 +54,6 @@
         "identity_status",
         "recorded_at_utc",
         "known_at_utc",
-        "recorded_at_utc",
         "valid_from_utc",
         "valid_to_utc",
         "aliases",
@@ -126,9 +125,6 @@
           "$ref": "#/$defs/utc"
         },
         "known_at_utc": {
-          "$ref": "#/$defs/utc"
-        },
-        "recorded_at_utc": {
           "$ref": "#/$defs/utc"
         },
         "valid_from_utc": {
