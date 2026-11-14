@@ -46,6 +46,11 @@ def build_audit_package_manifest(*, package_id, reconstruction_manifest_hash, ar
             raise ValueError("artifact entry must be an object")
         path = _validate_path(artifact.get("path"))
         role, media_type, content = artifact.get("role"), artifact.get("media_type"), artifact.get("content")
+        source_ids = artifact.get("source_ids", [])
+        if (not isinstance(source_ids, list)
+                or any(not isinstance(item, str) or not item.strip() for item in source_ids)
+                or len(source_ids) != len(set(source_ids))):
+            raise ValueError("artifact source_ids must be unique non-empty strings")
         if not isinstance(role, str) or not role.strip():
             raise ValueError("artifact role is required")
         if not isinstance(media_type, str) or not media_type.strip():
@@ -57,6 +62,7 @@ def build_audit_package_manifest(*, package_id, reconstruction_manifest_hash, ar
         seen.add(path)
         folded.add(path.casefold())
         entries.append({"path": path, "role": role, "media_type": media_type,
+                        "source_ids": sorted(source_ids),
                         "size_bytes": len(content), "hash_algorithm": "SHA-256",
                         "sha256": _sha(content)})
     entries.sort(key=lambda item: item["path"])
@@ -102,6 +108,11 @@ def verify_audit_package_manifest(*, manifest, artifacts_by_path,
         if path in expected or path.casefold() in folded:
             return fail("DUPLICATE_ARTIFACT_PATH")
         folded.add(path.casefold())
+        source_ids = entry.get("source_ids", [])
+        if (not isinstance(source_ids, list)
+                or any(not isinstance(item, str) or not item.strip() for item in source_ids)
+                or len(source_ids) != len(set(source_ids))):
+            return fail("INVALID_ARTIFACT_SOURCE_IDS")
         if entry.get("hash_algorithm") != "SHA-256" or not isinstance(entry.get("sha256"), str) or not _HASH.fullmatch(entry["sha256"]):
             return fail("INVALID_ARTIFACT_HASH")
         if not isinstance(entry.get("size_bytes"), int) or isinstance(entry.get("size_bytes"), bool) or entry["size_bytes"] < 0:
