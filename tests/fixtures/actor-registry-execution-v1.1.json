@@ -159,6 +159,32 @@
         "synthetic-actor-record"
       ],
       "counter_evidence_refs": []
+    },
+    {
+      "contract_version": "1.1.0",
+      "actor_id": "synthetic-btc-historical-whale",
+      "actor_type": "WHALE_CLUSTER",
+      "display_name": "Synthetic historical BTC whale",
+      "identity_status": "VERIFIED",
+      "jurisdiction": null,
+      "recorded_at_utc": "2020-01-03T00:00:00Z",
+      "known_at_utc": "2020-01-02T00:00:00Z",
+      "valid_from_utc": "2017-01-01T00:00:00Z",
+      "valid_to_utc": "2022-12-31T00:00:00Z",
+      "aliases": [],
+      "classifications": [],
+      "coverage": [
+        {
+          "asset": "BTC",
+          "network": "bitcoin-mainnet",
+          "activity_type": "BALANCE_CLUSTER",
+          "coverage_status": "PARTIAL"
+        }
+      ],
+      "evidence_refs": [
+        "synthetic-btc-historical-identity"
+      ],
+      "counter_evidence_refs": []
     }
   ],
   "relationships": [
