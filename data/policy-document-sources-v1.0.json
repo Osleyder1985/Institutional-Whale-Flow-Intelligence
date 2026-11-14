@@ -1,0 +1,31 @@
+{
+  "manifest_version": "1.0.0",
+  "purpose": "Local acquisition of official provider policy documents for evidence integrity review only",
+  "documents": [
+    {
+      "document_id": "binance_vision_dataset_terms_v1",
+      "provider": "Binance",
+      "url": "https://raw.githubusercontent.com/binance/binance-public-data/master/TERMS_AND_CONDITIONS.md",
+      "filename": "binance_vision_dataset_terms_v1.md",
+      "observed_version": "1.0; document states Last Updated 2026-08-26",
+      "url_is_mutable": true
+    },
+    {
+      "document_id": "cc_by_nc_sa_4_0_legal_code",
+      "provider": "Creative Commons",
+      "url": "https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode.txt",
+      "filename": "cc_by_nc_sa_4_0_legalcode.txt",
+      "observed_version": "4.0",
+      "url_is_mutable": true
+    },
+    {
+      "document_id": "binance_terms_of_use_adgm_2026_01_05",
+      "provider": "Binance / ADGM entities identified in document",
+      "url": "https://bin.bnbstatic.com/static/cms/cg08ou2ak0tn7mcplvfg/file/9958035d95bff024a86a662fb4fdba45527d55a936e2cb9ed1d7ddf205ca082d.pdf",
+      "filename": "binance_terms_of_use_adgm_2026_01_05.pdf",
+      "observed_version": "Effective Date 2026-01-05; applicability requires separate review",
+      "url_is_mutable": true
+    }
+  ],
+  "important": "This inventory is not a license, legal opinion, retention authorization, or source approval. Do not store downloaded documents in the public repository or a synchronized folder."
+}
