@@ -22,6 +22,7 @@ For the full archive day, and optionally for caller-selected UTC buckets:
 - taker buy/sell base quantity;
 - taker buy/sell quote notional;
 - signed base/quote volume delta (buy minus sell);
+- exact reduced taker-buy/taker-sell base and quote ratios, represented as `numerator/denominator` strings; a zero sell denominator yields JSON `null` rather than division by zero;
 - cumulative signed volume across observed buckets;
 - aggregate record count and first/last event timestamps.
 
