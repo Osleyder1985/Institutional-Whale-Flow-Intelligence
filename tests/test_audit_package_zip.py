@@ -199,7 +199,7 @@ class AuditPackageZipTests(unittest.TestCase):
         manifest, payloads = fixture()
         context = authorization_context(manifest)
         context["artifact_authorizations"].append(dict(context["artifact_authorizations"][0]))
-        with self.assertRaisesRegex(ValueError, "DUPLICATE_ARTIFACT_AUTHORIZATIONS"):
+        with self.assertRaisesRegex(ValueError, "DUPLICATE_OR_INVALID_ARTIFACT_AUTHORIZATION_ID"):
             build(manifest, payloads, context)
 
     def test_contradictory_source_policy_rejects_package(self):
