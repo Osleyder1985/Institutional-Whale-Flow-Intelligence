@@ -41,6 +41,13 @@ class TradeExecutionContractTests(unittest.TestCase):
             errors = validate_trade_execution(execution, self.evidence_ids)
             self.assertTrue(any("non-execution evidence is inadmissible" in error for error in errors), forbidden)
 
+    def test_aggregate_participant_attribution_is_not_valid_for_individual_execution(self):
+        execution = copy.deepcopy(self.executions[0])
+        execution["participant_attribution_status"] = "AGGREGATED"
+        validator = Draft202012Validator(self.schema, format_checker=FormatChecker())
+        self.assertTrue(list(validator.iter_errors(execution)))
+        self.assertIn("invalid participant_attribution_status for an individual execution", validate_trade_execution(execution, self.evidence_ids))
+
     def test_aggregate_record_cannot_become_individual_execution(self):
         execution = copy.deepcopy(self.executions[0])
         execution["aggregation_level"] = "AGGREGATED_REPORT"
