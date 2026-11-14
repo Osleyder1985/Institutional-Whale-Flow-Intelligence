@@ -8,22 +8,28 @@ The registry is intentionally endpoint- and asset-specific for Binance Spot. BTC
 
 ## Registered source scopes
 
+The table below is maintained as an exact mirror of `data/source-policy-evidence-registry-v1.0.json`. Tests fail if an ID is omitted, duplicated, or added only on one side.
+
 | Source ID | Exact scope | Assessment |
 |---|---|---|
-| `binance_vision_spot_trades_btcusdt` | Binance Vision — Spot historical trades — BTCUSDT | PENDING_EVIDENCE |
-| `binance_vision_spot_trades_ethusdt` | Binance Vision — Spot historical trades — ETHUSDT | PENDING_EVIDENCE |
+| `binance_spot_api_aggtrades_btcusdt` | Binance Spot public API `/api/v3/aggTrades` — BTCUSDT | PENDING_EVIDENCE |
+| `binance_spot_api_aggtrades_ethusdt` | Binance Spot public API `/api/v3/aggTrades` — ETHUSDT | PENDING_EVIDENCE |
+| `binance_spot_api_depth_btcusdt` | Binance Spot public API `/api/v3/depth` — BTCUSDT | PENDING_EVIDENCE |
+| `binance_spot_api_depth_ethusdt` | Binance Spot public API `/api/v3/depth` — ETHUSDT | PENDING_EVIDENCE |
+| `binance_spot_api_klines_btcusdt` | Binance Spot public API `/api/v3/klines` — BTCUSDT | PENDING_EVIDENCE |
+| `binance_spot_api_klines_ethusdt` | Binance Spot public API `/api/v3/klines` — ETHUSDT | PENDING_EVIDENCE |
+| `binance_spot_api_ticker_24hr_btcusdt` | Binance Spot public API `/api/v3/ticker/24hr` — BTCUSDT | PENDING_EVIDENCE |
+| `binance_spot_api_ticker_24hr_ethusdt` | Binance Spot public API `/api/v3/ticker/24hr` — ETHUSDT | PENDING_EVIDENCE |
+| `binance_spot_api_ticker_bookticker_btcusdt` | Binance Spot public API `/api/v3/ticker/bookTicker` — BTCUSDT | PENDING_EVIDENCE |
+| `binance_spot_api_ticker_bookticker_ethusdt` | Binance Spot public API `/api/v3/ticker/bookTicker` — ETHUSDT | PENDING_EVIDENCE |
+| `binance_spot_api_ticker_price_btcusdt` | Binance Spot public API `/api/v3/ticker/price` — BTCUSDT | PENDING_EVIDENCE |
+| `binance_spot_api_ticker_price_ethusdt` | Binance Spot public API `/api/v3/ticker/price` — ETHUSDT | PENDING_EVIDENCE |
+| `binance_spot_api_trades_btcusdt` | Binance Spot public API `/api/v3/trades` — BTCUSDT | PENDING_EVIDENCE |
+| `binance_spot_api_trades_ethusdt` | Binance Spot public API `/api/v3/trades` — ETHUSDT | PENDING_EVIDENCE |
 | `binance_vision_spot_aggtrades_btcusdt` | Binance Vision — Spot historical aggregate trades — BTCUSDT | PENDING_EVIDENCE |
 | `binance_vision_spot_aggtrades_ethusdt` | Binance Vision — Spot historical aggregate trades — ETHUSDT | PENDING_EVIDENCE |
-| `binance_spot_api_trades_btcusdt` | Binance Spot public API /api/v3/trades — BTCUSDT | PENDING_EVIDENCE |
-| `binance_spot_api_trades_ethusdt` | Binance Spot public API /api/v3/trades — ETHUSDT | PENDING_EVIDENCE |
-| `binance_spot_api_aggtrades_btcusdt` | Binance Spot public API /api/v3/aggtrades — BTCUSDT | PENDING_EVIDENCE |
-| `binance_spot_api_aggtrades_ethusdt` | Binance Spot public API /api/v3/aggtrades — ETHUSDT | PENDING_EVIDENCE |
-| `binance_spot_api_depth_btcusdt` | Binance Spot public API /api/v3/depth — BTCUSDT | PENDING_EVIDENCE |
-| `binance_spot_api_depth_ethusdt` | Binance Spot public API /api/v3/depth — ETHUSDT | PENDING_EVIDENCE |
-| `binance_spot_api_ticker_btcusdt` | Binance Spot public API /api/v3/ticker — BTCUSDT | PENDING_EVIDENCE |
-| `binance_spot_api_ticker_ethusdt` | Binance Spot public API /api/v3/ticker — ETHUSDT | PENDING_EVIDENCE |
-| `binance_spot_api_klines_btcusdt` | Binance Spot public API /api/v3/klines — BTCUSDT | PENDING_EVIDENCE |
-| `binance_spot_api_klines_ethusdt` | Binance Spot public API /api/v3/klines — ETHUSDT | PENDING_EVIDENCE |
+| `binance_vision_spot_trades_btcusdt` | Binance Vision — Spot historical trades — BTCUSDT | PENDING_EVIDENCE |
+| `binance_vision_spot_trades_ethusdt` | Binance Vision — Spot historical trades — ETHUSDT | PENDING_EVIDENCE |
 | `bitcoin_mainnet_local_node` | Bitcoin mainnet — locally operated node — native BTC ledger | PENDING_EVIDENCE |
 | `ethereum_mainnet_local_node_native_eth` | Ethereum mainnet — locally operated execution/consensus clients — native ETH ledger | PENDING_EVIDENCE |
 
@@ -34,8 +40,9 @@ The registry is intentionally endpoint- and asset-specific for Binance Spot. BTC
 For each BTCUSDT/ETHUSDT trades and aggregate-trades scope:
 - Preserve the exact official Vision Dataset Terms version and its incorporated license text.
 - Preserve the official archive documentation describing the relevant file format, publication schedule, timestamp units, checksums, and revision behavior.
-- Hash the exact preserved original bytes; record retrieval time and review scope.
+- Preserve the original bytes in an approved local evidence location; calculate SHA-256 over those exact bytes and record retrieval time, upstream revision/commit, and review scope. A Git blob SHA-1 or a rendered webpage is not a substitute for the original-byte SHA-256.
 - Review personal non-commercial research, local retention, historical snapshots, derived artifacts, reconstruction, attribution, and any redistribution restrictions separately.
+- Review the incorporated CC BY-NC-SA 4.0 license and Binance Terms of Use together with the Vision Dataset Terms.
 - Confirm whether the actual intended artefact type and retention duration fit the terms. A preliminary documentary assessment is not a verified authorization.
 
 ### Binance live public Spot API
@@ -56,9 +63,9 @@ For each asset and exact endpoint (`trades`, `aggTrades`, `depth`, `klines`, `ti
 
 ### Unresolved official-source contradiction — live public API
 
-The official Spot REST documentation and the Market Data Only FAQ currently list `https://data-api.binance.vision` as the no-authentication base for public REST market-data endpoints. However, a Binance Vision team contributor stated in the public Binance Public Data repository issue #502 (comment dated 2026-11-05) that `data-api.binance.vision` is not a live Binance endpoint and instructed users to rely only on `data.binance.vision` and its listed dataset endpoints. These statements conflict on the nature and scope of the host.
+The official Spot REST documentation lists `https://data-api.binance.vision` as the base endpoint for public market-data APIs. However, a contributor with the `Contributor` role in the public Binance Public Data repository issue #502 stated on 2026-11-05 that `data-api.binance.vision` is not a live Binance endpoint and directed users to `data.binance.vision` and its listed dataset endpoints. The contributor's statement is relevant evidence but is not, by itself, an authoritative legal/support determination resolving the API terms and retention scope.
 
-Until Binance clarifies this directly through an authoritative support/legal response, the live API source IDs remain `PENDING_EVIDENCE`. Do not activate, poll, or retain responses from this host. Do not infer that Vision Dataset Terms govern it solely because the host name contains `binance.vision`, and do not ignore the contrary support statement. The exact intended use, applicable terms, and retention rights require explicit reconciliation.
+Until Binance clarifies this through an authoritative support/legal response, the live API source IDs remain `PENDING_EVIDENCE`. Do not activate, poll, or retain responses from this host. Do not infer that Vision Dataset Terms govern it solely because the host name contains `binance.vision`, and do not ignore the contrary support statement. The exact intended use, applicable terms, and retention rights require explicit reconciliation.
 
 Official references:
 - Spot REST API: https://developers.binance.com/en/docs/products/spot/rest-api
