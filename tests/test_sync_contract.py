@@ -156,5 +156,88 @@ class SyncContractTests(unittest.TestCase):
             validate_operation_semantics(record)
 
 
+
+class ReferenceSyncProtocolSimulationTests(unittest.TestCase):
+    """In-memory protocol model; not a production transport or persistence test."""
+
+    def setUp(self):
+        self.server_inbox = {}
+        self.server_sequence = 0
+        self.server_outbox = []
+        self.clients = {
+            "desktop": {"pending": {}, "cursor": 0, "snapshots": {}},
+            "android": {"pending": {}, "cursor": 0, "snapshots": {}},
+            "ios": {"pending": {}, "cursor": 0, "snapshots": {}},
+        }
+
+    def submit(self, client, operation_id, fingerprint, dependencies=(), entity=None):
+        from iwfi.sync_contract import classify_idempotent_replay
+        if operation_id in self.server_inbox:
+            prior = self.server_inbox[operation_id]
+            outcome = classify_idempotent_replay(prior["fingerprint"], fingerprint)
+            if outcome == "DUPLICATE":
+                return dict(prior, outcome="DUPLICATE")
+            return {"outcome": "REJECTED", "reason_code": "IDEMPOTENCY_KEY_REUSE"}
+        if any(dep not in self.server_inbox or self.server_inbox[dep]["outcome"] != "ACCEPTED"
+               for dep in dependencies):
+            return {"outcome": "DEPENDENCY_PENDING", "cursor": None}
+        self.server_sequence += 1
+        receipt = {
+            "outcome": "ACCEPTED", "fingerprint": fingerprint,
+            "server_sequence": self.server_sequence, "cursor": self.server_sequence,
+        }
+        self.server_inbox[operation_id] = receipt
+        self.server_outbox.append((self.server_sequence, client, operation_id, entity))
+        return receipt
+
+    def test_three_clients_lost_ack_retry_and_duplicate_delivery(self):
+        first = self.submit("desktop", "op-1", "a" * 64)
+        self.assertEqual(first["outcome"], "ACCEPTED")
+        # Simulate lost acknowledgement: desktop retries the same immutable operation.
+        replay = self.submit("desktop", "op-1", "a" * 64)
+        self.assertEqual(replay["outcome"], "DUPLICATE")
+        self.submit("android", "op-2", "b" * 64, dependencies=("op-1",))
+        self.submit("ios", "op-3", "c" * 64, dependencies=("op-1",))
+        self.assertEqual(self.server_sequence, 3)
+        self.assertEqual(len(self.server_inbox), 3)
+        self.assertEqual([row[0] for row in self.server_outbox], [1, 2, 3])
+
+    def test_causal_dependency_pending_does_not_advance_cursor(self):
+        receipt = self.submit("android", "child", "d" * 64, dependencies=("parent",))
+        self.assertEqual(receipt["outcome"], "DEPENDENCY_PENDING")
+        self.assertIsNone(receipt["cursor"])
+        self.assertEqual(self.server_sequence, 0)
+        self.submit("desktop", "parent", "e" * 64)
+        accepted = self.submit("android", "child", "d" * 64, dependencies=("parent",))
+        self.assertEqual(accepted["outcome"], "ACCEPTED")
+        self.assertEqual(accepted["server_sequence"], 2)
+
+    def test_same_operation_id_with_changed_content_is_rejected(self):
+        self.submit("desktop", "reused", "f" * 64)
+        rejected = self.submit("ios", "reused", "0" * 64)
+        self.assertEqual(rejected["reason_code"], "IDEMPOTENCY_KEY_REUSE")
+        self.assertEqual(self.server_inbox["reused"]["fingerprint"], "f" * 64)
+
+    def test_conflicting_claims_are_both_preserved_without_last_write_wins(self):
+        self.submit("desktop", "claim-a", "1" * 64, entity={"claim": "EXCHANGE"})
+        self.submit("android", "claim-b", "2" * 64, entity={"claim": "CUSTODIAN"})
+        claims = [row[3]["claim"] for row in self.server_outbox if row[3]]
+        self.assertEqual(claims, ["EXCHANGE", "CUSTODIAN"])
+
+    def test_snapshot_remains_frozen_after_later_evidence_arrives(self):
+        frozen_snapshot = {"snapshot_id": "snap-1", "evidence_ids": ["obs-1"], "frozen": True}
+        self.clients["desktop"]["snapshots"]["snap-1"] = copy.deepcopy(frozen_snapshot)
+        self.submit("android", "new-evidence", "3" * 64, entity={"observation_id": "obs-2"})
+        self.assertEqual(self.clients["desktop"]["snapshots"]["snap-1"], frozen_snapshot)
+        self.assertEqual(self.clients["desktop"]["snapshots"]["snap-1"]["evidence_ids"], ["obs-1"])
+
+    def test_each_client_advances_only_to_server_confirmed_sequence(self):
+        receipt = self.submit("ios", "accepted", "4" * 64)
+        self.clients["ios"]["cursor"] = receipt["cursor"]
+        pending = self.submit("android", "blocked", "5" * 64, dependencies=("missing",))
+        self.assertEqual(self.clients["ios"]["cursor"], 1)
+        self.assertEqual(pending["cursor"], None)
+        self.assertEqual(self.clients["android"]["cursor"], 0)
+
 if __name__ == "__main__":
     unittest.main()
