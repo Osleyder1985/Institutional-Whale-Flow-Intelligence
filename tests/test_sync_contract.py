@@ -114,7 +114,7 @@ class SyncContractTests(unittest.TestCase):
         for cursor in FIXTURES["cursors"]:
             self.assertIsInstance(cursor["server_sequence"], int)
             self.assertGreaterEqual(cursor["server_sequence"], 0)
-            self.assertRegex(cursor["issued_at_utc"], r"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$")
+            self.assertRegex(cursor["issued_at_utc"], r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
 
     def test_operation_ids_are_stable_and_distinct_for_new_operations(self):
         ids = [item["operation_id"] for item in FIXTURES["operations"]]
