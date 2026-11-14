@@ -222,3 +222,79 @@ This matrix separates five capabilities that must not be conflated:
 **Recommendation:** do not approve a single provider yet. Treat provider selection as a capability-specific decision rather than choosing a vendor brand for the entire product. The most plausible eventual combination is a source for BTC+ETH on-chain flow metrics, a separate address/entity intelligence source, venue trade feeds for anonymous executions, and official fund/exchange disclosures. This is an architecture hypothesis, not an approved integration plan; every source still requires endpoint-level rights and samples.
 
 **No approval change:** no API key, account entitlement, paid plan, provider sample, polling, backfill or raw-payload retention has been authorized or tested by this documentation update.
+
+
+## 12. Binding zero-cost policy — Issue #59 (2026-11-14)
+
+**User requirement: total external cash expenditure for IWFI must remain USD 0.** This is stricter than “has a free tier”. It applies to every runtime and development dependency: data/API access, credits, hosting, storage, CI, monitoring, notifications, licenses and support.
+
+Disallowed:
+- Paid subscriptions, pay-per-call, paid top-ups, add-ons or licenses.
+- Trials that require payment details or can convert into a charge.
+- A non-recurring starter-credit grant as a required operational dependency.
+- Unbounded or unclear variable charges.
+- Assuming a free web dashboard means free automated API access.
+
+### 12.1 Reclassification of previously evaluated providers
+
+| Provider | Free access documented | Does free access cover IWFI's required capability? | Zero-cost decision |
+|---|---|---|---|
+| CryptoQuant | Basic: 10,000 API credits/month, market data only, daily resolution and 30 days of history | No. On-chain exchange/miner/entity flows require Professional; the Basic tier explicitly excludes on-chain endpoints | **REJECT as on-chain source**. Optional market-data evaluation only if the recurring free entitlement and personal-use terms remain valid |
+| Nansen | Free API allocation is documented; current vendor help page states 100 initial credits plus 10 daily refreshed credits, with purchased credits available | Not a sustainable core dependency without proving that the exact required endpoints fit the recurring free allocation indefinitely. Some Smart Money endpoints are credit-consuming; no paid top-ups permitted | **NOT APPROVED** as core dependency. May be considered only for strictly bounded free-tier experiments, no purchased credits |
+| CoinGlass | API plans start at Hobbyist paid tier; no zero-cost recurring API tier established by reviewed official plan table | No | **REJECT** |
+| Glassnode | Advanced/Light API is paid; Professional API is paid/add-on or credit-based | No | **REJECT** |
+| Arkham | API access is application/trial or plan gated; no verified recurring free API entitlement for the required endpoints | No evidence of a durable, unrestricted zero-cost API for this project | **NOT APPROVED**. A free web UI, if available, is not an automated data API |
+| Binance public market data | Official public market-data-only REST endpoints and public trade data are available without authenticated private-account access | Yes for public market executions, order book, ticker and candles; no participant identity | **APPROVED CANDIDATE**, subject to terms, rate limits and capture contract review |
+| Public blockchain data | Bitcoin and Ethereum public ledgers can be independently read using open-source node/client software and/or genuinely free public endpoints | Yes for transactions, balances/state and transfers; no inherent real-world identity or CEX customer execution identity | **APPROVED SOURCE CLASS**, subject to a verified zero-cost access method and resource budget |
+
+### 12.2 Zero-cost first vertical slice (revised)
+
+Build the first usable slice from:
+1. **Binance public Spot market data** for BTCUSDT and ETHUSDT: individual public trade records where available, plus order-book/ticker context. Treat buyer/seller as anonymous market participants; aggressor side is not a named actor.
+2. **Public Bitcoin and Ethereum ledger observations**: blocks, transactions, address balances/state and token transfers, preserving address-level identity as UNKNOWN unless separately supported by verifiable public evidence.
+3. **Official public disclosures**: issuer/fund filings and exchange notices with their actual publication timestamps and reporting periods. A filing is delayed holdings/disclosure evidence, not a live execution.
+4. **Open-source processing and local persistence** only where they introduce no external subscription, license charge or paid hosted dependency.
+
+No commercial label provider is required for the first slice. A source may be used only after checking its terms, request limits, data rights, and whether the method incurs any charge. If an apparently free service requires a card, paid credit purchase, paid tier, or chargeable cloud resource, it is excluded.
+
+### 12.3 What this means for the product objective
+
+A zero-cost design can detect:
+- large observable on-chain transfers (with size calculated from source data, not interpreted as a trade);
+- movements to/from known exchange addresses only when the address attribution is supported by a cited source and its validity interval;
+- public BTC/ETH market executions and aggregate aggressor-side pressure on venues;
+- ETF/fund holdings and flows when published by official sources, with reporting delay;
+- candidate relationships between events and price moves, explicitly marked as hypotheses.
+
+A zero-cost design **cannot promise**:
+- complete identification of all banks, funds, institutions or whales;
+- the legal beneficial owner behind arbitrary addresses;
+- the identity of the buyer or seller behind an anonymous centralized-exchange execution;
+- real-time institutional buy/sell detection from aggregate exchange inflows/outflows;
+- commercial-provider-grade wallet labels without using a qualifying free source.
+
+The system must represent the actor as UNKNOWN where evidence does not establish identity. Do not downgrade evidence standards to simulate paid-provider coverage.
+
+### 12.4 Runtime cost guardrails
+
+- No cloud resource may be provisioned if it can generate a charge.
+- Prefer local execution and storage; document electricity, bandwidth and hardware as user-side operating requirements rather than pretending they are zero-resource.
+- No API key with billing enabled may be configured for an IWFI adapter.
+- No purchased credits, paid fallback or automatic plan upgrade.
+- Every source adapter must declare `cost_model`, `recurring_free_quota`, `billing_risk`, `terms_reviewed_at`, and `zero_cost_eligible`.
+- CI must reject `zero_cost_eligible=true` if the source is pay-per-call, trial-only, non-recurring-credit-only, requires paid entitlement, or has unresolved billing risk.
+- If a free quota is exhausted, the adapter stops safely; it must not retry via paid endpoints or silently switch to a chargeable provider.
+
+### 12.5 Official references for free-access boundaries
+
+- Binance Spot REST API: https://developers.binance.com/en/docs/products/spot/rest-api
+- Binance market-data-only FAQ: https://developers.binance.com/en/docs/products/spot/faqs/market_data_only
+- Binance public historical data: https://data.binance.vision/
+- CryptoQuant current API plans: https://cryptoquant.com/apis
+- CryptoQuant current pricing: https://cryptoquant.com/pricing
+- Nansen API free-credit terms: https://academy.nansen.ai/articles/0938495-get-started-with-api
+- CoinGlass API plans: https://docs.coinglass.com/reference/plans-and-permissions
+- Arkham API application/access: https://arkm.com/api/
+
+**Decision:** this zero-cost policy supersedes any earlier suggestion to evaluate or use CryptoQuant Professional, paid CoinGlass tiers, Glassnode paid API, or any paid vendor plan. No provider API or account is approved by this document. No paid service, credit purchase, polling or backfill is authorized.
+
