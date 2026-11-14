@@ -199,8 +199,9 @@ class EntityExposureTests(unittest.TestCase):
         self.assertEqual(result["excluded"]["invalid_address_balance_record"], 1)
 
     def test_bitcoin_address_matching_remains_case_sensitive(self):
-        item = snapshot("btc-case", "2026-11-01T00:00:00Z", [("Bc1qAddress", 1000)])
-        result = aggregate([item], [claim("btc-lower-claim", "bc1qaddress")])
+        address = "34xp4vRoCGJym3xR7yCVPFHoCNxv4Twseo"
+        item = snapshot("btc-case", "2026-11-01T00:00:00Z", [(address, 1000)])
+        result = aggregate([item], [claim("btc-lower-claim", address.lower())])
         row = result["histories"][0]["snapshots"][0]
         self.assertEqual(row["known_controlled_address_exposure_atomic"], 0)
         self.assertEqual(row["coverage_status"], "PARTIAL")
