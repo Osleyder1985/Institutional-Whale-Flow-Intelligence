@@ -164,7 +164,7 @@ def write_observation(record, output_dir):
     output_dir.mkdir(parents=True, exist_ok=True)
     timestamp = re.sub(r"[^0-9TZ]", "-", record["observed_at_utc"])
     path = output_dir / f'{record["document_id"]}__{timestamp}.json'
-    data = (json.dumps(record, ensure_ascii=False, indent=2, sort_keys=True) + "\\n").encode("utf-8")
+    data = (json.dumps(record, ensure_ascii=False, indent=2, sort_keys=True) + "\n").encode("utf-8")
     fd, temporary = tempfile.mkstemp(prefix=".iwfi-observation-", suffix=".tmp", dir=str(output_dir))
     try:
         with os.fdopen(fd, "wb") as stream:
