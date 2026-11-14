@@ -52,7 +52,7 @@ def _resolve_control(address, network_id, snapshot_time, known_at, claim_index):
                 or claim.get("review_status") != "REVIEWED"
                 or claim.get("predicate") != "CONTROLLED_BY"
                 or claim.get("counter_evidence")
-                or not claim.get("supporting_evidence)):
+                or not claim.get("supporting_evidence")):
             continue
         target = claim.get("object")
         if not isinstance(target, dict) or target.get("object_type") != "ENTITY":
