@@ -1,0 +1,12 @@
+[
+  {
+    "evidence_id": "exec-evidence-btc",
+    "evidence_type": "VENUE_EXECUTION_RECORD",
+    "granularity": "INDIVIDUAL_EXECUTION"
+  },
+  {
+    "evidence_id": "exec-evidence-eth",
+    "evidence_type": "OFFICIAL_EXECUTION_DISCLOSURE",
+    "granularity": "INDIVIDUAL_EXECUTION"
+  }
+]

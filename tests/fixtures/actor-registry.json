@@ -1,0 +1,322 @@
+{
+  "contract_version": "1.0.0",
+  "actors": [
+    {
+      "contract_version": "1.0.0",
+      "actor_id": "actor-manager-northstar",
+      "actor_type": "ASSET_MANAGER",
+      "display_name": "Northstar Asset Management",
+      "identity_status": "VERIFIED",
+      "jurisdiction": "US",
+      "recorded_at_utc": "2024-01-01T00:00:00Z",
+      "known_at_utc": "2024-01-02T00:00:00Z",
+      "valid_from_utc": "2018-01-01T00:00:00Z",
+      "valid_to_utc": null,
+      "aliases": [
+        {
+          "value": "Northstar",
+          "alias_type": "BRAND",
+          "scope": "global",
+          "known_at_utc": "2024-01-02T00:00:00Z",
+          "valid_from_utc": "2018-01-01T00:00:00Z",
+          "valid_to_utc": null,
+          "evidence_refs": [
+            "evidence-manager"
+          ]
+        },
+        {
+          "value": "Northstar AM",
+          "alias_type": "FORMER_NAME",
+          "scope": "global",
+          "known_at_utc": "2024-01-02T00:00:00Z",
+          "valid_from_utc": "2018-01-01T00:00:00Z",
+          "valid_to_utc": "2022-12-31T00:00:00Z",
+          "evidence_refs": [
+            "evidence-manager-former-name"
+          ]
+        }
+      ],
+      "classifications": [
+        {
+          "classification": "ASSET_MANAGER",
+          "status": "VERIFIED",
+          "method": "OFFICIAL_REGISTRY",
+          "known_at_utc": "2024-01-02T00:00:00Z",
+          "valid_from_utc": "2018-01-01T00:00:00Z",
+          "valid_to_utc": null,
+          "evidence_refs": [
+            "evidence-manager"
+          ]
+        }
+      ],
+      "coverage": [
+        {
+          "asset": "BTC",
+          "network": "bitcoin-mainnet",
+          "activity_type": "DISCLOSED_HOLDINGS",
+          "coverage_status": "PARTIAL"
+        }
+      ],
+      "evidence_refs": [
+        "evidence-manager"
+      ],
+      "counter_evidence_refs": []
+    },
+    {
+      "contract_version": "1.0.0",
+      "actor_id": "actor-fund-northstar-btc",
+      "actor_type": "FUND",
+      "display_name": "Northstar Digital Fund",
+      "identity_status": "VERIFIED",
+      "jurisdiction": "US",
+      "recorded_at_utc": "2024-01-01T00:00:00Z",
+      "known_at_utc": "2024-01-02T00:00:00Z",
+      "valid_from_utc": "2020-01-01T00:00:00Z",
+      "valid_to_utc": null,
+      "aliases": [
+        {
+          "value": "NSBTC",
+          "alias_type": "TICKER",
+          "scope": "US_MARKET",
+          "known_at_utc": "2024-01-02T00:00:00Z",
+          "valid_from_utc": "2020-01-01T00:00:00Z",
+          "valid_to_utc": null,
+          "evidence_refs": [
+            "evidence-fund"
+          ]
+        }
+      ],
+      "classifications": [],
+      "coverage": [
+        {
+          "asset": "BTC",
+          "network": "bitcoin-mainnet",
+          "activity_type": "HOLDINGS",
+          "coverage_status": "OBSERVED"
+        }
+      ],
+      "evidence_refs": [
+        "evidence-fund"
+      ],
+      "counter_evidence_refs": []
+    },
+    {
+      "contract_version": "1.0.0",
+      "actor_id": "actor-custodian-eth",
+      "actor_type": "CUSTODIAN",
+      "display_name": "Meridian Custody",
+      "identity_status": "VERIFIED",
+      "jurisdiction": "GB",
+      "recorded_at_utc": "2024-02-01T00:00:00Z",
+      "known_at_utc": "2024-02-02T00:00:00Z",
+      "valid_from_utc": "2019-01-01T00:00:00Z",
+      "valid_to_utc": null,
+      "aliases": [],
+      "classifications": [],
+      "coverage": [
+        {
+          "asset": "ETH",
+          "network": "eip155:1",
+          "activity_type": "CUSTODY",
+          "coverage_status": "OBSERVED"
+        }
+      ],
+      "evidence_refs": [
+        "evidence-custodian"
+      ],
+      "counter_evidence_refs": []
+    },
+    {
+      "contract_version": "1.0.0",
+      "actor_id": "actor-issuer-eth",
+      "actor_type": "ETF_ISSUER",
+      "display_name": "Meridian ETH Trust Issuer",
+      "identity_status": "VERIFIED",
+      "jurisdiction": "US",
+      "recorded_at_utc": "2024-02-01T00:00:00Z",
+      "known_at_utc": "2024-02-02T00:00:00Z",
+      "valid_from_utc": "2023-01-01T00:00:00Z",
+      "valid_to_utc": null,
+      "aliases": [],
+      "classifications": [],
+      "coverage": [
+        {
+          "asset": "ETH",
+          "network": "eip155:1",
+          "activity_type": "ETF_PRIMARY_FLOW",
+          "coverage_status": "PARTIAL"
+        }
+      ],
+      "evidence_refs": [
+        "evidence-issuer"
+      ],
+      "counter_evidence_refs": []
+    },
+    {
+      "contract_version": "1.0.0",
+      "actor_id": "actor-whale-cluster-btc",
+      "actor_type": "WHALE_CLUSTER",
+      "display_name": "Provisional BTC cluster 01",
+      "identity_status": "INFERRED",
+      "jurisdiction": null,
+      "recorded_at_utc": "2025-01-01T00:00:00Z",
+      "known_at_utc": "2025-01-03T00:00:00Z",
+      "valid_from_utc": "2025-01-01T00:00:00Z",
+      "valid_to_utc": null,
+      "aliases": [
+        {
+          "value": "cluster-01",
+          "alias_type": "PUBLIC_LABEL",
+          "scope": "bitcoin-mainnet",
+          "known_at_utc": "2025-01-03T00:00:00Z",
+          "valid_from_utc": "2025-01-01T00:00:00Z",
+          "valid_to_utc": null,
+          "evidence_refs": [
+            "heuristic-cluster"
+          ]
+        }
+      ],
+      "classifications": [],
+      "coverage": [
+        {
+          "asset": "BTC",
+          "network": "bitcoin-mainnet",
+          "activity_type": "BALANCE_CLUSTER",
+          "coverage_status": "PARTIAL"
+        }
+      ],
+      "evidence_refs": [
+        "heuristic-cluster"
+      ],
+      "counter_evidence_refs": [
+        "counter-cluster"
+      ]
+    },
+    {
+      "contract_version": "1.0.0",
+      "actor_id": "actor-atlas-one",
+      "actor_type": "FUND",
+      "display_name": "Atlas Capital One",
+      "identity_status": "VERIFIED",
+      "jurisdiction": "US",
+      "recorded_at_utc": "2024-01-01T00:00:00Z",
+      "known_at_utc": "2024-01-02T00:00:00Z",
+      "valid_from_utc": "2020-01-01T00:00:00Z",
+      "valid_to_utc": null,
+      "aliases": [
+        {
+          "value": "Atlas",
+          "alias_type": "BRAND",
+          "scope": "global",
+          "known_at_utc": "2024-01-02T00:00:00Z",
+          "valid_from_utc": "2020-01-01T00:00:00Z",
+          "valid_to_utc": null,
+          "evidence_refs": [
+            "atlas-one"
+          ]
+        }
+      ],
+      "classifications": [],
+      "coverage": [],
+      "evidence_refs": [
+        "atlas-one"
+      ],
+      "counter_evidence_refs": []
+    },
+    {
+      "contract_version": "1.0.0",
+      "actor_id": "actor-atlas-two",
+      "actor_type": "ASSET_MANAGER",
+      "display_name": "Atlas Management Group",
+      "identity_status": "DISPUTED",
+      "jurisdiction": "CA",
+      "recorded_at_utc": "2024-01-01T00:00:00Z",
+      "known_at_utc": "2024-01-03T00:00:00Z",
+      "valid_from_utc": "2021-01-01T00:00:00Z",
+      "valid_to_utc": null,
+      "aliases": [
+        {
+          "value": "Atlas",
+          "alias_type": "BRAND",
+          "scope": "global",
+          "known_at_utc": "2024-01-03T00:00:00Z",
+          "valid_from_utc": "2021-01-01T00:00:00Z",
+          "valid_to_utc": null,
+          "evidence_refs": [
+            "atlas-two",
+            "atlas-conflict"
+          ]
+        }
+      ],
+      "classifications": [],
+      "coverage": [],
+      "evidence_refs": [
+        "atlas-two"
+      ],
+      "counter_evidence_refs": [
+        "atlas-conflict"
+      ]
+    },
+    {
+      "contract_version": "1.0.0",
+      "actor_id": "actor-dissolved",
+      "actor_type": "FUND",
+      "display_name": "Closed BTC Vehicle",
+      "identity_status": "VERIFIED",
+      "jurisdiction": "US",
+      "recorded_at_utc": "2020-01-01T00:00:00Z",
+      "known_at_utc": "2020-01-02T00:00:00Z",
+      "valid_from_utc": "2017-01-01T00:00:00Z",
+      "valid_to_utc": "2021-06-30T00:00:00Z",
+      "aliases": [
+        {
+          "value": "Closed BTC Vehicle",
+          "alias_type": "LEGAL_NAME",
+          "scope": "US",
+          "known_at_utc": "2020-01-02T00:00:00Z",
+          "valid_from_utc": "2017-01-01T00:00:00Z",
+          "valid_to_utc": "2021-06-30T00:00:00Z",
+          "evidence_refs": [
+            "dissolution-record"
+          ]
+        }
+      ],
+      "classifications": [],
+      "coverage": [],
+      "evidence_refs": [
+        "dissolution-record"
+      ],
+      "counter_evidence_refs": []
+    }
+  ],
+  "relationships": [
+    {
+      "relationship_id": "rel-manager-fund",
+      "subject_actor_id": "actor-manager-northstar",
+      "object_actor_id": "actor-fund-northstar-btc",
+      "relationship_type": "MANAGES",
+      "status": "VERIFIED",
+      "known_at_utc": "2024-01-02T00:00:00Z",
+      "valid_from_utc": "2020-01-01T00:00:00Z",
+      "valid_to_utc": null,
+      "evidence_refs": [
+        "evidence-manager-fund"
+      ],
+      "counter_evidence_refs": []
+    },
+    {
+      "relationship_id": "rel-manager-fund-disputed",
+      "subject_actor_id": "actor-manager-northstar",
+      "object_actor_id": "actor-fund-northstar-btc",
+      "relationship_type": "MANAGES",
+      "status": "DISPUTED",
+      "known_at_utc": "2024-02-01T00:00:00Z",
+      "valid_from_utc": "2020-01-01T00:00:00Z",
+      "valid_to_utc": null,
+      "evidence_refs": [
+        "counter-manager-fund"
+      ],
+      "counter_evidence_refs": []
+    }
+  ]
+}

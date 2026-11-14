@@ -129,4 +129,4 @@ No language, framework, database, hosting service, or provider is mandated by th
 
 ## 8. Implementation roadmap
 
-The prioritized, dependency-driven sequence, exit gates and current Issue/PR register are maintained in [the IWFI implementation roadmap](../roadmap/implementation-roadmap.md). The roadmap does not authorize provider access, polling, backfill, persistence or automatic market analysis.
+The prioritized, dependency-driven sequence, exit gates and current Issue/PR register are maintained in [the IWFI implementation roadmap](../roadmap/implementation-roadmap.md). The detailed composition of Source Observations, Attribution Claims, Movements, Trade Executions, Actor Registry and downstream activity is defined in [the integrated actor activity flow](integrated-actor-activity-flow.md). Neither document authorizes provider access, polling, backfill, persistence or automatic market analysis.

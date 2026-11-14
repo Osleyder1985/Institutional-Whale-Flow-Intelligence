@@ -158,3 +158,245 @@ Paid access, continuous polling, production ingestion and historical backfill: *
 - Arkham: el anuncio del 2026-09-08 confirma el feed de inteligencia en tiempo real y la retirada del objeto metrics y de `orderBy` en ese endpoint.
 
 Esta revalidación corrige afirmaciones que ya no estaban sustentadas. No sustituye el acceso de cuenta, la prueba de respuestas reales ni la revisión contractual y de retención. **Ningún proveedor queda aprobado.**
+
+
+## 9. Endpoint capability matrix — evidence-level distinctions (2026-11-13)
+
+This matrix separates five capabilities that must not be conflated:
+
+- **Flow/transfer measurement:** aggregate metric or on-chain movement.
+- **Address/entity intelligence:** provider claim about an address or cluster.
+- **Individual execution:** a venue trade/execution record, not merely an order or a flow metric.
+- **Named participant in that execution:** evidence linking a named actor to that exact execution.
+- **Institutional holdings/disclosure:** a position, holding, or fund-flow report with its own reporting period and publication delay.
+
+| Provider / documented endpoint family | Flow or transfer measurement | Address/entity intelligence | Individual execution | Named participant in that execution | Institutional holdings / disclosure | BTC / ETH boundary |
+|---|---|---|---|---|---|---|
+| Arkham Intel API / address intelligence updates | Yes: fund-flow and address-intelligence capabilities are announced; exact endpoint semantics need account docs | Yes: address labels, entity intelligence and update feed; label is a vendor claim, not legal proof | Not established by the cited announcements | Not established | Not established by the cited API announcement; verify any separate fund product | Endpoint-specific BTC and ETH coverage, access and payload schema remain unverified |
+| CryptoQuant on-chain metric catalog | Yes: exchange, miner, entity and inter-entity flow time series | Entity/address clustering is reflected in proprietary metrics; do not assume a named legal actor per row | No individual execution evidence established by the cited API overview | No | Fund & ETF metric family is documented; identify exact vehicle, reporting basis and delay per endpoint | BTC and ETH explicitly listed; on-chain access begins at Professional, daily resolution; Premium adds hourly/per-block |
+| Glassnode exchange/entity metrics | Yes: exchange deposits, withdrawals, netflows, balances and cohort metrics | Yes: exchange labels and proprietary entity clustering; documentation says labels/metrics can be mutable | No individual execution evidence established by the cited metrics | No | Not established by the reviewed exchange/entity endpoints; assess fund products separately | Metric metadata and account tier must confirm each asset/metric. Point-in-Time variants exist for selected metrics |
+| Nansen Smart Money | Yes: Smart Money netflows and aggregated holdings; DEX trade endpoint exists | Yes: curated wallet labels including Fund and Smart Trader; these remain provider classifications | DEX trades are described as trading activity for supported Smart Money wallets; validate exact records and semantics from authorized samples | Potentially wallet-level Smart Money attribution on supported chains; not proof of legal identity or beneficial owner | Fund-labelled holdings/flows are available as provider-classified data, not independently verified institutional filings | Smart Money support includes Ethereum, not Bitcoin. Bitcoin appears only in selected Profiler endpoint support |
+| CoinGlass Spot / On-chain / ETF endpoints | Yes: Spot Coin Netflow exposes taker buy/sell volumes and net inflow; CVD is an aggregate taker buy-minus-sell measure; whale-transfer and ETF-flow endpoints are separate | Not established as named institutional address attribution by the cited endpoints | Spot/futures WebSocket trade streams and trade/order datasets may expose venue-level market events; inspect endpoint schema and venue coverage before treating a record as an individual fill | No named customer/beneficial owner demonstrated by the reviewed public endpoint docs | Yes: BTC/ETH ETF flow endpoints are listed; ETF flows are fund-level aggregates, not customer executions | BTC and ETH appear across relevant categories, but exact endpoint/plan/asset availability must be checked individually; Spot CVD requires Startup or higher, commercial use requires Standard+ |
+
+### 9.1 What the official endpoint documentation actually proves
+
+**CoinGlass — aggregated taker flow is not an identified actor.** The Spot Coin Netflow endpoint describes taker buy volume, taker sell volume and net inflow across selected exchanges and time windows. Spot CVD is calculated as taker buy minus taker sell and accumulated by interval; missing taker-side data can be counted as zero in the documented calculation. These are market-wide/venue-aggregated measures, not participant identities. CoinGlass separately documents spot/futures trade WebSocket channels; those can support market execution observation where the specific feed provides records, but the reviewed docs do not establish customer identity. Startup adds Spot CVD and Coin Flows; Standard is the first plan marked for commercial use and adds WebSocket channels.
+
+**CryptoQuant — strong on-chain coverage, not a trade tape.** Its public API page documents exchange/miner/entity/inter-entity flow metrics and explicit BTC/ETH coverage. These metrics can support flow monitoring and hypotheses, but the public overview does not establish a per-execution participant identity. Professional is the first plan with on-chain API access; the public page describes daily on-chain resolution there, with hourly/per-block windows on Premium.
+
+**Glassnode — useful entity/cohort context, mutable labels.** Its documentation defines entities as clusters estimated using proprietary heuristics and warns that entity-based metrics can change as statistical information is updated. Exchange metrics use labeled exchange addresses that are continuously updated and can also change. Selected Point-in-Time (PiT) metrics are append-only and preserve what was computed at the time, which is materially different from the latest revised series. Deposits to exchanges and net exchange flows remain transfers/aggregates, not executions.
+
+**Nansen — best documented wallet-level Smart Money route for Ethereum, not unified BTC/ETH.** Smart Money exposes netflows, DEX trades and holdings for supported chains including Ethereum. The chain matrix does not include Bitcoin for Smart Money. The general chain catalog lists Bitcoin for selected Profiler endpoints, which must not be represented as BTC Smart Money. Holdings are explicitly aggregated rather than per-wallet breakdowns. A provider label such as Fund or Smart Trader is not independently verified legal identity.
+
+**Arkham — address/entity intelligence candidate, execution attribution unproven.** Its API announcements document entity labels, fund-flow data and a real-time address-intelligence updates feed. The September 8 update says the feed includes new, updated and deleted intelligence, while retiring its metrics object and orderBy fields from that endpoint. Public announcements do not establish that the API identifies the customer or beneficial owner behind a specific exchange execution.
+
+### 9.2 First-slice implications
+
+1. There is no single publicly documented provider in this review that proves, for both BTC and ETH, the full chain **named institution → exact individual execution → participant BUY/SELL → beneficial owner**.
+2. CryptoQuant is the strongest documented candidate for BTC+ETH on-chain flow coverage, but its Professional tier is paid and its flow metrics do not prove individual buys/sells.
+3. Arkham is a candidate for entity/address intelligence, but it requires account-level endpoint docs and samples before any capability is accepted.
+4. Nansen can be a separate Ethereum-only Smart Money evaluation; it cannot be the single BTC+ETH first source.
+5. CoinGlass can support market microstructure, taker-side aggregates, trade feeds and ETF flow monitoring, but those capabilities do not name the customer behind a venue execution.
+6. Glassnode can add exchange/entity cohort and Point-in-Time context, but current account entitlement and exact asset/metric access remain unverified.
+7. Therefore, the first vertical slice must not be described as “institutional buy/sell detection” unless an authorized source sample actually links an identified participant to an individual execution. Until then, the valid outputs are separately typed: observed transfer, aggregate flow, venue execution with unknown participant, provider-labelled address/entity, or delayed holdings/disclosure.
+
+## 10. Additional official references for the capability matrix
+
+- CoinGlass API overview and endpoint categories: https://docs.coinglass.com/reference/getting-started-with-your-api
+- CoinGlass endpoint overview and minimum plan by endpoint: https://docs.coinglass.com/reference/endpoint-overview
+- CoinGlass Spot Coin Netflow semantics: https://docs.coinglass.com/reference/spot-coin-netflow
+- CoinGlass Spot CVD calculation and plan access: https://docs.coinglass.com/reference/spot-cvd-history
+- CoinGlass API authentication and key security: https://docs.coinglass.com/reference/authentication
+- CryptoQuant Data API, asset coverage and plan gates: https://cryptoquant.com/apis
+- Glassnode exchange deposit/netflow definitions and mutable labels: https://docs.glassnode.com/basic-api/endpoints/transactions
+- Glassnode entity clustering description: https://docs.glassnode.com/basic-api/endpoints/entities
+- Glassnode Point-in-Time exchange netflow variants: https://docs.glassnode.com/basic-api/endpoints/pit
+- Glassnode exchange-label methodology and limitations: https://docs.glassnode.com/further-information/exchange-data-transparency-notice
+- Nansen Smart Money endpoints and supported chains: https://docs.nansen.ai/api/smart-money
+- Nansen holdings endpoint (aggregated balances): https://docs.nansen.ai/api/smart-money/holdings
+- Nansen general chain support by endpoint: https://docs.nansen.ai/reference/chains
+- Arkham real-time address intelligence update: https://arkm.com/announcements/arkham-api-upgrade-real-time-intel
+
+## 11. Revised recommendation and approval state
+
+**Recommendation:** do not approve a single provider yet. Treat provider selection as a capability-specific decision rather than choosing a vendor brand for the entire product. The most plausible eventual combination is a source for BTC+ETH on-chain flow metrics, a separate address/entity intelligence source, venue trade feeds for anonymous executions, and official fund/exchange disclosures. This is an architecture hypothesis, not an approved integration plan; every source still requires endpoint-level rights and samples.
+
+**No approval change:** no API key, account entitlement, paid plan, provider sample, polling, backfill or raw-payload retention has been authorized or tested by this documentation update.
+
+
+## 12. Binding zero-cost policy — Issue #59 (2026-11-14)
+
+**User requirement: total external cash expenditure for IWFI must remain USD 0.** This is stricter than “has a free tier”. It applies to every runtime and development dependency: data/API access, credits, hosting, storage, CI, monitoring, notifications, licenses and support.
+
+Disallowed:
+- Paid subscriptions, pay-per-call, paid top-ups, add-ons or licenses.
+- Trials that require payment details or can convert into a charge.
+- A non-recurring starter-credit grant as a required operational dependency.
+- Unbounded or unclear variable charges.
+- Assuming a free web dashboard means free automated API access.
+
+### 12.1 Reclassification of previously evaluated providers
+
+| Provider | Free access documented | Does free access cover IWFI's required capability? | Zero-cost decision |
+|---|---|---|---|
+| CryptoQuant | Basic: 10,000 API credits/month, market data only, daily resolution and 30 days of history | No. On-chain exchange/miner/entity flows require Professional; the Basic tier explicitly excludes on-chain endpoints | **REJECT as on-chain source**. Optional market-data evaluation only if the recurring free entitlement and personal-use terms remain valid |
+| Nansen | Free API allocation is documented; current vendor help page states 100 initial credits plus 10 daily refreshed credits, with purchased credits available | Not a sustainable core dependency without proving that the exact required endpoints fit the recurring free allocation indefinitely. Some Smart Money endpoints are credit-consuming; no paid top-ups permitted | **NOT APPROVED** as core dependency. May be considered only for strictly bounded free-tier experiments, no purchased credits |
+| CoinGlass | API plans start at Hobbyist paid tier; no zero-cost recurring API tier established by reviewed official plan table | No | **REJECT** |
+| Glassnode | Advanced/Light API is paid; Professional API is paid/add-on or credit-based | No | **REJECT** |
+| Arkham | API access is application/trial or plan gated; no verified recurring free API entitlement for the required endpoints | No evidence of a durable, unrestricted zero-cost API for this project | **NOT APPROVED**. A free web UI, if available, is not an automated data API |
+| Binance public market data | Official public market-data-only REST endpoints and public trade data are available without authenticated private-account access | Yes for public market executions, order book, ticker and candles; no participant identity | **APPROVED CANDIDATE**, subject to terms, rate limits and capture contract review |
+| Public blockchain data | Bitcoin and Ethereum public ledgers can be independently read using open-source node/client software and/or genuinely free public endpoints | Yes for transactions, balances/state and transfers; no inherent real-world identity or CEX customer execution identity | **APPROVED SOURCE CLASS**, subject to a verified zero-cost access method and resource budget |
+
+### 12.2 Zero-cost first vertical slice (revised)
+
+Build the first usable slice from:
+1. **Binance public Spot market data** for BTCUSDT and ETHUSDT: individual public trade records where available, plus order-book/ticker context. Treat buyer/seller as anonymous market participants; aggressor side is not a named actor.
+2. **Public Bitcoin and Ethereum ledger observations**: blocks, transactions, address balances/state and token transfers, preserving address-level identity as UNKNOWN unless separately supported by verifiable public evidence.
+3. **Official public disclosures**: issuer/fund filings and exchange notices with their actual publication timestamps and reporting periods. A filing is delayed holdings/disclosure evidence, not a live execution.
+4. **Open-source processing and local persistence** only where they introduce no external subscription, license charge or paid hosted dependency.
+
+No commercial label provider is required for the first slice. A source may be used only after checking its terms, request limits, data rights, and whether the method incurs any charge. If an apparently free service requires a card, paid credit purchase, paid tier, or chargeable cloud resource, it is excluded.
+
+### 12.3 What this means for the product objective
+
+A zero-cost design can detect:
+- large observable on-chain transfers (with size calculated from source data, not interpreted as a trade);
+- movements to/from known exchange addresses only when the address attribution is supported by a cited source and its validity interval;
+- public BTC/ETH market executions and aggregate aggressor-side pressure on venues;
+- ETF/fund holdings and flows when published by official sources, with reporting delay;
+- candidate relationships between events and price moves, explicitly marked as hypotheses.
+
+A zero-cost design **cannot promise**:
+- complete identification of all banks, funds, institutions or whales;
+- the legal beneficial owner behind arbitrary addresses;
+- the identity of the buyer or seller behind an anonymous centralized-exchange execution;
+- real-time institutional buy/sell detection from aggregate exchange inflows/outflows;
+- commercial-provider-grade wallet labels without using a qualifying free source.
+
+The system must represent the actor as UNKNOWN where evidence does not establish identity. Do not downgrade evidence standards to simulate paid-provider coverage.
+
+### 12.4 Runtime cost guardrails
+
+- No cloud resource may be provisioned if it can generate a charge.
+- Prefer local execution and storage; document electricity, bandwidth and hardware as user-side operating requirements rather than pretending they are zero-resource.
+- No API key with billing enabled may be configured for an IWFI adapter.
+- No purchased credits, paid fallback or automatic plan upgrade.
+- Every source adapter must declare `cost_model`, `recurring_free_quota`, `billing_risk`, `terms_reviewed_at`, and `zero_cost_eligible`.
+- CI must reject `zero_cost_eligible=true` if the source is pay-per-call, trial-only, non-recurring-credit-only, requires paid entitlement, or has unresolved billing risk.
+- If a free quota is exhausted, the adapter stops safely; it must not retry via paid endpoints or silently switch to a chargeable provider.
+
+### 12.5 Official references for free-access boundaries
+
+- Binance Spot REST API: https://developers.binance.com/en/docs/products/spot/rest-api
+- Binance market-data-only FAQ: https://developers.binance.com/en/docs/products/spot/faqs/market_data_only
+- Binance public historical data: https://data.binance.vision/
+- CryptoQuant current API plans: https://cryptoquant.com/apis
+- CryptoQuant current pricing: https://cryptoquant.com/pricing
+- Nansen API free-credit terms: https://academy.nansen.ai/articles/0938495-get-started-with-api
+- CoinGlass API plans: https://docs.coinglass.com/reference/plans-and-permissions
+- Arkham API application/access: https://arkm.com/api/
+
+**Decision:** this zero-cost policy supersedes any earlier suggestion to evaluate or use CryptoQuant Professional, paid CoinGlass tiers, Glassnode paid API, or any paid vendor plan. No provider API or account is approved by this document. No paid service, credit purchase, polling or backfill is authorized.
+
+
+
+## 13. Binance public Spot source review — 2026-11-14
+
+This section separates the historical Binance Vision archive from the public Spot market-data API. Their access methods and governing terms must not be conflated.
+
+### 13.1 Historical archive: documented access and use boundary
+
+Official Binance Public Data documentation states:
+- Spot trade archives are sourced from the Spot historical-trades endpoint and contain trade ID, price, quantity, quote quantity, timestamp, `isBuyerMaker`, and `isBestMatch`.
+- Spot aggregate-trade archives contain aggregate trade ID, price, quantity, first/last trade IDs, timestamp, `isBuyerMaker`, and `isBestMatch`.
+- Daily files are published the next day; monthly files are published on the first Monday of the month.
+- Spot archive timestamps from 2025-01-01 onward are in microseconds; older records use milliseconds. The ingestion contract must preserve source units and normalize only with explicit source-version rules.
+- Archive files can be updated after publication; checksum files are provided. A checksum must be verified and archive revisions must not silently overwrite prior observations.
+
+Official Vision Dataset Terms (version 1.0, updated 2026-08-26) state:
+- Datasets are available free of charge.
+- The stated license is CC BY-NC-SA 4.0, subject to the additional Vision Dataset Terms.
+- Permitted non-commercial purposes include academic research, non-monetized open educational projects, personal non-production historical backtesting, and non-commercial open-source data-science evaluations.
+- Commercial use requires a separate written enterprise data license.
+- The terms prohibit attempts to de-anonymize users from transaction identifiers and prohibit circumventing rate limits or impairing platform operations.
+- Derivative work redistribution must preserve attribution and the specified license conditions.
+
+**Preliminary decision for the user's declared personal, non-commercial research:** the historical archive appears to fit the stated personal non-production research category, provided the project remains within all Vision Dataset Terms and the incorporated CC BY-NC-SA obligations. This is a source-specific preliminary assessment, not legal advice or authorization for a commercial/live product. No redistribution of raw data, de-anonymization, or commercial use is approved.
+
+### 13.2 Endpoint clarification: do not classify data-api.binance.vision as a live feed
+
+Binance Spot REST documentation and its market-data-only FAQ describe `https://data-api.binance.vision` as a public market-data-only base URL. However, a contributor response dated 2026-11-05 in the official `binance/binance-public-data` repository, Issue #502, explicitly states that `data-api.binance.vision` is not a live Binance endpoint for the Vision Dataset Terms question, and instructs users to rely only on `data.binance.vision` and the endpoints listed there.
+
+IWFI adopts the conservative interpretation:
+- Do not model `data-api.binance.vision` as a live streaming or real-time feed.
+- Do not build or activate an adapter against that host under the Binance Vision historical-dataset approval.
+- The source under evaluation is the downloadable archive service at `data.binance.vision`, with daily/monthly files and published checksums.
+- Automated retrieval of those datasets, including via endpoints listed by the archive, is subject to the Vision Dataset Terms and Binance Terms of Use.
+- The repository contributor response is useful source-specific clarification, but it is not a signed legal opinion or a substitute for written confirmation from Binance Legal/licensing if scope remains ambiguous.
+
+The Binance Spot REST documentation may describe API behavior, timestamps, rate limits and public endpoints, but that documentation alone does not establish that a given endpoint is part of the Vision Dataset archive service or authorize IWFI to treat it as a live feed. Keep the REST API and archive source classes separate.
+
+No live API adapter is approved. Any future request to use a different Binance endpoint must receive its own endpoint-specific cost, terms, retention and capability review before implementation or activation.
+
+### 13.3 What the trade fields can and cannot establish
+
+- A Spot trade record is evidence that a trade was executed on Binance's venue at the recorded price, quantity and time.
+- `isBuyerMaker` indicates whether the buyer was the maker. When true, the seller was the taker/aggressor; when false, the buyer was the taker/aggressor. This is venue-side aggressor direction, not the legal identity of either counterparty.
+- The public trade record does not disclose the customer identity, beneficial owner, bank, fund, institution, or whale behind either side.
+- Binance defines an aggregate trade as one or more individual trades from the same taker order filled at the same time and price. Therefore, aggTrades must not be represented as a one-row-per-individual-fill feed.
+- Neither the individual trade feed nor aggressor-side inference identifies the institution that initiated the order. Participant attribution remains UNKNOWN unless separate evidence establishes the participant for that specific execution.
+
+### 13.4 Source decision
+
+| Source | Capability decision | Cost decision | Terms decision | IWFI activation |
+|---|---|---|---|---|
+| Binance Vision historical Spot trade archive | Candidate for historical venue-execution observations for BTCUSDT and ETHUSDT | Free of charge under published Vision Dataset Terms | Preliminary fit for personal non-production research only; comply with CC BY-NC-SA 4.0 and additional terms | NOT YET APPROVED; sample validation and retention design remain pending |
+| `data-api.binance.vision` | Not approved or classified as a live feed for IWFI; keep distinct from downloadable Vision archives | Cost/entitlement not approved for IWFI use | Repository contributor clarification in Issue #502 says rely on `data.binance.vision` and its listed endpoints for Vision Datasets | NOT APPROVED; no adapter |
+
+### 13.5 Official references
+
+- Spot REST API: https://developers.binance.com/en/docs/products/spot/rest-api
+- Market Data Only FAQ: https://github.com/binance/binance-spot-api-docs/blob/master/faqs/market_data_only.md
+- Spot API Glossary (`isBuyerMaker`, `aggTrade`): https://developers.binance.com/en/docs/products/spot/faqs/spot_glossary
+- Binance Public Data archive documentation: https://github.com/binance/binance-public-data/blob/master/README.md
+- Binance Vision Dataset Terms: https://github.com/binance/binance-public-data/blob/master/TERMS_AND_CONDITIONS.md
+
+**Decision:** Binance Vision historical Spot trades are the strongest documented zero-price historical market-execution candidate found so far for the personal non-production research scope. This does not identify institutions and does not approve live API polling. Do not treat `data-api.binance.vision` as an IWFI live feed. Issue #3 remains open until BTC/ETH archive samples, checksums, timestamp transitions, archive revisions, applicable terms and retention handling are tested and recorded.
+
+
+## 5. Public-ledger access review — 2026-11-14
+
+This review evaluates zero-purchase candidates for native BTC/ETH ledger observations. It does not approve a source, authorize automated capture, or establish retention rights.
+
+### 5.1 Bitcoin — Blockstream Esplora public API (candidate only)
+
+Official API reference: https://github.com/Blockstream/esplora/blob/master/API.md
+
+Documented public Bitcoin base URL: `https://blockstream.info/api/`. The reference documents transaction lookup (`GET /tx/:txid`), transaction status and block inclusion fields, address statistics and paginated confirmed transaction history, UTXOs, block metadata, block status and raw block retrieval. Amounts are represented in satoshis. The API can therefore expose the raw observable fields needed for a limited BTC transaction-inspection prototype.
+
+Limitations and unresolved gates:
+- The API documentation establishes endpoint semantics, not an entitlement or a contractual grant for unattended recurring use or long-term local retention.
+- The reviewed API reference does not specify a numeric public rate limit. Do not invent one or build a polling cadence around an assumed quota.
+- A public explorer API is a third-party hosted dependency; responses may be unavailable, throttled, incomplete or changed. Independent block inclusion/finality checks remain necessary.
+- Address/transaction data does not identify the beneficial owner, institution, customer, or economic purpose. Clustering remains a separate evidence-backed hypothesis.
+- No policy snapshot, retention approval, live adapter, polling, or backfill is established by this review.
+
+Decision: `CONDITIONAL_CANDIDATE / NOT_APPROVED`. Next evidence: obtain and preserve the operator's current API terms/acceptable-use policy, confirm free recurring access and retention scope, record numeric rate limits if published, then validate a small BTC mainnet sample against independent block data.
+
+### 5.2 Ethereum — locally operated execution + consensus clients
+
+Official current node guide: https://ethereum.org/developers/docs/nodes-and-clients/run-a-node
+
+The post-Merge node requires both an execution-layer client and a consensus-layer client. The guide currently lists minimum hardware of 2+ CPU cores, 16 GB RAM, 4 TB NVMe SSD and 25+ MBit/s bandwidth; recommended full-node hardware is 4+ fast CPU cores, 32 GB RAM, 4 TB NVMe SSD and 50 MBit/s down / 15+ MBit/s up. Its September 2026 full-node disk estimates range from 1.7 TB+ to 2.2 TB+ depending on client, with a further 15–90 GB for consensus beacon data depending on configuration. Archive nodes require substantially more storage.
+
+Implication for the project: a local Ethereum node is a zero-provider-fee and sovereign option, but it is not a lightweight assumption. The previously recorded workstation memory of 16 GB only matches the guide's minimum RAM figure; available NVMe capacity, bandwidth, disk I/O, sync time and operational headroom have not been measured here. Therefore hardware feasibility is NOT_VERIFIED. Do not begin a sync or recommend installing clients until those local constraints are measured.
+
+Decision: `TECHNICALLY_DOCUMENTED / FEASIBILITY_NOT_VERIFIED`. Ethereum public RPC alternatives are not approved by this review; each would require separate endpoint terms, quota, retention and cost diligence. ERC-20/token event coverage remains outside this native-ETH review.
+
+### 5.3 Consequence for the first vertical slice
+
+- Binance Vision historical Spot archives remain the only current zero-price historical market-data candidate with a source-specific non-commercial terms document, but real BTC/ETH sample archives and exact retained-artifact authorization are still outstanding.
+- Blockstream Esplora is a BTC ledger API candidate, not an approved recurring source.
+- A local Ethereum node is documented but its hardware feasibility is not established; a public Ethereum RPC candidate requires separate diligence.
+- No source in this section is promoted to `APPROVED`. No production ingestion, unattended polling, bulk backfill, or cross-device synchronization is authorized.
+

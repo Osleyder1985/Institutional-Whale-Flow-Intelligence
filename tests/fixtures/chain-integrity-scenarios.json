@@ -111,13 +111,13 @@
       },
       {
         "observation_kind": "FINALITY_CHECKPOINT",
-        "transaction_id": "0xcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
-        "inclusion": {
+        "transaction_id": null,
+        "inclusion": null,
+        "source_asserted_head_tag": "finalized",
+        "checkpoint": {
           "block_height": 21000010,
-          "block_hash": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
-          "transaction_index": null
-        },
-        "source_asserted_head_tag": "finalized"
+          "block_hash": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+        }
       }
     ],
     "expected_assessment": "FINALIZED",

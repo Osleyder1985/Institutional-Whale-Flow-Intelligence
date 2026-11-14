@@ -14,7 +14,7 @@ The following provider-neutral contracts are integrated:
 - Entity Attribution contract
 - Movement Ledger with an explicit, nullable transfer event locator
 - Observation Resolution policy 1.3.2
-- Chain Integrity Contract v1 for Bitcoin/Ethereum inclusion, canonicality, re-inclusion, and Ethereum finality
+- Chain Integrity Contract v2 / policy 2.0.0 for Bitcoin/Ethereum inclusion, canonicality, re-inclusion, and Ethereum finality
 
 Persistence must preserve the evidence and decisions described by these contracts. A database schema must not redefine event identity, quality semantics, attribution status, or resolution rules.
 
@@ -33,8 +33,8 @@ This ADR is a design proposal. It does not select a production database, create 
 9. **Semantic separation:** aggregate exchange/ETF metrics are not stored as individual transfers. Transfers are not trades, purchases, or sales.
 10. **Explicit execution:** ingestion, resolution, and research runs are initiated by the user. No polling, background market analysis, or backfill is enabled by this design.
 11. **Chain evidence is append-only:** block-inclusion observations and source chain-status assertions are immutable evidence; canonicality assessments are versioned interpretations, never in-place edits to observations.
-12. **Network-specific chain semantics:** Bitcoin has no universal protocol FINALIZED threshold in this contract; Ethereum FINALIZED requires a captured finalized checkpoint from the same identified source covering the inclusion height. REVERTED is not used as a synonym for reorg.
-13. **Snapshot temporal integrity:** each ResearchSnapshot freezes the exact chain assessment, observation IDs, policy version and software version known at run time. Later evidence requires a new assessment and new user-requested snapshot.
+12. **Network-specific chain semantics:** Bitcoin has no protocol-level FINALIZED state or universal confirmation threshold. Ethereum FINALIZED requires positive ACTIVE evidence for the exact inclusion block and a later independent finalized checkpoint from the same source and same non-empty source view, covering the inclusion height. A checkpoint is not a transaction inclusion. REVERTED is not a synonym for reorg.
+13. **Snapshot temporal integrity:** each ResearchSnapshot freezes the exact chain assessment fingerprint, assessment policy version, assessment supersession link, input observation IDs, and software version known at run time. Later evidence requires a new assessment and new user-requested snapshot.
 
 ## 2.1 Requirements already fixed by product scope
 
@@ -84,7 +84,7 @@ The following is a logical model, not a committed SQL schema. Physical tables, c
 | SyncConflict | Semantic conflict between concurrent or incompatible operations | Append-only; explicit resolution/supersession |
 | SourceObservation | Immutable provider observation envelope and permitted normalized facts | Insert new observation/version; do not overwrite |
 | ChainInclusionObservation | Immutable BTC/ETH mempool, block inclusion, block-status or finalized-checkpoint evidence with source and observed time | Append-only; each new block inclusion is a new record |
-| CanonicalityAssessment | Versioned assessment over a deterministic set of chain observation IDs and policy version | Append-only; supersede by a new assessment, never overwrite |
+| CanonicalityAssessment | Versioned assessment with policy version, exact evidence observation IDs, source/view context, status/reason, deterministic full-evidence fingerprint and optional supersedes_assessment_id | Append-only; supersede by a new assessment, never overwrite |
 | ObservationRevisionLink | Links a revised provider record to its predecessor | Append-only |
 | AttributionClaim | Address/entity claim, provenance, epistemic status, and validity interval | New claim/version for corrections |
 | Movement | Canonical individual transfer with network, transaction ID, nullable event locator, amount, endpoints, and event time | New movement version only when a documented correction is accepted |
@@ -102,7 +102,7 @@ The following is a logical model, not a committed SQL schema. Physical tables, c
 - One ResolutionDecision consumes a deterministic set of observation IDs and produces versioned links, field evidence, conflicts, and eligibility.
 - One AttributionClaim may apply to an address only during its recorded validity interval; the movement event time determines temporal resolution.
 - One transaction may have multiple ChainInclusionObservations across competing blocks or a later re-inclusion. Inclusion identity is distinct from transfer identity; the Movement event locator remains required to distinguish multiple transfers inside one transaction.
-- One CanonicalityAssessment references exact chain observation IDs, source set, policy version, assessed time and prior assessment superseded. Conflicting source assertions remain unresolved unless the chain contract provides positive, network-specific evidence.
+- One CanonicalityAssessment references exact chain observation IDs, source IDs and source-view IDs, policy version, assessed time, status/reason, deterministic fingerprint and optional prior assessment superseded. The fingerprint covers canonicalized full evidence records and assessment outcome; supersession is a separate lineage link. Conflicting source assertions remain unresolved unless the chain contract provides positive, network-specific evidence.
 - One ResearchSnapshot references the exact resolution decisions, canonicality assessments, metric definitions and evidence IDs used. It does not recalculate or overwrite prior snapshots.
 
 ## 4. Idempotency and uniqueness
@@ -133,7 +133,7 @@ The transaction hash alone is never a unique movement key. Distinct outputs/trac
 
 A block inclusion observation is distinct from a transfer movement. Its identity uses network + transaction ID + block hash + transaction position when available. The same transaction re-included in a different block creates a new inclusion observation; its transfer event locator remains unchanged. Source assertions about active-chain status are stored with source ID and observed time. Missing responses are not negative evidence.
 
-A canonicality assessment identity uses chain-integrity policy version + sorted input observation IDs + normalized source context. The same inputs and policy must produce the same status/reason. New evidence or a policy change creates a new assessment linked by supersession. Multi-source disagreement remains CANONICALITY_UNRESOLVED; Bitcoin is not assigned a protocol FINALIZED status, and Ethereum finality requires same-source finalized checkpoint evidence covering the inclusion height.
+A canonicality assessment fingerprint is SHA-256 over the policy version, network, transaction ID, canonicalized full evidence records, resulting status and reason. Sorting the evidence records makes input order irrelevant; changing evidence content changes the fingerprint even if observation IDs are reused. The optional `supersedes_assessment_id` is stored as a separate lineage relation and does not alter the evidence fingerprint. New evidence or a policy change creates a new assessment; prior assessments remain immutable. For `REOBSERVED`, old `NOT_ACTIVE` and later `ACTIVE` inclusion evidence must share source ID and the same non-empty source view ID and have strictly increasing UTC observation times. A missing view ID cannot be fabricated and leaves the sequence unresolved. Ethereum `FINALIZED` requires positive `ACTIVE` evidence for the exact inclusion block plus a later independent `FINALITY_CHECKPOINT` from the same source and non-empty source view, with checkpoint height at or above the inclusion height. A checkpoint has no transaction ID or transaction inclusion. Bitcoin is never assigned protocol `FINALIZED`.
 
 ### 4.4 Resolution decisions
 
@@ -213,16 +213,19 @@ Indexes must be justified by query workloads and measured cardinality. Do not ad
 
 ## 9. Chain-integrity dependency and remaining unknowns
 
-The chain-integrity contract dependency is now defined and integrated through PR #20 / Issue #19:
+The chain-integrity contract dependency is now defined and integrated through PR #20 / Issue #19, then hardened in PR #117 / Issue #18 (Chain Integrity Contract v2, policy 2.0.0):
 - immutable network-specific inclusion observations for BTC and ETH;
 - explicit separation of transaction inclusion identity and transfer event identity;
 - versioned canonicality assessments and supersession rather than in-place mutation;
+- mandatory explicit source view identity for same-view reorg/finality conclusions, with no fabricated view IDs;
+- Ethereum independent `FINALITY_CHECKPOINT` records and exact-block ACTIVE evidence before FINALIZED;
+- SHA-256 fingerprint over canonicalized full evidence and assessment outcome, plus a separate supersession lineage link;
 - no inference of non-inclusion from absence of data;
 - Bitcoin reorg/re-inclusion semantics without an invented universal confirmation/finality threshold;
 - Ethereum finalized checkpoint evidence, source identity and inclusion-height coverage;
 - multi-source conflicts remain unresolved; historical ResearchSnapshots freeze the evidence/assessment IDs known at run time.
 
-The persistence implementation must honor `docs/data-model/chain-integrity-contract.md`. This resolves the contract-definition dependency; it does not prove durable snapshot immutability until the persistence model and integration tests are implemented.
+The persistence implementation must honor `docs/data-model/chain-integrity-contract.md` v2 and the pure evaluator in `iwfi/chain_integrity.py`. PR #117 CI Contract tests #566 passed 314 tests on Linux and 314 on Windows. This verifies the contract/evaluator test suite, not database durability or snapshot persistence. The contract-definition dependency is resolved; durable snapshot immutability still requires persistence and integration tests.
 
 Other unresolved inputs include expected event volume, retention duration by provider, deployment location, recovery objectives, security/key-management details, synchronization batch sizing, and actual query workloads. Offline-first behavior is a confirmed product requirement; its protocol and conflict policies remain assigned to Issue #22. No numeric operational target is invented here.
 
@@ -239,6 +242,10 @@ The implementation plan must include synthetic tests for:
 - cross-source canonicality conflicts that remain unresolved;
 - Ethereum finalized checkpoint coverage and unsupported finality tags;
 - a new chain assessment without mutation of a historical ResearchSnapshot;
+- reorg ordering with fractional UTC seconds and same non-empty source view enforcement;
+- Ethereum checkpoint as an independent observation (no transaction ID/inclusion), and finality blocked without exact positive ACTIVE evidence;
+- assessment fingerprint stability under evidence-order changes and sensitivity to any evidence-content change;
+- explicit assessment supersession link while preserving the prior assessment and snapshot;
 - competing resolution runs over the same input set;
 - new observations producing a new decision without overwriting old decisions;
 - INVALID/QUARANTINED evidence retained but excluded from resolved fields;
@@ -262,4 +269,4 @@ This ADR does not authorize:
 - raw payload retention;
 - wallet clustering, institutional attribution, whale statistics, or buy/sell analysis.
 
-Issue #16 remains open until requirements are measured, the options are evaluated against those requirements, retention/security/operational questions are assigned, and the project owner accepts the ADR. Issue #22 defines the offline-first synchronization protocol and must be resolved before backend implementation. Only then should separate implementation Issues and PRs be created.
+Issue #16 remains open until requirements are measured, the options are evaluated against those requirements, retention/security/operational questions are assigned, and the project owner accepts the ADR. Issue #22 defines the offline-first synchronization protocol and must be resolved before backend implementation. Issue #71 retains provider-specific operational gates (including local storage location, sync/cloud exposure, capacity, derivative inventory and retention enforcement); its remaining local checks must not be represented as completed by CI. Only then should separate implementation Issues and PRs be created.
