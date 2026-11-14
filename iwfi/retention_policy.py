@@ -6,7 +6,7 @@ _REQUIRED_ARTIFACTS = {
     "SOURCE_ARCHIVE", "CHECKSUM", "VALIDATION_REPORT", "NORMALIZED_OBSERVATION",
     "DERIVED_DATA", "SNAPSHOT", "LOG", "BACKUP",
 }
-_UTC = re.compile(r"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$")
+_UTC = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
 
 
 def _nonempty(value):
