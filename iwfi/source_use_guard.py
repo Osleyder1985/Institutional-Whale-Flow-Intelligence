@@ -80,10 +80,14 @@ def authorize_source_use(policy, operation, destination="LOCAL_ONLY",
         errors.extend(retention_policy_errors(
             retention_policy, expected_policy_id=policy_id, expected_source_id=source_id
         ))
-        if artifact_type not in retention_policy.get("artifact_rules", {}):
-            errors.append("artifact_type must identify a covered retention rule")
-        elif retention_policy.get("artifact_rules", {}).get(artifact_type, {}).get("status") != "APPROVED":
-            errors.append("artifact_type retention rule must be APPROVED")
+        if not isinstance(retention_policy, dict):
+            errors.append("retention_policy must be an object")
+        else:
+            rules = retention_policy.get("artifact_rules")
+            if not isinstance(rules, dict) or artifact_type not in rules:
+                errors.append("artifact_type must identify a covered retention rule")
+            elif not isinstance(rules.get(artifact_type), dict) or rules[artifact_type].get("status") != "APPROVED":
+                errors.append("artifact_type retention rule must be APPROVED")
     if errors:
         return {"allowed": False, "status": "BLOCKED", "errors": sorted(set(errors))}
     return {"allowed": True, "status": "AUTHORIZED_LOCAL_ONLY", "errors": []}
