@@ -6,7 +6,7 @@ Status: implemented analytical function; not yet validated against real blockcha
 
 `iwfi.entity_flow_analytics.aggregate_entity_flows` converts eligible BTC/ETH Movement Ledger transfers into entity-level external flow only when an existing Attribution Claim explicitly and temporally supports the address-to-entity relationship.
 
-The function consumes Movement Ledger records and the canonical append-only claim collection. It does not create claims, discover clusters, merge entities, query a chain, or persist results.
+The function consumes Movement Ledger records and the canonical append-only claim collection. It does not create claims, discover clusters, merge entities, query a chain, or persist results. The current directed-flow implementation is restricted to Ethereum native transfers; Bitcoin UTXO_VOUT records are explicitly excluded until transaction-level input/output accounting is implemented under Issue #109.
 
 ## Attribution admission policy
 
@@ -31,7 +31,7 @@ If applicable verified claims point to more than one entity, the address is `CON
 - Knowledge cutoff: movement and claim `recorded_at_utc <= known_at_utc`.
 - Claim validity: inclusive `[valid_from_utc, valid_to_utc]`.
 - Only `VALID/PARTIAL`, confirmed transfers with a known positive decimal amount are included.
-- BTC and ETH remain separate.
+- Ethereum native transfers are supported in this first directed-flow implementation. Bitcoin UTXO_VOUT is excluded with `unsupported_utxo_accounting`; a UTXO output has a recipient but no unique sender, so treating it as a directed transfer would fabricate input-to-output pairing. See Issue #109.
 - EVM addresses are compared case-insensitively; Bitcoin address strings remain case-sensitive.
 - An attributed source and destination resolving to the same entity form an internal transfer. The amount is reported in `internal_transfer_volume` and is excluded from external incoming, outgoing and net flow.
 - Transfers between different attributed entities count once as outgoing for the source entity and once as incoming for the destination entity. This is two entity-side views of one transfer, not two distinct chain transfers.
