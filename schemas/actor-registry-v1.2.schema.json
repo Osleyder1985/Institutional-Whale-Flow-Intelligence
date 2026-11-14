@@ -1,0 +1,434 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://iwfi.invalid/schemas/actor-registry-v1.2.schema.json",
+  "title": "IWFI Actor Registry v1.2",
+  "description": "Bitemporal Actor Registry with typed, resolvable supporting and counter evidence references.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "actors",
+    "relationships"
+  ],
+  "properties": {
+    "contract_version": {
+      "const": "1.2.0"
+    },
+    "actors": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/actor"
+      },
+      "uniqueItems": true
+    },
+    "relationships": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/relationship"
+      },
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "utc": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+    },
+    "evidenceRefs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/evidenceReference"
+      },
+      "uniqueItems": true
+    },
+    "actor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract_version",
+        "actor_id",
+        "actor_type",
+        "display_name",
+        "identity_status",
+        "recorded_at_utc",
+        "known_at_utc",
+        "valid_from_utc",
+        "valid_to_utc",
+        "aliases",
+        "classifications",
+        "coverage",
+        "evidence_refs",
+        "counter_evidence_refs"
+      ],
+      "properties": {
+        "contract_version": {
+          "const": "1.1.0"
+        },
+        "actor_id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "actor_type": {
+          "enum": [
+            "BANK",
+            "ASSET_MANAGER",
+            "FUND",
+            "PENSION_FUND",
+            "SOVEREIGN_WEALTH_FUND",
+            "HEDGE_FUND",
+            "ETF_ISSUER",
+            "ETF",
+            "CORPORATE_TREASURY",
+            "EXCHANGE",
+            "CUSTODIAN",
+            "BROKER",
+            "PRIME_BROKER",
+            "MARKET_MAKER",
+            "OTC_DESK",
+            "LIQUIDITY_PROVIDER",
+            "MINER",
+            "MINING_POOL",
+            "VALIDATOR",
+            "GOVERNMENT",
+            "CENTRAL_BANK",
+            "PROTOCOL",
+            "FOUNDATION",
+            "DAO_TREASURY",
+            "WHALE_CLUSTER",
+            "UNKNOWN"
+          ]
+        },
+        "display_name": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "identity_status": {
+          "enum": [
+            "VERIFIED",
+            "PROVIDER_LABELLED",
+            "INFERRED",
+            "UNKNOWN",
+            "DISPUTED"
+          ]
+        },
+        "jurisdiction": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "recorded_at_utc": {
+          "$ref": "#/$defs/utc"
+        },
+        "known_at_utc": {
+          "$ref": "#/$defs/utc"
+        },
+        "valid_from_utc": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/utc"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "valid_to_utc": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/utc"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "aliases": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "value",
+              "alias_type",
+              "scope",
+              "known_at_utc",
+              "recorded_at_utc",
+              "valid_from_utc",
+              "valid_to_utc",
+              "evidence_refs"
+            ],
+            "properties": {
+              "value": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S"
+              },
+              "alias_type": {
+                "enum": [
+                  "LEGAL_NAME",
+                  "BRAND",
+                  "TICKER",
+                  "FORMER_NAME",
+                  "PUBLIC_LABEL",
+                  "OTHER"
+                ]
+              },
+              "scope": {
+                "type": "string",
+                "minLength": 1
+              },
+              "known_at_utc": {
+                "$ref": "#/$defs/utc"
+              },
+              "recorded_at_utc": {
+                "$ref": "#/$defs/utc"
+              },
+              "valid_from_utc": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/utc"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "valid_to_utc": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/utc"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "evidence_refs": {
+                "$ref": "#/$defs/evidenceRefs"
+              }
+            }
+          }
+        },
+        "classifications": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "classification",
+              "status",
+              "method",
+              "known_at_utc",
+              "recorded_at_utc",
+              "valid_from_utc",
+              "valid_to_utc",
+              "evidence_refs"
+            ],
+            "properties": {
+              "classification": {
+                "type": "string",
+                "minLength": 1
+              },
+              "status": {
+                "enum": [
+                  "VERIFIED",
+                  "PROVIDER_LABELLED",
+                  "INFERRED",
+                  "UNKNOWN",
+                  "DISPUTED"
+                ]
+              },
+              "method": {
+                "type": "string",
+                "minLength": 1
+              },
+              "known_at_utc": {
+                "$ref": "#/$defs/utc"
+              },
+              "recorded_at_utc": {
+                "$ref": "#/$defs/utc"
+              },
+              "valid_from_utc": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/utc"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "valid_to_utc": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/utc"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "evidence_refs": {
+                "$ref": "#/$defs/evidenceRefs"
+              }
+            }
+          }
+        },
+        "coverage": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "asset",
+              "network",
+              "activity_type",
+              "coverage_status"
+            ],
+            "properties": {
+              "asset": {
+                "enum": [
+                  "BTC",
+                  "ETH"
+                ]
+              },
+              "network": {
+                "enum": [
+                  "bitcoin-mainnet",
+                  "eip155:1"
+                ]
+              },
+              "activity_type": {
+                "type": "string",
+                "minLength": 1
+              },
+              "coverage_status": {
+                "enum": [
+                  "OBSERVED",
+                  "PARTIAL",
+                  "NOT_COVERED",
+                  "UNKNOWN"
+                ]
+              }
+            }
+          }
+        },
+        "evidence_refs": {
+          "$ref": "#/$defs/evidenceRefs"
+        },
+        "counter_evidence_refs": {
+          "$ref": "#/$defs/evidenceRefs"
+        }
+      }
+    },
+    "relationship": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "relationship_id",
+        "subject_actor_id",
+        "object_actor_id",
+        "relationship_type",
+        "status",
+        "known_at_utc",
+        "recorded_at_utc",
+        "valid_from_utc",
+        "valid_to_utc",
+        "evidence_refs",
+        "counter_evidence_refs"
+      ],
+      "properties": {
+        "relationship_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "subject_actor_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "object_actor_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "relationship_type": {
+          "enum": [
+            "MANAGES",
+            "ISSUES",
+            "SPONSORS",
+            "CONTROLS",
+            "CUSTODIES_FOR",
+            "OPERATES",
+            "SUBSIDIARY_OF",
+            "INVESTS_IN"
+          ]
+        },
+        "status": {
+          "enum": [
+            "VERIFIED",
+            "PROVIDER_LABELLED",
+            "INFERRED",
+            "UNKNOWN",
+            "DISPUTED"
+          ]
+        },
+        "known_at_utc": {
+          "$ref": "#/$defs/utc"
+        },
+        "recorded_at_utc": {
+          "$ref": "#/$defs/utc"
+        },
+        "valid_from_utc": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/utc"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "valid_to_utc": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/utc"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "evidence_refs": {
+          "$ref": "#/$defs/evidenceRefs"
+        },
+        "counter_evidence_refs": {
+          "$ref": "#/$defs/evidenceRefs"
+        }
+      }
+    },
+    "evidenceReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ref_type",
+        "ref_id"
+      ],
+      "properties": {
+        "ref_type": {
+          "enum": [
+            "SOURCE_OBSERVATION",
+            "ATTRIBUTION_CLAIM"
+          ]
+        },
+        "ref_id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        }
+      }
+    }
+  }
+}
