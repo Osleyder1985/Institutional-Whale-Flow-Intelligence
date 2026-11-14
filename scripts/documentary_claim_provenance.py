@@ -97,14 +97,19 @@ def validate_claim(claim, snapshot_catalog):
             errors.append("EVIDENCE_RECORD_INVALID")
             continue
         doc_id, digest = item.get("document_id"), item.get("snapshot_sha256")
-        key = (doc_id, digest)
-        if key in seen_evidence:
+        locator = item.get("locator")
+        locator_key = (
+            locator.get("locator_type"), locator.get("value"),
+            locator.get("start_offset"), locator.get("end_offset")
+        ) if isinstance(locator, dict) else (None, None, None, None)
+        evidence_key = (doc_id, digest, *locator_key)
+        if evidence_key in seen_evidence:
             errors.append("DUPLICATE_EVIDENCE_REFERENCE")
-        seen_evidence.add(key)
+        seen_evidence.add(evidence_key)
         if not _nonempty(doc_id) or not isinstance(digest, str) or not _SHA256.fullmatch(digest):
             errors.append("SNAPSHOT_REFERENCE_INVALID")
             continue
-        snapshot = snapshots.get(key)
+        snapshot = snapshots.get((doc_id, digest))
         if snapshot is None:
             errors.append("SNAPSHOT_NOT_REGISTERED_OR_HASH_MISMATCH")
             continue
