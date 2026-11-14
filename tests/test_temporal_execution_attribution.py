@@ -55,6 +55,17 @@ class TemporalExecutionAttributionTests(unittest.TestCase):
         self.assertEqual(buyer["status"], "UNKNOWN")
         self.assertIsNone(buyer["actor_id"])
 
+    def test_inferred_actor_identity_caps_direct_execution_claim_to_inferred(self):
+        registry = copy.deepcopy(self.actors)
+        actor = next(x for x in registry["actors"] if x["actor_id"] == "synthetic-eth-buyer-a")
+        actor["identity_status"] = "INFERRED"
+        result = resolve_execution_participants_as_of(
+            self.claims, self.trade, "2026-02-11T12:30:00Z", registry, self.observation_ids
+        )
+        buyer = next(x for x in result["participants"] if x["participant_role"] == "BUYER")
+        self.assertEqual(buyer["status"], "INFERRED")
+        self.assertEqual(buyer["actor_id"], "synthetic-eth-buyer-a")
+
     def test_actor_recorded_after_cutoff_is_not_attributed(self):
         registry = copy.deepcopy(self.actors)
         actor = next(x for x in registry["actors"] if x["actor_id"] == "synthetic-eth-buyer-a")
