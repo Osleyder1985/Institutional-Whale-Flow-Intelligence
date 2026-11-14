@@ -83,10 +83,15 @@ def evaluate_retention_authorizations(*, manifest, authorization_context):
     if not isinstance(entries, list) or not entries:
         return _fail("ARTIFACT_INVENTORY_REQUIRED")
     auth_by_path = {}
+    authorization_ids = set()
     for auth in authorizations:
         if not isinstance(auth, dict) or not isinstance(auth.get("artifact_path"), str):
             return _fail("ARTIFACT_AUTHORIZATION_INCOMPLETE")
         path = auth["artifact_path"]
+        authorization_id = auth.get("authorization_id")
+        if not isinstance(authorization_id, str) or not authorization_id.strip() or authorization_id in authorization_ids:
+            return _fail("DUPLICATE_OR_INVALID_ARTIFACT_AUTHORIZATION_ID", artifact_path=path)
+        authorization_ids.add(authorization_id)
         if path in auth_by_path:
             return _fail("CONTRADICTORY_ARTIFACT_AUTHORIZATIONS", artifact_path=path)
         auth_by_path[path] = auth
@@ -94,13 +99,24 @@ def evaluate_retention_authorizations(*, manifest, authorization_context):
     if set(auth_by_path) != set(paths) or len(paths) != len(set(paths)):
         return _fail("ARTIFACT_AUTHORIZATION_INVENTORY_MISMATCH")
 
+    for source, parents in lineage.items():
+        if (not isinstance(source, str) or not source.strip()
+                or not isinstance(parents, list)
+                or any(not isinstance(parent, str) or not parent.strip() for parent in parents)
+                or len(parents) != len(set(parents))):
+            return _fail("SOURCE_LINEAGE_INVALID")
     policy_by_source = {}
+    policy_ids = set()
     for policy in policies:
         if not isinstance(policy, dict):
             return _fail("SOURCE_POLICY_INCOMPLETE")
         source = policy.get("source_id")
         if not isinstance(source, str) or not source.strip():
             return _fail("SOURCE_POLICY_INCOMPLETE")
+        policy_id = policy.get("policy_id")
+        if not isinstance(policy_id, str) or not policy_id.strip() or (source, policy_id) in policy_ids:
+            return _fail("DUPLICATE_OR_INVALID_SOURCE_POLICY_ID", source_id=source)
+        policy_ids.add((source, policy_id))
         policy_by_source.setdefault(source, []).append(policy)
 
     artifact_decisions = []
