@@ -15,6 +15,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from scripts.extract_policy_evidence import EvidenceExtractionError, build_extraction_bundle
+
 
 ROOT = Path(__file__).resolve().parents[1]
 SHA256_RE = re.compile(r"^[a-f0-9]{64}$")
@@ -150,8 +152,22 @@ def _validate_finding(finding: Any, documents: dict[str, dict[str, Any]]) -> dic
     }
 
 
-def validate_policy_findings(bundle_path: str | Path, review_path: str | Path) -> dict[str, Any]:
+def validate_policy_findings(
+    bundle_path: str | Path, review_path: str | Path, evidence_dir: str | Path
+) -> dict[str, Any]:
     documents = load_extraction_bundle(bundle_path)
+    try:
+        rebuilt_bundle = build_extraction_bundle(evidence_dir)
+    except (EvidenceExtractionError, OSError) as exc:
+        raise FindingValidationError("ORIGINAL_SNAPSHOT_RECONSTRUCTION_FAILED") from exc
+    supplied_bundle = _load_json(Path(bundle_path), "EXTRACTION_BUNDLE_INVALID")
+    if (
+        supplied_bundle.get("source_manifest_sha256") != rebuilt_bundle.get("source_manifest_sha256")
+        or supplied_bundle.get("documents") != rebuilt_bundle.get("documents")
+        or supplied_bundle.get("authorization_status") != rebuilt_bundle.get("authorization_status")
+        or supplied_bundle.get("legal_review_status") != rebuilt_bundle.get("legal_review_status")
+    ):
+        raise FindingValidationError("EXTRACTION_BUNDLE_DOES_NOT_MATCH_ORIGINAL_SNAPSHOTS")
     review = _load_json(Path(review_path), "POLICY_REVIEW_REGISTER_INVALID")
     if review.get("review_register_version") != "1.0.0":
         raise FindingValidationError("POLICY_REVIEW_VERSION_UNSUPPORTED")
@@ -220,10 +236,11 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--bundle", required=True)
     parser.add_argument("--review-register", required=True)
+    parser.add_argument("--evidence-dir", required=True, help="Directory containing original snapshots and capture manifest.")
     parser.add_argument("--output", required=True)
     args = parser.parse_args(argv)
     try:
-        report = validate_policy_findings(args.bundle, args.review_register)
+        report = validate_policy_findings(args.bundle, args.review_register, args.evidence_dir)
         path = write_validation_report(report, args.output)
     except (FindingValidationError, OSError) as exc:
         parser.exit(2, f"validation rejected: {exc}\n")
