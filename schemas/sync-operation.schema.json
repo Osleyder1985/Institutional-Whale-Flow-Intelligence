@@ -1,0 +1,169 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://iwfi.invalid/schemas/sync-operation.schema.json",
+  "title": "IWFI Sync Operation Envelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "operation_id",
+    "device_id",
+    "stream_id",
+    "device_sequence",
+    "causal_dependencies",
+    "entity_type",
+    "entity_id",
+    "operation_kind",
+    "schema_version",
+    "policy_versions",
+    "created_at_device_utc",
+    "payload_hash",
+    "retention",
+    "payload"
+  ],
+  "properties": {
+    "contract_version": {
+      "const": "1.0.0"
+    },
+    "operation_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "device_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "stream_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "device_sequence": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "causal_dependencies": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "format": "uuid"
+      }
+    },
+    "entity_type": {
+      "enum": [
+        "SOURCE_OBSERVATION",
+        "CHAIN_INCLUSION_OBSERVATION",
+        "CANONICALITY_ASSESSMENT",
+        "ATTRIBUTION_CLAIM",
+        "MOVEMENT",
+        "RESOLUTION_DECISION",
+        "RESEARCH_SNAPSHOT",
+        "SYNC_CONFLICT"
+      ]
+    },
+    "entity_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "operation_kind": {
+      "enum": [
+        "CREATE",
+        "REVISE",
+        "LINK",
+        "RESOLVE",
+        "SNAPSHOT_CREATE",
+        "ANNOTATE"
+      ]
+    },
+    "schema_version": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "policy_versions": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "\\S"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "\\S"
+      }
+    },
+    "created_at_device_utc": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+    },
+    "payload_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "retention": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "retention_class",
+        "terms_record_id"
+      ],
+      "properties": {
+        "retention_class": {
+          "enum": [
+            "NORMALIZED_ONLY",
+            "HASH_ONLY",
+            "RAW_ALLOWED",
+            "NOT_APPLICABLE"
+          ]
+        },
+        "terms_record_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "\\S"
+        }
+      }
+    },
+    "payload": {
+      "type": "object"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "retention": {
+            "properties": {
+              "retention_class": {
+                "const": "RAW_ALLOWED"
+              }
+            },
+            "required": [
+              "retention_class"
+            ]
+          }
+        },
+        "required": [
+          "retention"
+        ]
+      },
+      "then": {
+        "properties": {
+          "retention": {
+            "properties": {
+              "terms_record_id": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}
