@@ -66,8 +66,19 @@ def validate_actor_registry_v11(registry):
             errors.append(f"duplicate actor_id: {actor_id}")
         else:
             ids.add(actor_id)
-        if actor.get("identity_status") not in _ALLOWED_IDENTITY:
+        identity_status = actor.get("identity_status")
+        if identity_status not in _ALLOWED_IDENTITY:
             errors.append(f"{label}: invalid identity_status")
+        actor_evidence = actor.get("evidence_refs")
+        actor_counter = actor.get("counter_evidence_refs")
+        if not isinstance(actor_evidence, list) or any(not isinstance(ref, str) or not ref.strip() for ref in actor_evidence):
+            errors.append(f"{label}: invalid evidence_refs")
+        if not isinstance(actor_counter, list) or any(not isinstance(ref, str) or not ref.strip() for ref in actor_counter):
+            errors.append(f"{label}: invalid counter_evidence_refs")
+        if identity_status in {"VERIFIED", "PROVIDER_LABELLED", "INFERRED"} and not actor_evidence:
+            errors.append(f"{label}: identified actor requires evidence_refs")
+        if identity_status == "DISPUTED" and not actor_counter:
+            errors.append(f"{label}: DISPUTED actor requires counter_evidence_refs")
         _known_and_recorded(actor, datetime.max, label, errors)
         if not _valid_at(actor, datetime.min):
             # Validate interval shape/order without requiring the actor to be currently active.
@@ -86,6 +97,23 @@ def validate_actor_registry_v11(registry):
                 if not isinstance(item, dict):
                     errors.append(f"{sublabel} must be an object")
                     continue
+                if field == "aliases":
+                    if not isinstance(item.get("value"), str) or not item["value"].strip():
+                        errors.append(f"{sublabel}: invalid alias value")
+                    if not isinstance(item.get("alias_type"), str) or not item["alias_type"].strip():
+                        errors.append(f"{sublabel}: invalid alias_type")
+                    if not isinstance(item.get("scope"), str) or not item["scope"].strip():
+                        errors.append(f"{sublabel}: invalid alias scope")
+                else:
+                    if not isinstance(item.get("classification"), str) or not item["classification"].strip():
+                        errors.append(f"{sublabel}: invalid classification")
+                    if item.get("status") not in _ALLOWED_IDENTITY:
+                        errors.append(f"{sublabel}: invalid classification status")
+                    if not isinstance(item.get("method"), str) or not item["method"].strip():
+                        errors.append(f"{sublabel}: invalid classification method")
+                refs = item.get("evidence_refs")
+                if not isinstance(refs, list) or not refs or any(not isinstance(ref, str) or not ref.strip() for ref in refs):
+                    errors.append(f"{sublabel}: evidence_refs must contain non-empty references")
                 _known_and_recorded(item, datetime.max, sublabel, errors)
                 start, end = item.get("valid_from_utc"), item.get("valid_to_utc")
                 if start is not None and _time(start) is None or end is not None and _time(end) is None:
@@ -116,6 +144,10 @@ def validate_actor_registry_v11(registry):
             refs = item.get(evidence_field)
             if not isinstance(refs, list) or any(not isinstance(ref, str) or not ref.strip() for ref in refs):
                 errors.append(f"{label}: invalid {evidence_field}")
+        if item.get("status") in {"VERIFIED", "PROVIDER_LABELLED", "INFERRED"} and not item.get("evidence_refs"):
+            errors.append(f"{label}: attributed relationship requires evidence_refs")
+        if item.get("status") == "DISPUTED" and not item.get("counter_evidence_refs"):
+            errors.append(f"{label}: DISPUTED relationship requires counter_evidence_refs")
         _known_and_recorded(item, datetime.max, label, errors)
         start, end = item.get("valid_from_utc"), item.get("valid_to_utc")
         if start is not None and _time(start) is None or end is not None and _time(end) is None:
