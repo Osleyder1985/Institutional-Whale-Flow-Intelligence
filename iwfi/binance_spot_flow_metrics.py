@@ -14,6 +14,7 @@ import sys
 import zipfile
 from datetime import date, datetime, time, timedelta, timezone
 from decimal import Decimal, InvalidOperation
+from fractions import Fraction
 from pathlib import Path
 from typing import Any
 
@@ -49,6 +50,14 @@ def _format_decimal(value: Decimal) -> str:
     return format(value, "f")
 
 
+def _format_ratio(numerator: Decimal, denominator: Decimal) -> str | None:
+    """Return an exact reduced numerator/denominator ratio, or None at zero denominator."""
+    if denominator == 0:
+        return None
+    ratio = Fraction(numerator) / Fraction(denominator)
+    return f"{ratio.numerator}/{ratio.denominator}"
+
+
 def _utc_text(day: date, seconds_from_midnight: int) -> str:
     value = datetime.combine(day, time.min, tzinfo=timezone.utc) + timedelta(seconds=seconds_from_midnight)
     return value.strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -80,6 +89,8 @@ def _finalize_bucket(record: dict[str, Any], cumulative_base: Decimal,
         "taker_sell_quote_qty": _format_decimal(sell_quote),
         "signed_base_volume_delta": _format_decimal(buy_base - sell_base),
         "signed_quote_volume_delta": _format_decimal(buy_quote - sell_quote),
+        "taker_buy_to_sell_base_ratio": _format_ratio(buy_base, sell_base),
+        "taker_buy_to_sell_quote_ratio": _format_ratio(buy_quote, sell_quote),
         "cumulative_signed_base_volume": _format_decimal(cumulative_base),
         "cumulative_signed_quote_volume": _format_decimal(cumulative_quote),
         "first_timestamp": record["first_timestamp"],
