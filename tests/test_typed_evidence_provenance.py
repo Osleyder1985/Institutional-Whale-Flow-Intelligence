@@ -135,7 +135,7 @@ class TypedEvidenceProvenanceTests(unittest.TestCase):
             "relationships": []}
         result = resolve_actor_registry_evidence_as_of(registry, snapshots(), CUTOFF, EVENT)
         self.assertEqual(result["status"], "RESOLVED")
-        self.assertEqual(len(result["records"]), 2)
+        self.assertEqual(len(result["records"]), 3)
 
     def test_wrong_reference_type_is_rejected(self):
         result = resolve_typed_evidence_refs(
