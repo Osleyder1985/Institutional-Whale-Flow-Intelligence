@@ -165,16 +165,20 @@ def aggregate_bitcoin_entity_deltas(transactions, claims, start_time_utc,
         block_height, block_hash = tx.get("block_height"), tx.get("block_hash")
         inputs, outputs = tx.get("inputs"), tx.get("outputs")
         fee = tx.get("fee_sats")
+        observation_ids = tx.get("source_observation_ids")
         if (not isinstance(block_height, int) or isinstance(block_height, bool) or block_height < 0
                 or not isinstance(block_hash, str) or TXID_PATTERN.fullmatch(block_hash) is None
                 or not isinstance(fee, int) or isinstance(fee, bool) or fee < 0
                 or not isinstance(inputs, list) or not inputs
-                or not isinstance(outputs, list) or not outputs):
+                or not isinstance(outputs, list) or not outputs
+                or not isinstance(observation_ids, list) or not observation_ids
+                or any(not isinstance(value, str) or not value for value in observation_ids)
+                or len(set(observation_ids)) != len(observation_ids)):
             stats["transactions_excluded"]["malformed_accounting_fields"] += 1
             continue
 
         valid = True
-        input_ids, output_ids = set(), set()
+        input_ids, output_ids, prevouts = set(), set(), set()
         input_total = output_total = 0
         for item in inputs:
             if not isinstance(item, dict):
@@ -191,6 +195,15 @@ def aggregate_bitcoin_entity_deltas(transactions, claims, start_time_utc,
                     or not isinstance(amount, int) or isinstance(amount, bool) or amount < 0):
                 valid = False
                 break
+            outpoint = (prev_txid.lower(), prev_vout)
+            if outpoint in prevouts:
+                valid = False
+                break
+            prevouts.add(outpoint)
+            address = item.get("address")
+            if address is not None and (not isinstance(address, str) or not address):
+                valid = False
+                break
             input_ids.add(vin)
             input_total += amount
         if not valid:
@@ -204,6 +217,10 @@ def aggregate_bitcoin_entity_deltas(transactions, claims, start_time_utc,
             if (not isinstance(vout, int) or isinstance(vout, bool) or vout < 0
                     or vout in output_ids or not isinstance(amount, int)
                     or isinstance(amount, bool) or amount < 0):
+                valid = False
+                break
+            address = item.get("address")
+            if address is not None and (not isinstance(address, str) or not address):
                 valid = False
                 break
             output_ids.add(vout)
