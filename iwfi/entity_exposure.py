@@ -76,7 +76,7 @@ def _resolve_control(address, network_id, snapshot_time, known_at, claim_index):
 def aggregate_entity_exposure_history(snapshots, claims, known_at_utc):
     """Aggregate address balances by entity and calculate comparable snapshot deltas.
 
-    A complete entity total requires a reviewed complete inventory and an
+    A complete controlled-address total requires a reviewed complete inventory and an
     admissible CONTROLLED_BY claim for every listed address at snapshot time.
     """
     cutoff = _parse_utc(known_at_utc)
@@ -204,7 +204,7 @@ def aggregate_entity_exposure_history(snapshots, claims, known_at_utc):
             and isinstance(coverage.get("reviewer_id"), str)
             and bool(coverage.get("reviewer_id"))
             and reviewed_at is not None
-            and reviewed_at <= cutoff
+            and snapshot_time <= reviewed_at <= cutoff
             and isinstance(expected_count, int)
             and not isinstance(expected_count, bool)
             and isinstance(observed_count, int)
@@ -293,7 +293,7 @@ def aggregate_entity_exposure_history(snapshots, claims, known_at_utc):
             changes.append({
                 "from_snapshot_batch_id": previous["snapshot_batch_id"],
                 "to_snapshot_batch_id": current["snapshot_batch_id"],
-                "known_address_delta_atomic": known_delta,
+                "known_controlled_address_delta_atomic": known_delta,
                 "total_controlled_address_delta_atomic": total_delta,
                 "relative_controlled_address_change": relative_change,
                 "candidate_direction": direction,
@@ -319,7 +319,7 @@ def aggregate_entity_exposure_history(snapshots, claims, known_at_utc):
         "excluded": dict(sorted(excluded.items())),
         "limitations": [
             "Known-address exposure is only the sum of addresses with admissible control claims.",
-            "Total entity exposure is emitted only with reviewed complete inventory and complete address attribution.",
+            "Total controlled-address exposure is emitted only with reviewed complete inventory and complete address attribution.",
             "CONTROLLED_BY proves address control, not beneficial ownership or treasury ownership.",
             "Custodial customer assets must not be interpreted as the custodian's proprietary holdings.",
             "Candidate direction is a descriptive net balance change and is always NOT_CALIBRATED.",
