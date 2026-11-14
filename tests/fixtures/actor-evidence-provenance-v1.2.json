@@ -1,0 +1,89 @@
+{
+  "fixture_version": "1.0.0",
+  "description": "Synthetic BTC/ETH provenance records; no live provider data.",
+  "knowledge_cutoff_utc": "2026-11-10T00:00:00Z",
+  "valid_time_utc": "2026-11-09T12:00:00Z",
+  "snapshots": {
+    "SOURCE_OBSERVATION": {
+      "status": "COMPLETE",
+      "records": [
+        {
+          "observation_id": "obs-btc-synthetic-001",
+          "retrieved_at_utc": "2026-11-09T13:00:00Z",
+          "event_time_utc": "2026-11-09T12:00:00Z",
+          "observation_type": "ON_CHAIN_TRANSACTION",
+          "asset": "BTC"
+        },
+        {
+          "observation_id": "obs-eth-synthetic-001",
+          "retrieved_at_utc": "2026-11-09T13:05:00Z",
+          "event_time_utc": "2026-11-09T12:05:00Z",
+          "observation_type": "PUBLIC_FILING",
+          "asset": "ETH"
+        }
+      ]
+    },
+    "ATTRIBUTION_CLAIM": {
+      "status": "COMPLETE",
+      "records": [
+        {
+          "claim_id": "claim-btc-synthetic-001",
+          "known_at_utc": "2026-11-09T14:00:00Z",
+          "recorded_at_utc": "2026-11-09T14:01:00Z",
+          "valid_from_utc": "2026-11-09T12:00:00Z",
+          "valid_to_utc": null,
+          "epistemic_status": "DISPUTED",
+          "evidence_refs": [
+            {
+              "ref_type": "SOURCE_OBSERVATION",
+              "ref_id": "obs-btc-synthetic-001"
+            }
+          ]
+        },
+        {
+          "claim_id": "claim-eth-synthetic-001",
+          "known_at_utc": "2026-11-09T14:05:00Z",
+          "recorded_at_utc": "2026-11-09T14:06:00Z",
+          "valid_from_utc": "2026-11-09T12:05:00Z",
+          "valid_to_utc": null,
+          "epistemic_status": "INFERRED",
+          "evidence_refs": [
+            {
+              "ref_type": "SOURCE_OBSERVATION",
+              "ref_id": "obs-eth-synthetic-001"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "actors": [
+    {
+      "actor_id": "actor-btc-synthetic",
+      "identity_status": "DISPUTED",
+      "evidence_refs": [
+        {
+          "ref_type": "SOURCE_OBSERVATION",
+          "ref_id": "obs-btc-synthetic-001"
+        }
+      ],
+      "counter_evidence_refs": [
+        {
+          "ref_type": "ATTRIBUTION_CLAIM",
+          "ref_id": "claim-btc-synthetic-001"
+        }
+      ]
+    },
+    {
+      "actor_id": "actor-eth-synthetic",
+      "identity_status": "INFERRED",
+      "evidence_refs": [
+        {
+          "ref_type": "ATTRIBUTION_CLAIM",
+          "ref_id": "claim-eth-synthetic-001"
+        }
+      ],
+      "counter_evidence_refs": []
+    }
+  ]
+}
