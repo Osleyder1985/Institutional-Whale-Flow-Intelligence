@@ -172,6 +172,36 @@ class AuditPackageZipTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "AUTHORIZATION_INCOMPLETE"):
             build(manifest, payloads, context)
 
+    def test_revoked_artifact_authorization_rejects_package(self):
+        manifest, payloads = fixture()
+        context = authorization_context(manifest)
+        context["artifact_authorizations"][0]["status"] = "REVOKED"
+        with self.assertRaisesRegex(ValueError, "AUTHORIZATION_MISMATCH"):
+            build(manifest, payloads, context)
+
+    def test_expired_source_policy_rejects_package(self):
+        manifest, payloads = fixture()
+        context = authorization_context(manifest)
+        context["source_policies"][0]["expires_at_utc"] = "2026-11-14T12:00:00Z"
+        with self.assertRaisesRegex(ValueError, "SOURCE_POLICY_INACTIVE_OR_EXPIRED"):
+            build(manifest, payloads, context)
+
+    def test_source_lineage_cycle_rejects_package(self):
+        manifest, payloads = fixture()
+        context = authorization_context(manifest)
+        source = context["artifact_authorizations"][0]["source_ids"][0]
+        context["source_lineage"][source] = ["upstream:cycle"]
+        context["source_lineage"]["upstream:cycle"] = [source]
+        with self.assertRaisesRegex(ValueError, "SOURCE_LINEAGE_CYCLE"):
+            build(manifest, payloads, context)
+
+    def test_duplicate_artifact_authorization_rejects_package(self):
+        manifest, payloads = fixture()
+        context = authorization_context(manifest)
+        context["artifact_authorizations"].append(dict(context["artifact_authorizations"][0]))
+        with self.assertRaisesRegex(ValueError, "DUPLICATE_ARTIFACT_AUTHORIZATIONS"):
+            build(manifest, payloads, context)
+
     def test_contradictory_source_policy_rejects_package(self):
         manifest, payloads = fixture()
         context = authorization_context(manifest)
