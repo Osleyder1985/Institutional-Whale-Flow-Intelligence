@@ -54,6 +54,7 @@
         "path",
         "role",
         "media_type",
+        "source_ids",
         "size_bytes",
         "hash_algorithm",
         "sha256"
@@ -70,6 +71,11 @@
         "media_type": {
           "type": "string",
           "minLength": 1
+        },
+        "source_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
         },
         "size_bytes": {
           "type": "integer",
