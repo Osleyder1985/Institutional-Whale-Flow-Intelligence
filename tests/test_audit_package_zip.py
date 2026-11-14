@@ -30,7 +30,8 @@ def fixture():
         "snapshots/evidence-001.bin": ("EVIDENCE_SNAPSHOT", "application/octet-stream"),
     }
     artifacts = [
-        {"path": path, "role": roles[path][0], "media_type": roles[path][1], "content": content}
+        {"path": path, "role": roles[path][0], "media_type": roles[path][1],
+         "source_ids": ["source:" + path], "content": content}
         for path, content in payloads.items()
     ]
     manifest = build_audit_package_manifest(
@@ -42,7 +43,7 @@ def fixture():
 def authorization_context(manifest, evaluated_at=EVALUATED):
     authorizations, policies, lineage = [], [], {}
     for index, item in enumerate(manifest["artifacts"]):
-        source = "source:" + item["path"]
+        source = item["source_ids"][0]
         lineage[source] = []
         authorizations.append({
             "authorization_id": "auth-" + str(index),
@@ -140,6 +141,21 @@ class AuditPackageZipTests(unittest.TestCase):
         context = authorization_context(manifest)
         context["artifact_authorizations"].pop()
         with self.assertRaisesRegex(ValueError, "ARTIFACT_AUTHORIZATION_INVENTORY_MISMATCH"):
+            build(manifest, payloads, context)
+
+    def test_authorization_cannot_omit_or_substitute_manifest_sources(self):
+        manifest, payloads = fixture()
+        context = authorization_context(manifest)
+        context["artifact_authorizations"][0]["source_ids"] = ["unrelated-source"]
+        context["source_lineage"]["unrelated-source"] = []
+        context["source_policies"].append({
+            "policy_id": "unrelated-policy", "policy_version": "1.0",
+            "source_id": "unrelated-source", "rights_ref": "synthetic-rights:unrelated",
+            "status": "ACTIVE", "valid_from_utc": "2026-01-01T00:00:00Z",
+            "expires_at_utc": "2027-01-01T00:00:00Z",
+            "allowed_actions": ["RETAIN_LOCAL"], "prohibited_actions": [],
+        })
+        with self.assertRaisesRegex(ValueError, "SOURCE_BINDING_MISMATCH"):
             build(manifest, payloads, context)
 
     def test_expired_artifact_authorization_rejects_package(self):
