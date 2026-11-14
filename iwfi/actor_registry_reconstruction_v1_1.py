@@ -61,6 +61,7 @@ def _collect_registry_references(registry):
             entries = actor.get(field, [])
             if not isinstance(entries, list):
                 raise ValueError(base + "/" + field + " must be an array")
+            seen_entries = set()
             for j, entry in enumerate(entries):
                 if not isinstance(entry, dict):
                     raise ValueError("invalid " + field + " entry")
@@ -70,6 +71,9 @@ def _collect_registry_references(registry):
                     identity = entry.get("classification")
                 if not isinstance(identity, str) or not identity.strip():
                     raise ValueError(field + " entry requires stable value/classification")
+                if identity in seen_entries:
+                    raise ValueError("duplicate " + field + " identity within actor")
+                seen_entries.add(identity)
                 path = base + "/" + field + "/" + identity
                 add(entry, path, "evidence_refs")
     for relationship in relationships:
@@ -132,9 +136,10 @@ def build_actor_registry_reconstruction_manifest_v1_1(
         ids = reference_snapshot_map[key]
         if isinstance(ids, str):
             ids = [ids]
-        if not isinstance(ids, list) or not ids or any(sid not in descriptors for sid in ids):
-            raise ValueError("every registry reference needs known snapshot dependencies: " + key)
-        mapped[(ref["record_path"], ref["polarity"], ref["ref_type"], ref["ref_id"])] = sorted(set(ids))
+        if (not isinstance(ids, list) or not ids or len(ids) != len(set(ids))
+                or any(sid not in descriptors for sid in ids)):
+            raise ValueError("every registry reference needs unique known snapshot dependencies: " + key)
+        mapped[(ref["record_path"], ref["polarity"], ref["ref_type"], ref["ref_id"])] = sorted(ids)
         for sid in ids:
             dependencies[sid] = descriptors[sid]
     frozen_refs = []
@@ -237,6 +242,7 @@ def verify_actor_registry_reconstruction_manifest_v1_1(
     if set(dep_by_id) != reference_snapshot_ids:
         return fail("DEPENDENCY_REFERENCE_SET_MISMATCH")
     results = []
+    decoded_by_id = {}
     for sid, dep in sorted(dep_by_id.items()):
         snapshot, payload = snapshots_by_id.get(sid), payloads_by_id.get(sid)
         if not isinstance(snapshot, dict):
@@ -255,11 +261,36 @@ def verify_actor_registry_reconstruction_manifest_v1_1(
                     status = "SNAPSHOT_AFTER_CUTOFF"
                 else:
                     status = verify_snapshot_payload(snapshot, payload).get("status")
-            except ValueError:
-                status = "INVALID_SNAPSHOT_TIMESTAMP"
+                    if status == "HASH_VERIFIED":
+                        document = json.loads(payload.decode("utf-8"))
+                        if not isinstance(document, dict) or not isinstance(document.get("records"), list):
+                            status = "INVALID_SNAPSHOT_DOCUMENT"
+                        else:
+                            decoded_by_id[sid] = document
+            except (ValueError, UnicodeDecodeError, json.JSONDecodeError):
+                status = "INVALID_SNAPSHOT_DOCUMENT"
         results.append({"source_snapshot_id": sid, "status": status})
     if any(x["status"] != "HASH_VERIFIED" for x in results):
         return fail("SNAPSHOT_VERIFICATION_FAILED", results)
+    for ref in frozen:
+        expected_record_type = ref["ref_type"]
+        id_field = "observation_id" if expected_record_type == "SOURCE_OBSERVATION" else "claim_id"
+        present = False
+        for sid in ref["snapshot_ids"]:
+            document = decoded_by_id.get(sid)
+            if document is None or document.get("record_type") != expected_record_type:
+                continue
+            coverage = document.get("coverage_status")
+            if coverage not in {"COMPLETE", "PARTIAL"}:
+                continue
+            if any(isinstance(record, dict) and record.get(id_field) == ref["ref_id"]
+                   for record in document["records"]):
+                present = True
+                break
+        if not present:
+            return fail("REFERENCED_RECORD_NOT_PRESENT_IN_BOUND_SNAPSHOTS", [
+                {"record_path": ref["record_path"], "ref_type": expected_record_type,
+                 "ref_id": ref["ref_id"]}])
     return {"status": "ACTOR_REGISTRY_RECONSTRUCTION_VERIFIED",
             "registry_hash_status": "HASH_VERIFIED",
             "reference_status": "COMPLETE_EXACT_MATCH",
