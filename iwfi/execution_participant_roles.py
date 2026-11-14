@@ -15,6 +15,14 @@ _DIRECT_EVIDENCE = {
     "VENUE_PARTICIPANT_DISCLOSURE",
     "AUTHORIZED_ACCOUNT_LINK",
 }
+_METHODS = _DIRECT_EVIDENCE | {"EVIDENCE_CORROBORATION", "PROVIDER_LABEL", "NONE", "CONFLICT_REVIEW", "OTHER"}
+_EVIDENCE_TYPES = _DIRECT_EVIDENCE | {"PROVIDER_ATTRIBUTION", "ON_CHAIN_OBSERVATION", "OTHER"}
+_REQUIRED_CLAIM_FIELDS = {
+    "contract_version", "claim_id", "trade_id", "actor_id", "candidate_actor_ids",
+    "participant_role", "participant_side", "epistemic_status", "attribution_method",
+    "recorded_at_utc", "known_at_utc", "valid_from_utc", "valid_to_utc",
+    "source_observation_ids", "supporting_evidence", "counter_evidence",
+}
 
 
 def _time(value):
@@ -76,6 +84,11 @@ def validate_execution_participant_roles(registry, trades, actor_ids, observatio
         if not isinstance(claim, dict):
             errors.append(f"claims[{index}] must be an object")
             continue
+        missing_fields = _REQUIRED_CLAIM_FIELDS - set(claim)
+        if missing_fields:
+            errors.append(f"claims[{index}] missing required fields: {sorted(missing_fields)}")
+        if claim.get("contract_version") != "1.1.0":
+            errors.append(f"claims[{index}] has unsupported contract_version")
         claim_id = claim.get("claim_id")
         if not _nonempty(claim_id):
             errors.append(f"claims[{index}] has invalid claim_id")
@@ -98,6 +111,17 @@ def validate_execution_participant_roles(registry, trades, actor_ids, observatio
             errors.append(f"claim {claim_id}: participant_side is incompatible with participant_role")
         if status not in _STATUSES:
             errors.append(f"claim {claim_id}: invalid epistemic_status")
+        method = claim.get("attribution_method")
+        if method not in _METHODS:
+            errors.append(f"claim {claim_id}: invalid attribution_method")
+        elif status == "DIRECT" and method not in _DIRECT_EVIDENCE:
+            errors.append(f"claim {claim_id}: DIRECT requires a direct attribution method")
+        elif status == "INFERRED" and method not in {"EVIDENCE_CORROBORATION", "OTHER"}:
+            errors.append(f"claim {claim_id}: INFERRED requires an inference method")
+        elif status == "UNKNOWN" and method != "NONE":
+            errors.append(f"claim {claim_id}: UNKNOWN must use NONE")
+        elif status == "DISPUTED" and method != "CONFLICT_REVIEW":
+            errors.append(f"claim {claim_id}: DISPUTED must use CONFLICT_REVIEW")
 
         actor_id = claim.get("actor_id")
         candidates = claim.get("candidate_actor_ids")
@@ -158,6 +182,10 @@ def validate_execution_participant_roles(registry, trades, actor_ids, observatio
                 if not isinstance(item, dict):
                     errors.append(f"claim {claim_id}: {evidence_field}[{evidence_index}] must be an object")
                     continue
+                if item.get("evidence_type") not in _EVIDENCE_TYPES:
+                    errors.append(f"claim {claim_id}: {evidence_field}[{evidence_index}] has invalid evidence_type")
+                if not _nonempty(item.get("source")) or not _nonempty(item.get("record_ref")):
+                    errors.append(f"claim {claim_id}: {evidence_field}[{evidence_index}] has invalid source/record_ref")
                 observation_id = item.get("observation_id")
                 if observation_id is not None:
                     if not _nonempty(observation_id) or observation_id not in observations:
