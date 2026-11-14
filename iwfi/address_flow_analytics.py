@@ -75,6 +75,8 @@ def summarize_address_flows(
     for index, movement in enumerate(rows):
         if not isinstance(movement, dict):
             raise AddressFlowAnalyticsError(f"movements[{index}] must be an object")
+        if movement.get("contract_version") != "1.0.0":
+            raise AddressFlowAnalyticsError(f"movements[{index}]: unsupported contract_version")
         movement_id = movement.get("movement_id")
         if not isinstance(movement_id, str) or not movement_id:
             raise AddressFlowAnalyticsError(f"movements[{index}] has no movement_id")
