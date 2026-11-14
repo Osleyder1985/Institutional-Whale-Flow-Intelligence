@@ -5,7 +5,6 @@ import argparse
 import hashlib
 import json
 import re
-import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.error import HTTPError, URLError
@@ -74,23 +73,16 @@ def load_registry(path=DEFAULT_REGISTRY):
 def read_body(response):
     digest = hashlib.sha256()
     size = 0
-    fd, temp_name = tempfile.mkstemp(prefix="iwfi-observe-")
-    try:
-        with open(fd, "wb", closefd=True) as sink:
-            while True:
-                block = response.read(CHUNK_SIZE)
-                if not block:
-                    break
-                sink.write(block)
-                digest.update(block)
-                size += len(block)
-            sink.flush()
-        expected_length = response.headers.get("Content-Length")
-        if expected_length is not None and int(expected_length) != size:
-            raise ObservationError("CONTENT_LENGTH_MISMATCH")
-        return digest.hexdigest(), size
-    finally:
-        Path(temp_name).unlink(missing_ok=True)
+    while True:
+        block = response.read(CHUNK_SIZE)
+        if not block:
+            break
+        digest.update(block)
+        size += len(block)
+    expected_length = response.headers.get("Content-Length")
+    if expected_length is not None and int(expected_length) != size:
+        raise ObservationError("CONTENT_LENGTH_MISMATCH")
+    return digest.hexdigest(), size
 
 
 def observe_source(source, opener=None, observed_at=None):
