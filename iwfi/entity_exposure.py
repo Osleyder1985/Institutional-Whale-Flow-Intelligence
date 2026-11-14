@@ -107,6 +107,10 @@ def aggregate_entity_exposure_history(snapshots, claims, known_at_utc):
             raise ValueError(f"duplicate snapshot_batch_id: {batch_id}")
         seen_ids.add(batch_id)
 
+        scope_entity_id = snapshot.get("scope_entity_id")
+        if not isinstance(scope_entity_id, str) or not scope_entity_id:
+            excluded["invalid_scope_entity_id"] += 1
+            continue
         asset_id, network_id = snapshot.get("asset_id"), snapshot.get("network_id")
         expected = {
             "bitcoin:btc": ("bitcoin-mainnet", "satoshi"),
@@ -187,6 +191,10 @@ def aggregate_entity_exposure_history(snapshots, claims, known_at_utc):
             and reviewed_at <= cutoff
             and isinstance(expected_count, int)
             and not isinstance(expected_count, bool)
+            and isinstance(observed_count, int)
+            and not isinstance(observed_count, bool)
+            and isinstance(inventory_unresolved, int)
+            and not isinstance(inventory_unresolved, bool)
             and expected_count == len(addresses)
             and observed_count == len(addresses)
             and inventory_unresolved == 0
@@ -203,9 +211,9 @@ def aggregate_entity_exposure_history(snapshots, claims, known_at_utc):
             coverage_status = "PARTIAL"
             total_exposure = None
 
-        grouped[(snapshot.get("scope_entity_id"), asset_id, expected[1])].append({
+        grouped[(scope_entity_id, asset_id, expected[1])].append({
             "snapshot_batch_id": batch_id,
-            "entity_id": snapshot.get("scope_entity_id"),
+            "entity_id": scope_entity_id,
             "asset_id": asset_id,
             "network_id": network_id,
             "unit": expected[1],
@@ -235,7 +243,7 @@ def aggregate_entity_exposure_history(snapshots, claims, known_at_utc):
             same_address_set = previous["_address_set"] == current["_address_set"]
             known_delta = (
                 current["known_address_exposure_atomic"] - previous["known_address_exposure_atomic"]
-                if same_address_set and previous["coverage_status"] != "UNKNOWN"
+                if same_address_set and previous["_address_set"] and previous["coverage_status"] != "UNKNOWN"
                 and current["coverage_status"] != "UNKNOWN" else None
             )
             total_delta = None
