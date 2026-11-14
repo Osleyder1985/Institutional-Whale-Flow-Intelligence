@@ -194,8 +194,9 @@ class EntityExposureTests(unittest.TestCase):
         item = snapshot("eth-duplicate", "2026-11-01T00:00:00Z",
                          [(address, 100), (address.lower(), 200)],
                          asset="ethereum:eth", network="eip155:1", unit="wei")
-        with self.assertRaisesRegex(ValueError, "invalid_address_balance_record"):
-            aggregate([item], [claim("eth-duplicate-claim", address.lower(), network="eip155:1")])
+        result = aggregate([item], [claim("eth-duplicate-claim", address.lower(), network="eip155:1")])
+        self.assertEqual(result["histories"], [])
+        self.assertEqual(result["excluded"]["invalid_address_balance_record"], 1)
 
     def test_bitcoin_address_matching_remains_case_sensitive(self):
         item = snapshot("btc-case", "2026-11-01T00:00:00Z", [("Bc1qAddress", 1000)])
