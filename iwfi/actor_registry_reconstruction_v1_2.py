@@ -57,8 +57,17 @@ def build_actor_registry_reconstruction_manifest_v1_2(
         raise ValueError("root claim snapshot bytes must be retained for reconstruction")
     if not isinstance(descriptor.get("source_snapshot_id"), str) or not descriptor["source_snapshot_id"].strip():
         raise ValueError("root claim snapshot ID is required")
-    if _time(descriptor.get("retrieved_at_utc")) > _time(knowledge_cutoff_utc):
+    cutoff = _time(knowledge_cutoff_utc)
+    if _time(descriptor.get("retrieved_at_utc")) > cutoff:
         raise ValueError("root claim snapshot retrieved after knowledge cutoff")
+    recorded_at = root_claim.get("recorded_at_utc")
+    if _time(recorded_at) > cutoff:
+        raise ValueError("root claim recorded after knowledge cutoff")
+    valid_time = _time(valid_time_utc)
+    if root_claim.get("valid_from_utc") is not None and valid_time < _time(root_claim["valid_from_utc"]):
+        raise ValueError("valid time precedes root claim validity interval")
+    if root_claim.get("valid_to_utc") is not None and valid_time > _time(root_claim["valid_to_utc"]):
+        raise ValueError("valid time follows root claim validity interval")
     integrity = verify_snapshot_payload(descriptor, root_claim_payload)
     if integrity.get("status") != "HASH_VERIFIED":
         raise ValueError("root claim snapshot payload hash is not verified")
@@ -122,8 +131,16 @@ def verify_actor_registry_reconstruction_manifest_v1_2(
             return fail("ROOT_CLAIM_MEDIA_TYPE_UNSUPPORTED")
         if root_claim_snapshot_descriptor.get("payload_retention") != "RETAINED":
             return fail("ROOT_CLAIM_PAYLOAD_NOT_RETAINED")
-        if _time(root_claim_snapshot_descriptor.get("retrieved_at_utc")) > _time(knowledge_cutoff_utc):
+        cutoff = _time(knowledge_cutoff_utc)
+        if _time(root_claim_snapshot_descriptor.get("retrieved_at_utc")) > cutoff:
             return fail("ROOT_CLAIM_SNAPSHOT_AFTER_CUTOFF")
+        if _time(root_claim.get("recorded_at_utc")) > cutoff:
+            return fail("ROOT_CLAIM_RECORDED_AFTER_CUTOFF")
+        valid_time = _time(valid_time_utc)
+        if root_claim.get("valid_from_utc") is not None and valid_time < _time(root_claim["valid_from_utc"]):
+            return fail("ROOT_CLAIM_VALID_TIME_BEFORE_INTERVAL")
+        if root_claim.get("valid_to_utc") is not None and valid_time > _time(root_claim["valid_to_utc"]):
+            return fail("ROOT_CLAIM_VALID_TIME_AFTER_INTERVAL")
         if verify_snapshot_payload(root_claim_snapshot_descriptor, root_claim_payload).get("status") != "HASH_VERIFIED":
             return fail("ROOT_CLAIM_SNAPSHOT_HASH_MISMATCH")
         root_claim = json.loads(root_claim_payload.decode("utf-8"))
