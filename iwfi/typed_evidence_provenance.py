@@ -6,7 +6,7 @@ It performs no I/O and never upgrades an upstream epistemic status.
 from datetime import datetime
 import re
 
-_UTC = re.compile(r"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$")
+_UTC = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
 _ALLOWED_TYPES = {"SOURCE_OBSERVATION", "ATTRIBUTION_CLAIM"}
 _ALLOWED_STATUS = {"VERIFIED", "PROVIDER_LABELLED", "INFERRED", "UNKNOWN", "DISPUTED"}
 
@@ -45,7 +45,7 @@ def _snapshot_status(snapshot):
 
 
 def _is_visible(record, cutoff, valid_time, require_validity):
-    known = _parse_time(record.get("known_at_utc", record.get("retrieved_at_utc")) )
+    known = _parse_time(record.get("known_at_utc", record.get("retrieved_at_utc")))
     recorded = _parse_time(record.get("recorded_at_utc", record.get("retrieved_at_utc")))
     if known is None or recorded is None or recorded < known:
         return False, "INVALID_TEMPORAL_METADATA"
@@ -98,7 +98,6 @@ def _resolve(ref, snapshots, cutoff, valid_time, predicate=None):
         status = record.get("epistemic_status", record.get("status"))
         if status not in _ALLOWED_STATUS:
             return None, "INVALID_UPSTREAM_EPISTEMIC_STATUS"
-        # Claims may cite observations, but may not recursively cite other claims.
         nested = record.get("evidence_refs", [])
         if not isinstance(nested, list):
             return None, "INVALID_UPSTREAM_EVIDENCE"
@@ -116,7 +115,7 @@ def resolve_typed_evidence_refs(evidence_refs, snapshots, knowledge_cutoff_utc,
     Missing snapshot != missing record. Partial snapshots never prove non-existence.
     """
     cutoff, valid_time = _parse_time(knowledge_cutoff_utc), _parse_time(valid_time_utc)
-    if cutoff is None or valid_time is None or not isinstance(evidence_refs, list):
+    if cutoff is None or valid_time is None or not isinstance(evidence_refs, list) or not isinstance(snapshots, dict):
         return {"status": "INVALID_INPUT", "resolved": [], "rejected": ["INVALID_QUERY_TIME_OR_REFS"]}
     resolved, rejected = [], []
     seen = set()
