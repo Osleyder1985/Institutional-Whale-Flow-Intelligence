@@ -64,7 +64,11 @@ def delete_artifacts(root, artifact_id, dependent_artifact_ids_reviewed,
         raise ArtifactDeletionError("deletion_method is required")
     if not isinstance(dependent_artifact_ids_reviewed, list) or not isinstance(backup_artifact_ids_reviewed, list):
         raise ArtifactDeletionError("dependency and backup reviews must be explicit lists")
-    all_ids = [artifact_id] + dependent_artifact_ids_reviewed + backup_artifact_ids_reviewed
+    if len(backup_artifact_ids_reviewed) != len(set(backup_artifact_ids_reviewed)):
+        raise ArtifactDeletionError("backup artifact IDs must be unique")
+    all_ids = [artifact_id] + dependent_artifact_ids_reviewed + [
+        item for item in backup_artifact_ids_reviewed if item != artifact_id
+    ]
     if any(not isinstance(item, str) or not _SAFE_ID.fullmatch(item) for item in all_ids):
         raise ArtifactDeletionError("all reviewed artifact IDs must be safe strings")
     if len(all_ids) != len(set(all_ids)):
@@ -87,7 +91,9 @@ def delete_artifacts(root, artifact_id, dependent_artifact_ids_reviewed,
     expected_dependents = dependent_artifact_ids_for(inventory, artifact_id)
     expected_backups = inventory["backup_artifact_ids"]
     related_backups = related_backup_artifact_ids_for(inventory, artifact_id)
-    deletion_ids = [artifact_id] + expected_dependents + related_backups
+    deletion_ids = [artifact_id] + expected_dependents + [
+        item for item in related_backups if item != artifact_id
+    ]
     if set(dependent_artifact_ids_reviewed) != set(expected_dependents):
         raise ArtifactDeletionError(
             "dependency review does not match complete local inventory; expected: "
@@ -149,7 +155,8 @@ def delete_artifacts(root, artifact_id, dependent_artifact_ids_reviewed,
     }
     try:
         with started_path.open("x", encoding="utf-8", newline="") as stream:
-            stream.write(json.dumps(started_audit, sort_keys=True, separators=(",", ":")) + "\n")
+            stream.write(json.dumps(started_audit, sort_keys=True, separators=(",", ":")) + "
+")
             stream.flush()
             os.fsync(stream.fileno())
     except FileExistsError as exc:
@@ -195,7 +202,8 @@ def delete_artifacts(root, artifact_id, dependent_artifact_ids_reviewed,
     }
     try:
         with completed_path.open("x", encoding="utf-8", newline="") as stream:
-            stream.write(json.dumps(audit, sort_keys=True, separators=(",", ":")) + "\n")
+            stream.write(json.dumps(audit, sort_keys=True, separators=(",", ":")) + "
+")
             stream.flush()
             os.fsync(stream.fileno())
     except FileExistsError as exc:
