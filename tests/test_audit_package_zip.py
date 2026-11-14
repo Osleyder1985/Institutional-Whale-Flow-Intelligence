@@ -83,7 +83,13 @@ class AuditPackageZipTests(unittest.TestCase):
             return json.loads(source.read(MANIFEST_PATH).decode("utf-8"))
 
     def verify(self, archive, context=None, expected=ROOT_HASH):
-        manifest = self._manifest(archive)
+        try:
+            manifest = self._manifest(archive)
+        except zipfile.BadZipFile:
+            return verify_audit_package_zip(
+                archive_bytes=archive,
+                expected_reconstruction_manifest_hash=expected,
+                authorization_context=context or {})
         return verify_audit_package_zip(
             archive_bytes=archive,
             expected_reconstruction_manifest_hash=expected,
