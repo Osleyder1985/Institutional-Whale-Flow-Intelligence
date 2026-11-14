@@ -323,13 +323,20 @@ Official Vision Dataset Terms (version 1.0, updated 2026-08-26) state:
 
 **Preliminary decision for the user's declared personal, non-commercial research:** the historical archive appears to fit the stated personal non-production research category, provided the project remains within all Vision Dataset Terms and the incorporated CC BY-NC-SA obligations. This is a source-specific preliminary assessment, not legal advice or authorization for a commercial/live product. No redistribution of raw data, de-anonymization, or commercial use is approved.
 
-### 13.2 Live public Spot API: capability is documented; terms approval remains open
+### 13.2 Endpoint clarification: do not classify data-api.binance.vision as a live feed
 
-Binance's Spot REST documentation identifies `https://data-api.binance.vision` as the market-data-only base URL and lists public endpoints including `/api/v3/trades`, `/api/v3/aggTrades`, `/api/v3/depth`, `/api/v3/klines`, and ticker endpoints. The market-data-only FAQ states these requests do not require an API key.
+Binance Spot REST documentation and its market-data-only FAQ describe `https://data-api.binance.vision` as a public market-data-only base URL. However, a contributor response dated 2026-11-05 in the official `binance/binance-public-data` repository, Issue #502, explicitly states that `data-api.binance.vision` is not a live Binance endpoint for the Vision Dataset Terms question, and instructs users to rely only on `data.binance.vision` and the endpoints listed there.
 
-However, the Vision Dataset Terms are specifically presented as terms for the Binance Vision Datasets. They must not automatically be treated as a complete legal review of every live public API endpoint. The applicable terms for automated live API use, local retention and the intended personal research workflow must be separately confirmed before any live API adapter is approved or activated.
+IWFI adopts the conservative interpretation:
+- Do not model `data-api.binance.vision` as a live streaming or real-time feed.
+- Do not build or activate an adapter against that host under the Binance Vision historical-dataset approval.
+- The source under evaluation is the downloadable archive service at `data.binance.vision`, with daily/monthly files and published checksums.
+- Automated retrieval of those datasets, including via endpoints listed by the archive, is subject to the Vision Dataset Terms and Binance Terms of Use.
+- The repository contributor response is useful source-specific clarification, but it is not a signed legal opinion or a substitute for written confirmation from Binance Legal/licensing if scope remains ambiguous.
 
-The REST API documentation states timestamps are milliseconds by default and supports microsecond response timestamps through the `X-MBX-TIME-UNIT` header. It documents HTTP 429 for request-rate violations and HTTP 418 for an IP ban after continuing to send requests following 429. An adapter must respect returned rate-limit information and stop/back off; it must not retry in a way that circumvents limits.
+The Binance Spot REST documentation may describe API behavior, timestamps, rate limits and public endpoints, but that documentation alone does not establish that a given endpoint is part of the Vision Dataset archive service or authorize IWFI to treat it as a live feed. Keep the REST API and archive source classes separate.
+
+No live API adapter is approved. Any future request to use a different Binance endpoint must receive its own endpoint-specific cost, terms, retention and capability review before implementation or activation.
 
 ### 13.3 What the trade fields can and cannot establish
 
@@ -344,7 +351,7 @@ The REST API documentation states timestamps are milliseconds by default and sup
 | Source | Capability decision | Cost decision | Terms decision | IWFI activation |
 |---|---|---|---|---|
 | Binance Vision historical Spot trade archive | Candidate for historical venue-execution observations for BTCUSDT and ETHUSDT | Free of charge under published Vision Dataset Terms | Preliminary fit for personal non-production research only; comply with CC BY-NC-SA 4.0 and additional terms | NOT YET APPROVED; sample validation and retention design remain pending |
-| Binance live public Spot market-data API | Public trade/depth/market data endpoints documented without API key | No endpoint charge is documented for the market-data-only route; quota/operational limits still apply | Applicable terms for automated live API access and retention not yet separately cleared | NOT APPROVED pending terms review |
+| `data-api.binance.vision` | Not approved or classified as a live feed for IWFI; keep distinct from downloadable Vision archives | Cost/entitlement not approved for IWFI use | Repository contributor clarification in Issue #502 says rely on `data.binance.vision` and its listed endpoints for Vision Datasets | NOT APPROVED; no adapter |
 
 ### 13.5 Official references
 
@@ -354,4 +361,4 @@ The REST API documentation states timestamps are milliseconds by default and sup
 - Binance Public Data archive documentation: https://github.com/binance/binance-public-data/blob/master/README.md
 - Binance Vision Dataset Terms: https://github.com/binance/binance-public-data/blob/master/TERMS_AND_CONDITIONS.md
 
-**Decision:** Binance Vision historical Spot trades are the strongest documented zero-price historical market-execution candidate found so far for the personal non-production research scope. This does not identify institutions and does not approve live API polling. Issue #3 remains open until BTC/ETH samples, checksums, timestamp transitions, archive revisions, applicable terms and retention handling are tested and recorded.
+**Decision:** Binance Vision historical Spot trades are the strongest documented zero-price historical market-execution candidate found so far for the personal non-production research scope. This does not identify institutions and does not approve live API polling. Do not treat `data-api.binance.vision` as an IWFI live feed. Issue #3 remains open until BTC/ETH archive samples, checksums, timestamp transitions, archive revisions, applicable terms and retention handling are tested and recorded.
