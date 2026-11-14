@@ -125,6 +125,19 @@ def build_actor_registry_reconstruction_manifest_v1_1(
             raise ValueError("snapshot IDs must be present and unique")
         if _time(descriptor.get("retrieved_at_utc")) > cutoff:
             raise ValueError("snapshot retrieved after knowledge cutoff")
+        payload_hash = descriptor.get("payload_hash")
+        if (not isinstance(payload_hash, str) or len(payload_hash) != 64
+                or descriptor.get("hash_algorithm") != "SHA-256"
+                or descriptor.get("hash_scope") not in {"RAW_BYTES", "CANONICAL_JSON"}
+                or not isinstance(descriptor.get("source_id"), str)
+                or not descriptor["source_id"].strip()):
+            raise ValueError("snapshot must have a verifiable SHA-256 payload descriptor")
+        try:
+            int(payload_hash, 16)
+        except ValueError as exc:
+            raise ValueError("snapshot payload_hash must be lowercase SHA-256 hex") from exc
+        if payload_hash.lower() != payload_hash:
+            raise ValueError("snapshot payload_hash must be lowercase SHA-256 hex")
         descriptors[sid] = descriptor
     expected_keys = {_reference_key(r["ref_type"], r["ref_id"]) for r in refs}
     if set(reference_snapshot_map) != expected_keys:
