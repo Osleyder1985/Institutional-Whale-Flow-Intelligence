@@ -128,7 +128,7 @@ class AuditPackageZipTests(unittest.TestCase):
             build_audit_package_zip(
                 manifest=manifest,
                 artifacts_by_path={"claims/root-claim.json": b'{"claim_id":"synthetic"}'},
-                authorization_context=authorization_context(manifest))
+                authorization_context={})
 
     def test_inventory_must_verify_before_export(self):
         manifest, payloads = fixture()
