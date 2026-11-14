@@ -13,7 +13,7 @@ The function consumes Movement Ledger records and the canonical append-only clai
 An address is attributed only when a claim satisfies all of the following:
 
 - subject is the exact address on the movement's network;
-- predicate is `CONTROLLED_BY` or `OPERATED_BY`;
+- predicate is `CONTROLLED_BY`;
 - object is an `ENTITY`;
 - epistemic status is `VERIFIED`;
 - review status is `REVIEWED`;
@@ -21,7 +21,7 @@ An address is attributed only when a claim satisfies all of the following:
 - `recorded_at_utc <= known_at_utc`;
 - both validity boundaries are present and the movement event time falls within the inclusive interval.
 
-The strict policy deliberately abstains on open-ended validity intervals because the existing contract defines null boundaries as unresolved, not infinite. `LABELLED_AS`, `ASSOCIATED_WITH`, `MEMBER_OF` and `CUSTODIED_BY` do not establish address control for this metric. Provider labels, inferences and unknown claims remain visible in the source claim ledger but do not contribute entity flows.
+The strict policy deliberately abstains on open-ended validity intervals because the existing contract defines null boundaries as unresolved, not infinite. `OPERATED_BY` is also excluded from this economic-control metric because operational responsibility is not proof of economic control. `LABELLED_AS`, `ASSOCIATED_WITH`, `MEMBER_OF` and `CUSTODIED_BY` are likewise excluded. Provider labels, inferences and unknown claims remain visible in the source claim ledger but do not contribute entity flows.
 
 If applicable verified claims point to more than one entity, the address is `CONFLICT` and is not attributed. A disputed claim blocks attribution. The function never resolves conflicts by input order, provider ranking, transfer proximity or label similarity.
 
