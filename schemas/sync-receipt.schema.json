@@ -165,6 +165,25 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "properties": {
+          "outcome": {
+            "const": "DUPLICATE"
+          }
+        },
+        "required": [
+          "outcome"
+        ]
+      },
+      "then": {
+        "properties": {
+          "idempotent_replay": {
+            "const": true
+          }
+        }
+      }
     }
   ]
 }
