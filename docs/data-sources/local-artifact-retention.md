@@ -35,6 +35,18 @@ Every acquired archive revision must be recorded as a distinct artifact version 
 
 Deletion evidence must identify the artifact/version, scope of dependent derivatives and copies, execution timestamp, method, and verification result. Deletion must account for derivatives and backups under the user's control. Logs must not retain prohibited payload data merely to prove deletion.
 
+## Local inventory and dependency-complete deletion
+
+Every newly stored artifact record must contain `depends_on_artifact_ids`, an explicit list of local artifact IDs on which that artifact depends. The local inventory:
+
+- Enumerates every direct entry in the managed artifact root (excluding only the dedicated `_deletion_audit` directory); unknown files, folders, symlinks, malformed records, missing payloads, and digest mismatches fail closed.
+- Verifies each artifact directory ID against its record, hashes each `payload.bin`, and produces a deterministic SHA-256 inventory digest.
+- Resolves transitive dependants from the declared dependency graph and separately enumerates every `BACKUP` artifact in that root.
+- Requires the deletion review lists to match the discovered local dependants and backup inventory exactly before any deletion begins.
+- Retains the inventory digest and explicit scope in the deletion audit.
+
+The inventory scope is only the supplied managed root. External copies, filesystem snapshots, OS backup catalogs, synchronization clients, and copies in other locations remain `NOT_VERIFIED`; this feature does not claim a globally complete inventory or secure erasure. Existing records without explicit dependency metadata must be migrated and reviewed before deletion can proceed.
+
 ## Enforcement
 
 Call `authorize_artifact_write(source_use_policy, retention_policy, artifact_type)` before any local write. It fails closed unless the source-use policy passes, the retention policy ID and source ID match, all eight artifact classes are approved, cloud sync is disabled, external cost is zero, and the requested artifact type is known.
