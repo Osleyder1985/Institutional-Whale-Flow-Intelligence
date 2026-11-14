@@ -38,9 +38,11 @@ def _claim_applies(claim, event_time, known_at):
     recorded = _parse_utc(claim.get("recorded_at_utc"))
     start = _parse_utc(claim.get("valid_from_utc"))
     end = _parse_utc(claim.get("valid_to_utc"))
+    review = claim.get("review")
+    reviewed_at = _parse_utc(review.get("reviewed_at_utc")) if isinstance(review, dict) else None
     if recorded is None or start is None or end is None:
         return False, "TIME_UNRESOLVED"
-    if recorded > known_at:
+    if recorded > known_at or reviewed_at is None or reviewed_at > known_at:
         return False, "NOT_KNOWN_AT_CUTOFF"
     if start > end:
         return False, "INVALID_INTERVAL"
