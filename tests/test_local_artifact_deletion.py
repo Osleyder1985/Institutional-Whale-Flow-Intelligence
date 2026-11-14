@@ -42,7 +42,7 @@ def retention_policy():
     }
 
 
-def create_artifact(root, artifact_id, artifact_type):
+def create_artifact(root, artifact_id, artifact_type, depends_on_artifact_ids=None):
     folder = Path(root) / artifact_id
     folder.mkdir()
     payload = b"synthetic"
@@ -55,7 +55,7 @@ def create_artifact(root, artifact_id, artifact_type):
         "local_sha256": hashlib.sha256(payload).hexdigest(),
         "terms_reviewed_at_utc": "2026-11-14T00:00:00Z",
         "purpose": "PERSONAL_NON_PRODUCTION_RESEARCH", "retention_policy_id": "retention-v1",
-        "revision_id": artifact_id, "storage_scope": "LOCAL_ONLY", "cloud_sync_allowed": False,
+        "revision_id": artifact_id, "storage_scope": "LOCAL_ONLY", "cloud_sync_allowed": False,\n        "depends_on_artifact_ids": depends_on_artifact_ids or [],
     }), encoding="utf-8")
 
 
@@ -63,8 +63,8 @@ class LocalArtifactDeletionTests(unittest.TestCase):
     def test_deletes_primary_derivative_and_backup_and_writes_audit(self):
         with tempfile.TemporaryDirectory() as temp:
             create_artifact(temp, "archive-001", "SOURCE_ARCHIVE")
-            create_artifact(temp, "feature-001", "DERIVED_DATA")
-            create_artifact(temp, "backup-001", "BACKUP")
+            create_artifact(temp, "feature-001", "DERIVED_DATA", ["archive-001"])
+            create_artifact(temp, "backup-001", "BACKUP", ["archive-001"])
             result = delete_artifacts(
                 temp, "archive-001", ["feature-001"], ["backup-001"], "deletion-001",
                 "test-unlink", source_policy(), retention_policy(), "2026-11-14T00:00:00Z"
@@ -81,6 +81,38 @@ class LocalArtifactDeletionTests(unittest.TestCase):
             self.assertFalse(audit["secure_erasure_claimed"])
             self.assertEqual(audit["dependent_artifact_ids_reviewed"], ["feature-001"])
             self.assertEqual(audit["backup_artifact_ids_reviewed"], ["backup-001"])
+
+    def test_omitted_local_dependent_blocks_deletion(self):
+        with tempfile.TemporaryDirectory() as temp:
+            create_artifact(temp, "archive-001", "SOURCE_ARCHIVE")
+            create_artifact(temp, "feature-001", "DERIVED_DATA", ["archive-001"])
+            with self.assertRaisesRegex(ArtifactDeletionError, "dependency review does not match"):
+                delete_artifacts(temp, "archive-001", [], [], "deletion-001",
+                                 "test-unlink", source_policy(), retention_policy(),
+                                 "2026-11-14T00:00:00Z")
+            self.assertTrue((Path(temp) / "archive-001").exists())
+            self.assertTrue((Path(temp) / "feature-001").exists())
+
+    def test_omitted_backup_blocks_deletion(self):
+        with tempfile.TemporaryDirectory() as temp:
+            create_artifact(temp, "archive-001", "SOURCE_ARCHIVE")
+            create_artifact(temp, "backup-001", "BACKUP", ["archive-001"])
+            with self.assertRaisesRegex(ArtifactDeletionError, "backup review does not match"):
+                delete_artifacts(temp, "archive-001", [], [], "deletion-001",
+                                 "test-unlink", source_policy(), retention_policy(),
+                                 "2026-11-14T00:00:00Z")
+            self.assertTrue((Path(temp) / "archive-001").exists())
+            self.assertTrue((Path(temp) / "backup-001").exists())
+
+    def test_unregistered_root_entry_blocks_deletion(self):
+        with tempfile.TemporaryDirectory() as temp:
+            create_artifact(temp, "archive-001", "SOURCE_ARCHIVE")
+            (Path(temp) / "untracked-folder").mkdir()
+            with self.assertRaisesRegex(ArtifactDeletionError, "inventory incomplete"):
+                delete_artifacts(temp, "archive-001", [], [], "deletion-001",
+                                 "test-unlink", source_policy(), retention_policy(),
+                                 "2026-11-14T00:00:00Z")
+            self.assertTrue((Path(temp) / "archive-001").exists())
 
     def test_missing_dependency_blocks_before_any_deletion(self):
         with tempfile.TemporaryDirectory() as temp:
