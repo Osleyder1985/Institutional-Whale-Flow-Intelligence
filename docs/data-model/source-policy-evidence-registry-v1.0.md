@@ -23,6 +23,6 @@ No approval is inherited between providers, products, endpoints, data types, or 
 
 ## Fail-closed behavior
 
-The runtime authorization evaluator must require the evidence fields in this schema for every policy used to authorize an artifact. The registry's empty initial state authorizes no source. Synthetic test fixtures are not provider approvals.
+The runtime authorization evaluator now requires issuer, document_ref, document_sha256, retrieved_at_utc, reviewed_at_utc, review_status=VERIFIED, reviewer_id, and a non-empty review_scope for every policy used to authorize an artifact. It rejects malformed document hashes, future retrieval/review timestamps, and any review state other than VERIFIED. The registry's empty initial state authorizes no source. Synthetic test fixtures are not provider approvals.
 
 This registry does not itself establish legal validity. Human review must verify the issuing authority and exact document. Do not create a provider record until its primary evidence is available.
