@@ -64,7 +64,9 @@ class SyncContractTests(unittest.TestCase):
     def test_operation_cannot_depend_on_itself(self):
         record = copy.deepcopy(FIXTURES["operations"][0])
         record["causal_dependencies"] = [record["operation_id"]]
-        self.assertIn(record["operation_id"], record["causal_dependencies"])
+        from iwfi.sync_contract import validate_operation_semantics
+        with self.assertRaises(ValueError):
+            validate_operation_semantics(record)
 
     def test_payload_hash_matches_canonical_payload_bytes(self):
         record = copy.deepcopy(FIXTURES["operations"][0])
@@ -76,9 +78,9 @@ class SyncContractTests(unittest.TestCase):
     def test_raw_allowed_retention_requires_terms_record(self):
         record = copy.deepcopy(FIXTURES["operations"][0])
         record["retention"] = {"retention_class": "RAW_ALLOWED", "terms_record_id": None}
+        self.assertFalse(self.validators["operations"].is_valid(record))
+        record["retention"]["terms_record_id"] = "provider-terms-v1"
         self.assertTrue(self.validators["operations"].is_valid(record))
-        self.assertEqual(record["retention"]["retention_class"], "RAW_ALLOWED")
-        self.assertIsNone(record["retention"]["terms_record_id"])
 
     def test_accepted_receipt_requires_server_sequence_and_cursor(self):
         record = copy.deepcopy(FIXTURES["receipts"][0])
@@ -97,7 +99,7 @@ class SyncContractTests(unittest.TestCase):
         record = copy.deepcopy(FIXTURES["receipts"][1])
         self.assertTrue(self.validators["receipts"].is_valid(record))
         record["idempotent_replay"] = False
-        self.assertTrue(self.validators["receipts"].is_valid(record))
+        self.assertFalse(self.validators["receipts"].is_valid(record))
         self.assertEqual(record["outcome"], "DUPLICATE")
 
     def test_terminal_cursor_has_no_next_page(self):
