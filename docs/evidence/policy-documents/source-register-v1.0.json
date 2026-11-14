@@ -1,0 +1,38 @@
+{
+  "evidence_set_version": "1.0.0",
+  "captured_at_utc": "2026-11-14",
+  "documents": [
+    {
+      "document_id": "binance_vision_dataset_terms_v1",
+      "title": "Binance Vision Dataset Terms",
+      "version": "1.0",
+      "last_updated": "2026-08-26",
+      "source_url": "https://github.com/binance/binance-public-data/blob/master/TERMS_AND_CONDITIONS.md",
+      "original_path": "docs/evidence/policy-documents/originals/binance_vision_dataset_terms_v1.md",
+      "sha256_of_original_local_snapshot": "99c4921dbe023cd68c1a447775707d621453cc78aec6ac0bfe2e6c06a5114ee0",
+      "repository_copy_is_source_text": true,
+      "rights_notice": "Binance Vision Dataset Terms; source and rights remain with Binance. See sections 3 and 4 of the document for dataset-use conditions."
+    },
+    {
+      "document_id": "cc_by_nc_sa_4_0_legal_code",
+      "title": "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International Legal Code",
+      "version": "4.0",
+      "source_url": "https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode.txt",
+      "upstream_repository": "https://github.com/creativecommons/cc-legal-tools-data/blob/a0dac18d1a773b4cdb7d8dd5d9bf4efab7901030/docs/licenses/by-nc-sa/4.0/legalcode.txt",
+      "original_path": "docs/evidence/policy-documents/originals/cc_by_nc_sa_4_0_legalcode.txt",
+      "sha256_of_local_snapshot": "e66c269d4819aaab34b49ef5220c4ddab6756f21bb5180761a4eb8561f2b7bbd",
+      "license": "CC0 1.0 for the text of Creative Commons public licenses, as stated in the source document's final paragraph"
+    },
+    {
+      "document_id": "binance_terms_of_use_adgm_2026_01_05",
+      "title": "Binance ADGM Terms of Use",
+      "effective_date": "2026-01-05",
+      "source_url": "https://bin.bnbstatic.com/static/cms/cg08ou2ak0tn7mcplvfg/file/9958035d95bff024a86a662fb4fdba45527d55a936e2cb9ed1d7ddf205ca082d.pdf",
+      "original_filename": "binance_terms_of_use_adgm_2026_01_05.pdf",
+      "sha256_of_original_local_snapshot": "9958035d95bff024a86a662fb4fdba45527d55a936e2cb9ed1d7ddf205ca082d",
+      "pages": 73,
+      "repository_status": "SOURCE_REFERENCE_AND_VERIFIED_HASH_ONLY",
+      "note": "The original PDF remains linked at its official source. The repository's GitHub text-file interface cannot transfer binary PDF bytes; do not replace the original with an incomplete transcription."
+    }
+  ]
+}
