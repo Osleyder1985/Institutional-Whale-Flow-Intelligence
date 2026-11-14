@@ -68,7 +68,10 @@
       }
     },
     "transaction_id": {
-      "type": "string",
+      "type": [
+        "string",
+        "null"
+      ],
       "minLength": 1
     },
     "observation_kind": {
@@ -385,6 +388,10 @@
         "properties": {
           "checkpoint": {
             "type": "null"
+          },
+          "transaction_id": {
+            "type": "string",
+            "minLength": 1
           }
         }
       }
