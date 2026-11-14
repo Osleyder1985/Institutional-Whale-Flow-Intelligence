@@ -13,9 +13,9 @@
 
 ## Behavior
 
-The function validates every target before deleting any of them, deletes only the explicitly enumerated artifact directories, verifies their absence, and writes an exclusive JSON deletion-audit record under `_deletion_audit/`. The audit records reviewed dependency and backup IDs and reports VERIFIED, PARTIAL, or NOT_VERIFIED.
+The function validates every target before deleting any of them and writes an exclusive `*.started.json` intent record under `_deletion_audit/` before removal begins. It then deletes only the explicitly enumerated artifact directories, verifies their absence, and writes an exclusive `*.completed.json` result record. A crash during deletion therefore leaves a durable intent record for manual reconciliation. The audit records reviewed dependency and backup IDs and reports VERIFIED, PARTIAL, or NOT_VERIFIED.
 
-This is a manual, explicit operation. It is not a retention scheduler and does not automatically delete expired data. If deletion audit persistence fails after deletion, the caller receives an error; operators must inspect the storage root before retrying. Audit records themselves are LOG artifacts and remain subject to the approved LOG retention rule.
+This is a manual, explicit operation. It is not a retention scheduler and does not automatically delete expired data. If completion-audit persistence fails after deletion, the started event remains; operators must inspect the storage root and audit directory before retrying. Audit records themselves are LOG artifacts and remain subject to the approved LOG retention rule.
 
 ## Limitations
 
