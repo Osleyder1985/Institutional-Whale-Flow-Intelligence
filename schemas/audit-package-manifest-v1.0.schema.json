@@ -54,7 +54,6 @@
         "path",
         "role",
         "media_type",
-        "source_ids",
         "size_bytes",
         "hash_algorithm",
         "sha256"
