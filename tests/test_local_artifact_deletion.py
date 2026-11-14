@@ -83,6 +83,30 @@ class LocalArtifactDeletionTests(unittest.TestCase):
             self.assertEqual(audit["dependent_artifact_ids_reviewed"], ["feature-001"])
             self.assertEqual(audit["backup_artifact_ids_reviewed"], ["backup-001"])
 
+    def test_unrelated_backup_is_reviewed_but_not_deleted(self):
+        with tempfile.TemporaryDirectory() as temp:
+            create_artifact(temp, "archive-001", "SOURCE_ARCHIVE")
+            create_artifact(temp, "backup-unrelated", "BACKUP", ["other-archive"])
+            create_artifact(temp, "other-archive", "SOURCE_ARCHIVE")
+            result = delete_artifacts(
+                temp, "archive-001", [], ["backup-unrelated"], "deletion-001",
+                "test-unlink", source_policy(), retention_policy(), "2026-11-14T00:00:00Z"
+            )
+            self.assertEqual(result["status"], "VERIFIED")
+            self.assertFalse((Path(temp) / "archive-001").exists())
+            self.assertTrue((Path(temp) / "backup-unrelated").exists())
+            self.assertTrue((Path(temp) / "other-archive").exists())
+
+    def test_untracked_nested_file_blocks_deletion(self):
+        with tempfile.TemporaryDirectory() as temp:
+            create_artifact(temp, "archive-001", "SOURCE_ARCHIVE")
+            (Path(temp) / "archive-001" / "untracked.txt").write_text("extra")
+            with self.assertRaisesRegex(ArtifactDeletionError, "untracked entries"):
+                delete_artifacts(temp, "archive-001", [], [], "deletion-001",
+                                 "test-unlink", source_policy(), retention_policy(),
+                                 "2026-11-14T00:00:00Z")
+            self.assertTrue((Path(temp) / "archive-001").exists())
+
     def test_omitted_local_dependent_blocks_deletion(self):
         with tempfile.TemporaryDirectory() as temp:
             create_artifact(temp, "archive-001", "SOURCE_ARCHIVE")
