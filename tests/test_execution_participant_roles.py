@@ -228,8 +228,10 @@ class ExecutionParticipantRoleTests(unittest.TestCase):
             "counter_evidence": []
         }
         registry["claims"].append(unknown_buyer)
+        execution = copy.deepcopy(self.trade_v11)
+        execution["participant_role_claim_ids"].append("claim-eth-buyer-identity-unknown")
         result = resolve_execution_participants(
-            registry, self.trade_v11, "2026-02-11T12:30:00Z",
+            registry, execution, "2026-02-11T12:30:00Z",
             self.actor_ids, self.observation_ids
         )
         buyer = next(item for item in result["participants"] if item["participant_role"] == "BUYER")
