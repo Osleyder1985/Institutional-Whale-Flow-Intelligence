@@ -79,9 +79,14 @@ def delete_artifacts(root, artifact_id, dependent_artifact_ids_reviewed,
     audit_dir = root / "_deletion_audit"
     if audit_dir.is_symlink() or (audit_dir.exists() and not audit_dir.is_dir()):
         raise ArtifactDeletionError("deletion audit path must be a non-symlink directory")
-    audit_path = audit_dir / f"{deletion_id}.json"
-    if audit_path.exists() or audit_path.is_symlink():
+    started_path = audit_dir / f"{deletion_id}.started.json"
+    completed_path = audit_dir / f"{deletion_id}.completed.json"
+    if started_path.exists() or started_path.is_symlink() or completed_path.exists() or completed_path.is_symlink():
         raise ArtifactDeletionError("deletion audit ID already exists")
+    audit_auth = authorize_artifact_write(source_policy, retention_policy, "LOG")
+    if not audit_auth["allowed"]:
+        raise ArtifactDeletionError("cannot retain deletion audit: " + "; ".join(audit_auth["errors"]))
+    audit_dir.mkdir(mode=0o700, exist_ok=True)
 
     records = {}
     paths = {}
@@ -108,6 +113,23 @@ def delete_artifacts(root, artifact_id, dependent_artifact_ids_reviewed,
         records[item_id] = record
         paths[item_id] = path
 
+    started_audit = {
+        "record_version": "1.0.0", "deletion_id": deletion_id,
+        "phase": "DELETION_STARTED", "verification_status": "NOT_VERIFIED",
+        "artifact_id": artifact_id, "artifact_type": records[artifact_id]["artifact_type"],
+        "reviewed_at_utc": reviewed_at_utc, "deletion_method": deletion_method,
+        "dependent_artifact_ids_reviewed": dependent_artifact_ids_reviewed,
+        "backup_artifact_ids_reviewed": backup_artifact_ids_reviewed,
+        "storage_scope": "LOCAL_ONLY", "secure_erasure_claimed": False,
+    }
+    try:
+        with started_path.open("x", encoding="utf-8", newline="") as stream:
+            stream.write(json.dumps(started_audit, sort_keys=True, separators=(",", ":")) + "\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+    except FileExistsError as exc:
+        raise ArtifactDeletionError("deletion audit ID already exists") from exc
+
     deleted_ids = []
     failures = []
     for item_id in all_ids:
@@ -126,6 +148,7 @@ def delete_artifacts(root, artifact_id, dependent_artifact_ids_reviewed,
     audit = {
         "record_version": "1.0.0",
         "deletion_id": deletion_id,
+        "phase": "DELETION_COMPLETED" if status == "VERIFIED" else "DELETION_INCOMPLETE",
         "artifact_id": artifact_id,
         "artifact_type": records[artifact_id]["artifact_type"],
         "deleted_at_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -134,24 +157,20 @@ def delete_artifacts(root, artifact_id, dependent_artifact_ids_reviewed,
         "dependent_artifact_ids_reviewed": dependent_artifact_ids_reviewed,
         "backup_artifact_ids_reviewed": backup_artifact_ids_reviewed,
         "storage_scope": "LOCAL_ONLY",
+        "secure_erasure_claimed": False,
         "notes": (
             "reviewed_at_utc=" + reviewed_at_utc +
             "; deleted_artifact_ids=" + ",".join(deleted_ids) +
             "; failed_artifact_ids=" + ",".join(failures)
         ),
     }
-
-    audit_auth = authorize_artifact_write(source_policy, retention_policy, "LOG")
-    if not audit_auth["allowed"]:
-        raise ArtifactDeletionError("cannot retain deletion audit: " + "; ".join(audit_auth["errors"]))
-    audit_dir.mkdir(mode=0o700, exist_ok=True)
     try:
-        with audit_path.open("x", encoding="utf-8", newline="") as stream:
+        with completed_path.open("x", encoding="utf-8", newline="") as stream:
             stream.write(json.dumps(audit, sort_keys=True, separators=(",", ":")) + "\n")
             stream.flush()
             os.fsync(stream.fileno())
     except FileExistsError as exc:
-        raise ArtifactDeletionError("deletion audit ID already exists") from exc
+        raise ArtifactDeletionError("completion audit ID already exists; started event retained") from exc
 
-    return {"status": status, "audit_record": str(audit_path),
+    return {"status": status, "audit_record": str(completed_path), "started_audit_record": str(started_path),
             "deleted_artifact_ids": deleted_ids, "failed_artifact_ids": failures}
