@@ -362,3 +362,41 @@ No live API adapter is approved. Any future request to use a different Binance e
 - Binance Vision Dataset Terms: https://github.com/binance/binance-public-data/blob/master/TERMS_AND_CONDITIONS.md
 
 **Decision:** Binance Vision historical Spot trades are the strongest documented zero-price historical market-execution candidate found so far for the personal non-production research scope. This does not identify institutions and does not approve live API polling. Do not treat `data-api.binance.vision` as an IWFI live feed. Issue #3 remains open until BTC/ETH archive samples, checksums, timestamp transitions, archive revisions, applicable terms and retention handling are tested and recorded.
+
+
+## 5. Public-ledger access review — 2026-11-14
+
+This review evaluates zero-purchase candidates for native BTC/ETH ledger observations. It does not approve a source, authorize automated capture, or establish retention rights.
+
+### 5.1 Bitcoin — Blockstream Esplora public API (candidate only)
+
+Official API reference: https://github.com/Blockstream/esplora/blob/master/API.md
+
+Documented public Bitcoin base URL: `https://blockstream.info/api/`. The reference documents transaction lookup (`GET /tx/:txid`), transaction status and block inclusion fields, address statistics and paginated confirmed transaction history, UTXOs, block metadata, block status and raw block retrieval. Amounts are represented in satoshis. The API can therefore expose the raw observable fields needed for a limited BTC transaction-inspection prototype.
+
+Limitations and unresolved gates:
+- The API documentation establishes endpoint semantics, not an entitlement or a contractual grant for unattended recurring use or long-term local retention.
+- The reviewed API reference does not specify a numeric public rate limit. Do not invent one or build a polling cadence around an assumed quota.
+- A public explorer API is a third-party hosted dependency; responses may be unavailable, throttled, incomplete or changed. Independent block inclusion/finality checks remain necessary.
+- Address/transaction data does not identify the beneficial owner, institution, customer, or economic purpose. Clustering remains a separate evidence-backed hypothesis.
+- No policy snapshot, retention approval, live adapter, polling, or backfill is established by this review.
+
+Decision: `CONDITIONAL_CANDIDATE / NOT_APPROVED`. Next evidence: obtain and preserve the operator's current API terms/acceptable-use policy, confirm free recurring access and retention scope, record numeric rate limits if published, then validate a small BTC mainnet sample against independent block data.
+
+### 5.2 Ethereum — locally operated execution + consensus clients
+
+Official current node guide: https://ethereum.org/developers/docs/nodes-and-clients/run-a-node
+
+The post-Merge node requires both an execution-layer client and a consensus-layer client. The guide currently lists minimum hardware of 2+ CPU cores, 16 GB RAM, 4 TB NVMe SSD and 25+ MBit/s bandwidth; recommended full-node hardware is 4+ fast CPU cores, 32 GB RAM, 4 TB NVMe SSD and 50 MBit/s down / 15+ MBit/s up. Its September 2026 full-node disk estimates range from 1.7 TB+ to 2.2 TB+ depending on client, with a further 15–90 GB for consensus beacon data depending on configuration. Archive nodes require substantially more storage.
+
+Implication for the project: a local Ethereum node is a zero-provider-fee and sovereign option, but it is not a lightweight assumption. The previously recorded workstation memory of 16 GB only matches the guide's minimum RAM figure; available NVMe capacity, bandwidth, disk I/O, sync time and operational headroom have not been measured here. Therefore hardware feasibility is NOT_VERIFIED. Do not begin a sync or recommend installing clients until those local constraints are measured.
+
+Decision: `TECHNICALLY_DOCUMENTED / FEASIBILITY_NOT_VERIFIED`. Ethereum public RPC alternatives are not approved by this review; each would require separate endpoint terms, quota, retention and cost diligence. ERC-20/token event coverage remains outside this native-ETH review.
+
+### 5.3 Consequence for the first vertical slice
+
+- Binance Vision historical Spot archives remain the only current zero-price historical market-data candidate with a source-specific non-commercial terms document, but real BTC/ETH sample archives and exact retained-artifact authorization are still outstanding.
+- Blockstream Esplora is a BTC ledger API candidate, not an approved recurring source.
+- A local Ethereum node is documented but its hardware feasibility is not established; a public Ethereum RPC candidate requires separate diligence.
+- No source in this section is promoted to `APPROVED`. No production ingestion, unattended polling, bulk backfill, or cross-device synchronization is authorized.
+
