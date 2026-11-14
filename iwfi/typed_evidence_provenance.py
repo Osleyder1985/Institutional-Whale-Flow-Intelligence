@@ -69,7 +69,7 @@ def _is_visible(record, cutoff, valid_time, require_validity):
     return True, "ELIGIBLE"
 
 
-def _resolve(ref, snapshots, cutoff, valid_time):
+def _resolve(ref, snapshots, cutoff, valid_time, predicate=None):
     ref_type, ref_id = ref.get("ref_type"), ref.get("ref_id")
     if ref_type not in _ALLOWED_TYPES or not isinstance(ref_id, str) or not ref_id.strip():
         return None, "INVALID_REFERENCE"
@@ -90,6 +90,10 @@ def _resolve(ref, snapshots, cutoff, valid_time):
     eligible, reason = _is_visible(record, cutoff, valid_time, ref_type == "ATTRIBUTION_CLAIM")
     if not eligible:
         return None, reason
+    if ref_type == "SOURCE_OBSERVATION" and predicate in {"BUYER", "SELLER", "BENEFICIAL_OWNER", "OWNS", "CONTROLS"}:
+        observation_type = str(record.get("observation_type", "")).upper()
+        if observation_type in {"ON_CHAIN_TRANSACTION", "TOKEN_TRANSFER", "TRANSFER"}:
+            return None, "TRANSFER_DOES_NOT_PROVE_OWNERSHIP_OR_EXECUTION_SIDE"
     if ref_type == "ATTRIBUTION_CLAIM":
         status = record.get("epistemic_status", record.get("status"))
         if status not in _ALLOWED_STATUS:
@@ -105,7 +109,7 @@ def _resolve(ref, snapshots, cutoff, valid_time):
 
 
 def resolve_typed_evidence_refs(evidence_refs, snapshots, knowledge_cutoff_utc,
-                                valid_time_utc, require_all=True):
+                                valid_time_utc, require_all=True, predicate=None):
     """Resolve a single evidence polarity list; return fail-closed deterministic result.
 
     Snapshot shape: {"status": "COMPLETE"|"PARTIAL", "records": [...]}
@@ -125,7 +129,7 @@ def resolve_typed_evidence_refs(evidence_refs, snapshots, knowledge_cutoff_utc,
             rejected.append({"ref": ref, "reason": "DUPLICATE_REFERENCE"})
             continue
         seen.add(key)
-        value, reason = _resolve(ref, snapshots, cutoff, valid_time)
+        value, reason = _resolve(ref, snapshots, cutoff, valid_time, predicate)
         if value is None:
             rejected.append({"ref": ref, "reason": reason})
         else:
