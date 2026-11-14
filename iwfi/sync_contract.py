@@ -6,6 +6,7 @@ import hashlib
 import json
 import re
 from datetime import datetime
+from uuid import UUID
 from datetime import datetime, timezone
 
 
@@ -53,6 +54,11 @@ def validate_operation_semantics(operation):
     dependencies = operation.get("causal_dependencies")
     if not isinstance(operation_id, str) or not operation_id.strip():
         raise ValueError("operation_id must be a non-empty string")
+    try:
+        if str(UUID(operation_id)) != operation_id.lower():
+            raise ValueError("operation_id must use canonical UUID text")
+    except (ValueError, AttributeError) as exc:
+        raise ValueError("operation_id must be a UUID") from exc
     timestamp = operation.get("created_at_device_utc")
     if not isinstance(timestamp, str):
         raise ValueError("created_at_device_utc must be a UTC timestamp")
