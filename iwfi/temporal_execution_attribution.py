@@ -142,7 +142,9 @@ def resolve_actor_identity_as_of(registry, actor_id, knowledge_cutoff_utc, valid
     if known > cutoff or recorded > cutoff or not _valid_at(actor, valid_time):
         return {"status": "NOT_ELIGIBLE_AS_OF", "actor": None}
     status = actor["identity_status"]
-    if status in {"UNKNOWN", "DISPUTED"} or actor.get("counter_evidence_refs"):
+    if status == "UNKNOWN":
+        return {"status": "UNKNOWN", "actor": None}
+    if status == "DISPUTED" or actor.get("counter_evidence_refs"):
         return {"status": "DISPUTED", "actor": None}
     return {"status": "ELIGIBLE", "actor": actor}
 
