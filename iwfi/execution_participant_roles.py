@@ -40,9 +40,9 @@ def _nonempty(value):
 
 def _valid_role_side(role, side):
     if role == "BUYER":
-        return side == "BUY"
+        return side in {"BUY", "UNKNOWN"}
     if role == "SELLER":
-        return side == "SELL"
+        return side in {"SELL", "UNKNOWN"}
     if role in _ROLES - {"BUYER", "SELLER", "UNKNOWN"}:
         return side in {"NOT_APPLICABLE", "UNKNOWN"}
     return role == "UNKNOWN" and side == "UNKNOWN"
@@ -111,6 +111,12 @@ def validate_execution_participant_roles(registry, trades, actor_ids, observatio
             errors.append(f"claim {claim_id}: participant_side is incompatible with participant_role")
         if status not in _STATUSES:
             errors.append(f"claim {claim_id}: invalid epistemic_status")
+        if status in {"DIRECT", "INFERRED"} and role == "BUYER" and side != "BUY":
+            errors.append(f"claim {claim_id}: identified BUYER requires BUY side")
+        if status in {"DIRECT", "INFERRED"} and role == "SELLER" and side != "SELL":
+            errors.append(f"claim {claim_id}: identified SELLER requires SELL side")
+        if status == "DISPUTED" and side != "UNKNOWN":
+            errors.append(f"claim {claim_id}: DISPUTED role claim must not choose participant_side")
         method = claim.get("attribution_method")
         if method not in _METHODS:
             errors.append(f"claim {claim_id}: invalid attribution_method")
