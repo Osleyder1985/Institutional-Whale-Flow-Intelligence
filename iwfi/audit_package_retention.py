@@ -199,6 +199,7 @@ def evaluate_retention_authorizations(*, manifest, authorization_context):
         "decision_version": _VERSION,
         "evaluated_at_utc": authorization_context["evaluated_at_utc"],
         "authorization_evidence_sha256": _sha(_canonical(evidence)),
+        "authorization_evidence": evidence,
         "artifact_decisions": artifact_decisions,
     }
 
@@ -225,6 +226,10 @@ def verify_retention_decision(*, decision, manifest, authorization_context):
     unsigned = {key: value for key, value in decision.items() if key != "decision_sha256"}
     if decision.get("decision_sha256") != _sha(_canonical(unsigned)):
         return _fail("RETENTION_DECISION_HASH_MISMATCH")
+    frozen_evidence = decision.get("authorization_evidence")
+    if (not isinstance(frozen_evidence, dict)
+            or _sha(_canonical(frozen_evidence)) != decision.get("authorization_evidence_sha256")):
+        return _fail("FROZEN_AUTHORIZATION_EVIDENCE_INVALID")
     if (decision.get("decision_version") != _VERSION
             or decision.get("package_mode") != "LOCAL_ONLY"
             or decision.get("inventory_manifest_hash") != manifest.get("manifest_hash")):
@@ -235,6 +240,8 @@ def verify_retention_decision(*, decision, manifest, authorization_context):
         return current
     if current.get("authorization_evidence_sha256") != decision.get("authorization_evidence_sha256"):
         return _fail("AUTHORIZATION_OR_POLICY_CHANGED")
+    if current.get("authorization_evidence") != frozen_evidence:
+        return _fail("FROZEN_AUTHORIZATION_EVIDENCE_MISMATCH")
     if current.get("artifact_decisions") != decision.get("artifact_decisions"):
         return _fail("ARTIFACT_AUTHORIZATION_DECISION_CHANGED")
     return {"status": "RETENTION_AUTHORIZED",
