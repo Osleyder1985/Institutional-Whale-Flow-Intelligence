@@ -142,8 +142,8 @@ def resolve_actor_identity_as_of(registry, actor_id, knowledge_cutoff_utc, valid
     if known > cutoff or recorded > cutoff or not _valid_at(actor, valid_time):
         return {"status": "NOT_ELIGIBLE_AS_OF", "actor": None}
     status = actor["identity_status"]
-    if status in {"UNKNOWN", "DISPUTED"}:
-        return {"status": status, "actor": None}
+    if status in {"UNKNOWN", "DISPUTED"} or actor.get("counter_evidence_refs"):
+        return {"status": "DISPUTED", "actor": None}
     return {"status": "ELIGIBLE", "actor": actor}
 
 
@@ -211,7 +211,7 @@ def resolve_relationship_as_of(registry, subject_actor_id, object_actor_id, rela
     statuses = {item.get("status") for item in matches}
     if not matches:
         status = "UNKNOWN"
-    elif len(statuses) > 1 or "DISPUTED" in statuses:
+    elif len(statuses) > 1 or "DISPUTED" in statuses or any(item.get("counter_evidence_refs") for item in matches):
         status = "DISPUTED"
     else:
         status = next(iter(statuses))
