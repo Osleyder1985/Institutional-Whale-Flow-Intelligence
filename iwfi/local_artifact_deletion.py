@@ -6,6 +6,10 @@ from pathlib import Path
 import re
 import shutil
 
+from iwfi.local_artifact_inventory import (
+    ArtifactInventoryError, build_local_artifact_inventory, dependent_artifact_ids_for,
+    related_backup_artifact_ids_for,
+)
 from iwfi.retention_policy import authorize_artifact_write, retention_policy_errors
 from iwfi.source_use_guard import source_use_policy_errors
 
@@ -60,9 +64,16 @@ def delete_artifacts(root, artifact_id, dependent_artifact_ids_reviewed,
         raise ArtifactDeletionError("deletion_method is required")
     if not isinstance(dependent_artifact_ids_reviewed, list) or not isinstance(backup_artifact_ids_reviewed, list):
         raise ArtifactDeletionError("dependency and backup reviews must be explicit lists")
-    all_ids = [artifact_id] + dependent_artifact_ids_reviewed + backup_artifact_ids_reviewed
-    if any(not isinstance(item, str) or not _SAFE_ID.fullmatch(item) for item in all_ids):
+    all_reviewed_ids = dependent_artifact_ids_reviewed + backup_artifact_ids_reviewed
+    if any(not isinstance(item, str) or not _SAFE_ID.fullmatch(item) for item in all_reviewed_ids):
         raise ArtifactDeletionError("all reviewed artifact IDs must be safe strings")
+    if len(backup_artifact_ids_reviewed) != len(set(backup_artifact_ids_reviewed)):
+        raise ArtifactDeletionError("backup artifact IDs must be unique")
+    all_ids = [artifact_id] + dependent_artifact_ids_reviewed + [
+        item for item in backup_artifact_ids_reviewed if item != artifact_id
+    ]
+    if len(all_ids) != len(set(all_ids)):
+        raise ArtifactDeletionError("artifact IDs must be unique across target, dependencies, and backups")
     if len(all_ids) != len(set(all_ids)):
         raise ArtifactDeletionError("artifact IDs must be unique across target, dependencies, and backups")
     if not _SAFE_ID.fullmatch(artifact_id):
@@ -75,6 +86,27 @@ def delete_artifacts(root, artifact_id, dependent_artifact_ids_reviewed,
         raise ArtifactDeletionError("reviewed_at_utc must use YYYY-MM-DDTHH:MM:SSZ") from exc
     if reviewed.strftime("%Y-%m-%dT%H:%M:%SZ") != reviewed_at_utc:
         raise ArtifactDeletionError("reviewed_at_utc is not a valid UTC timestamp")
+
+    try:
+        inventory = build_local_artifact_inventory(root)
+    except ArtifactInventoryError as exc:
+        raise ArtifactDeletionError("local artifact inventory incomplete: " + str(exc)) from exc
+    expected_dependents = dependent_artifact_ids_for(inventory, artifact_id)
+    expected_backups = inventory["backup_artifact_ids"]
+    related_backups = related_backup_artifact_ids_for(inventory, artifact_id)
+    deletion_ids = [artifact_id] + expected_dependents + [
+        item for item in related_backups if item != artifact_id
+    ]
+    if set(dependent_artifact_ids_reviewed) != set(expected_dependents):
+        raise ArtifactDeletionError(
+            "dependency review does not match complete local inventory; expected: "
+            + ", ".join(expected_dependents)
+        )
+    if set(backup_artifact_ids_reviewed) != set(expected_backups):
+        raise ArtifactDeletionError(
+            "backup review does not match complete local inventory; expected: "
+            + ", ".join(expected_backups)
+        )
 
     audit_dir = root / "_deletion_audit"
     if audit_dir.is_symlink() or (audit_dir.exists() and not audit_dir.is_dir()):
@@ -90,7 +122,7 @@ def delete_artifacts(root, artifact_id, dependent_artifact_ids_reviewed,
 
     records = {}
     paths = {}
-    for item_id in all_ids:
+    for item_id in deletion_ids:
         path = _safe_artifact_directory(root, item_id)
         record_path = path / "record.json"
         if record_path.is_symlink() or not record_path.is_file():
@@ -121,6 +153,8 @@ def delete_artifacts(root, artifact_id, dependent_artifact_ids_reviewed,
         "dependent_artifact_ids_reviewed": dependent_artifact_ids_reviewed,
         "backup_artifact_ids_reviewed": backup_artifact_ids_reviewed,
         "storage_scope": "LOCAL_ONLY", "secure_erasure_claimed": False,
+        "inventory_sha256": inventory["inventory_sha256"],
+        "inventory_scope": inventory["scope"],
     }
     try:
         with started_path.open("x", encoding="utf-8", newline="") as stream:
@@ -132,7 +166,7 @@ def delete_artifacts(root, artifact_id, dependent_artifact_ids_reviewed,
 
     deleted_ids = []
     failures = []
-    for item_id in all_ids:
+    for item_id in deletion_ids:
         try:
             shutil.rmtree(paths[item_id])
             if paths[item_id].exists():
@@ -142,7 +176,7 @@ def delete_artifacts(root, artifact_id, dependent_artifact_ids_reviewed,
         except OSError:
             failures.append(item_id)
 
-    status = "VERIFIED" if not failures and len(deleted_ids) == len(all_ids) else (
+    status = "VERIFIED" if not failures and len(deleted_ids) == len(deletion_ids) else (
         "PARTIAL" if deleted_ids else "NOT_VERIFIED"
     )
     audit = {
@@ -158,6 +192,10 @@ def delete_artifacts(root, artifact_id, dependent_artifact_ids_reviewed,
         "backup_artifact_ids_reviewed": backup_artifact_ids_reviewed,
         "storage_scope": "LOCAL_ONLY",
         "secure_erasure_claimed": False,
+        "inventory_sha256": inventory["inventory_sha256"],
+        "inventory_scope": inventory["scope"],
+        "external_copies": inventory["external_copies"],
+        "os_backup_and_sync_state": inventory["os_backup_and_sync_state"],
         "notes": (
             "reviewed_at_utc=" + reviewed_at_utc +
             "; deleted_artifact_ids=" + ",".join(deleted_ids) +
