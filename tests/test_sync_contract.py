@@ -67,6 +67,7 @@ class SyncContractTests(unittest.TestCase):
 
     def test_payload_hash_matches_canonical_payload_bytes(self):
         record = copy.deepcopy(FIXTURES["operations"][0])
+        record["created_at_device_utc"] = "2026-11-14T10:00:00Z"
         from iwfi.sync_contract import canonical_payload_hash, validate_operation_semantics
         record["payload_hash"] = canonical_payload_hash(record["payload"])
         self.assertTrue(self.validators["operations"].is_valid(record))
