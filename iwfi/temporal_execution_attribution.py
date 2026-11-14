@@ -99,11 +99,23 @@ def validate_actor_registry_v11(registry):
             errors.append(f"{label} must be an object")
             continue
         rid = item.get("relationship_id")
-        if not isinstance(rid, str) or not rid.strip() or rid in relationship_ids:
-            errors.append(f"{label}: invalid or duplicate relationship_id")
-        relationship_ids.add(rid)
-        if item.get("subject_actor_id") not in ids or item.get("object_actor_id") not in ids:
+        if not isinstance(rid, str) or not rid.strip():
+            errors.append(f"{label}: invalid relationship_id")
+        elif rid in relationship_ids:
+            errors.append(f"{label}: duplicate relationship_id")
+        else:
+            relationship_ids.add(rid)
+        subject, target = item.get("subject_actor_id"), item.get("object_actor_id")
+        if not isinstance(subject, str) or subject not in ids or not isinstance(target, str) or target not in ids:
             errors.append(f"{label}: relationship actor reference not found")
+        if item.get("status") not in {"VERIFIED", "PROVIDER_LABELLED", "INFERRED", "UNKNOWN", "DISPUTED"}:
+            errors.append(f"{label}: invalid relationship status")
+        if not isinstance(item.get("relationship_type"), str) or not item.get("relationship_type").strip():
+            errors.append(f"{label}: invalid relationship_type")
+        for evidence_field in ("evidence_refs", "counter_evidence_refs"):
+            refs = item.get(evidence_field)
+            if not isinstance(refs, list) or any(not isinstance(ref, str) or not ref.strip() for ref in refs):
+                errors.append(f"{label}: invalid {evidence_field}")
         _known_and_recorded(item, datetime.max, label, errors)
         start, end = item.get("valid_from_utc"), item.get("valid_to_utc")
         if start is not None and _time(start) is None or end is not None and _time(end) is None:
@@ -183,7 +195,9 @@ def resolve_execution_participants_as_of(claim_registry, trade, knowledge_cutoff
         if isinstance(claim, dict):
             if isinstance(claim.get("actor_id"), str):
                 candidate_ids.add(claim["actor_id"])
-            candidate_ids.update(x for x in claim.get("candidate_actor_ids", []) if isinstance(x, str))
+            candidates = claim.get("candidate_actor_ids")
+            if isinstance(candidates, list):
+                candidate_ids.update(x for x in candidates if isinstance(x, str))
     structural_errors = validate_execution_participant_role_links(
         trade, claim_registry, sorted(candidate_ids), observation_ids
     )
