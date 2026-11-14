@@ -60,6 +60,14 @@ def authorization_context(manifest, evaluated_at=EVALUATED):
             "policy_version": "1.0",
             "source_id": source,
             "rights_ref": "synthetic-rights:" + str(index),
+            "issuer": "Synthetic test issuer",
+            "document_ref": "synthetic-policy-document:" + str(index),
+            "document_sha256": hashlib.sha256(("synthetic policy " + str(index)).encode()).hexdigest(),
+            "retrieved_at_utc": "2026-11-13T00:00:00Z",
+            "reviewed_at_utc": "2026-11-13T12:00:00Z",
+            "review_status": "VERIFIED",
+            "reviewer_id": "synthetic-reviewer",
+            "review_scope": ["RETAIN_LOCAL", "HISTORICAL_SNAPSHOTS"],
             "status": "ACTIVE",
             "valid_from_utc": "2026-01-01T00:00:00Z",
             "expires_at_utc": "2027-01-01T00:00:00Z",
@@ -151,6 +159,11 @@ class AuditPackageZipTests(unittest.TestCase):
         context["source_policies"].append({
             "policy_id": "unrelated-policy", "policy_version": "1.0",
             "source_id": "unrelated-source", "rights_ref": "synthetic-rights:unrelated",
+            "issuer": "Synthetic test issuer", "document_ref": "synthetic-policy-document:unrelated",
+            "document_sha256": hashlib.sha256(b"synthetic policy unrelated").hexdigest(),
+            "retrieved_at_utc": "2026-11-13T00:00:00Z", "reviewed_at_utc": "2026-11-13T12:00:00Z",
+            "review_status": "VERIFIED", "reviewer_id": "synthetic-reviewer",
+            "review_scope": ["RETAIN_LOCAL"],
             "status": "ACTIVE", "valid_from_utc": "2026-01-01T00:00:00Z",
             "expires_at_utc": "2027-01-01T00:00:00Z",
             "allowed_actions": ["RETAIN_LOCAL"], "prohibited_actions": [],
@@ -200,6 +213,34 @@ class AuditPackageZipTests(unittest.TestCase):
         context = authorization_context(manifest)
         context["artifact_authorizations"].append(dict(context["artifact_authorizations"][0]))
         with self.assertRaisesRegex(ValueError, "DUPLICATE_OR_INVALID_ARTIFACT_AUTHORIZATION_ID"):
+            build(manifest, payloads, context)
+
+    def test_source_policy_without_primary_document_hash_rejects_package(self):
+        manifest, payloads = fixture()
+        context = authorization_context(manifest)
+        del context["source_policies"][0]["document_sha256"]
+        with self.assertRaisesRegex(ValueError, "SOURCE_POLICY_INCOMPLETE"):
+            build(manifest, payloads, context)
+
+    def test_source_policy_with_unverified_review_rejects_package(self):
+        manifest, payloads = fixture()
+        context = authorization_context(manifest)
+        context["source_policies"][0]["review_status"] = "PENDING"
+        with self.assertRaisesRegex(ValueError, "SOURCE_POLICY_EVIDENCE_NOT_VERIFIED"):
+            build(manifest, payloads, context)
+
+    def test_source_policy_with_future_review_timestamp_rejects_package(self):
+        manifest, payloads = fixture()
+        context = authorization_context(manifest)
+        context["source_policies"][0]["reviewed_at_utc"] = "2026-11-15T00:00:00Z"
+        with self.assertRaisesRegex(ValueError, "SOURCE_POLICY_INCOMPLETE"):
+            build(manifest, payloads, context)
+
+    def test_source_policy_with_malformed_document_hash_rejects_package(self):
+        manifest, payloads = fixture()
+        context = authorization_context(manifest)
+        context["source_policies"][0]["document_sha256"] = "not-a-sha256"
+        with self.assertRaisesRegex(ValueError, "SOURCE_POLICY_INCOMPLETE"):
             build(manifest, payloads, context)
 
     def test_contradictory_source_policy_rejects_package(self):
