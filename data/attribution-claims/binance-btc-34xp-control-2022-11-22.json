@@ -1,0 +1,47 @@
+{
+  "contract_version": "1.0.0",
+  "claim_id": "claim-binance-btc-34xp-control-2022-11-22",
+  "subject": {
+    "subject_type": "ADDRESS",
+    "subject_id": "34xp4vRoCGJym3xR7yCVPFHoCNxv4Twseo",
+    "network_id": "bitcoin-mainnet"
+  },
+  "predicate": "CONTROLLED_BY",
+  "object": {
+    "object_type": "ENTITY",
+    "object_id": "entity-binance",
+    "network_id": null
+  },
+  "epistemic_status": "VERIFIED",
+  "claim_source": {
+    "provider": "Mazars",
+    "endpoint": "AUP Proof of Reserve report",
+    "record_id": "Binance-POR-Report-7-December-2022",
+    "observation_ids": []
+  },
+  "supporting_evidence": [
+    {
+      "evidence_type": "OFFICIAL_PUBLICATION",
+      "evidence_ref": "https://public.bnbstatic.com/static/proof-of-reserve/Binance-POR-Report-7-December-2022-1.pdf",
+      "source": "Mazars AUP report dated 2022-12-07; reporting date 2022-11-22 23:59:59 UTC; procedures/findings and BTC address appendix",
+      "observation_id": null
+    },
+    {
+      "evidence_type": "OFFICIAL_PUBLICATION",
+      "evidence_ref": "https://www.binance.com/en/blog/community/2895840147147652626",
+      "source": "Binance official disclosure of hot/cold wallet address list",
+      "observation_id": null
+    }
+  ],
+  "counter_evidence": [],
+  "recorded_at_utc": "2026-11-14T16:27:15Z",
+  "valid_from_utc": "2022-11-22T23:59:59Z",
+  "valid_to_utc": "2022-11-22T23:59:59Z",
+  "supersedes_claim_id": null,
+  "review_status": "REVIEWED",
+  "rationale": "The Mazars AUP report identifies this exact BTC address in the appendix of addresses tested and states that the procedures corroborated Binance ownership of the private keys associated with verified public keys and control of funds at the exact reporting timestamp. The engagement was an agreed-upon procedures engagement, not an assurance engagement or audit opinion. This claim asserts address control only at 2022-11-22T23:59:59Z; it does not assert beneficial ownership of custodial customer funds, treasury ownership, or control outside that instant.",
+  "review": {
+    "reviewer_id": "iwfi-ai-evidence-reviewer",
+    "reviewed_at_utc": "2026-11-14T16:27:15Z"
+  }
+}

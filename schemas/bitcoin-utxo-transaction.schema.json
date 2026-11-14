@@ -1,0 +1,180 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://iwfi.invalid/schemas/bitcoin-utxo-transaction.schema.json",
+  "title": "IWFI Bitcoin UTXO Transaction Accounting Input",
+  "description": "A canonical Bitcoin mainnet transaction with independently represented inputs and outputs; not a wallet balance or trade.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "transaction_id",
+    "network_id",
+    "block_height",
+    "block_hash",
+    "event_time_utc",
+    "recorded_at_utc",
+    "canonicality",
+    "confirmation_status",
+    "inputs",
+    "outputs",
+    "fee_sats",
+    "source_observation_ids"
+  ],
+  "properties": {
+    "contract_version": {
+      "const": "1.0.0"
+    },
+    "transaction_id": {
+      "type": "string",
+      "pattern": "^[0-9a-fA-F]{64}$"
+    },
+    "network_id": {
+      "const": "bitcoin-mainnet"
+    },
+    "block_height": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "block_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-fA-F]{64}$"
+    },
+    "event_time_utc": {
+      "$ref": "#/$defs/utcTimestamp"
+    },
+    "recorded_at_utc": {
+      "$ref": "#/$defs/utcTimestamp"
+    },
+    "canonicality": {
+      "enum": [
+        "CANONICAL",
+        "ORPHANED",
+        "UNKNOWN"
+      ]
+    },
+    "confirmation_status": {
+      "enum": [
+        "CONFIRMED",
+        "PENDING",
+        "UNKNOWN"
+      ]
+    },
+    "inputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/input"
+      }
+    },
+    "outputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/output"
+      }
+    },
+    "fee_sats": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "source_observation_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "$defs": {
+    "utcTimestamp": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+    },
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "vin",
+        "previous_txid",
+        "previous_vout",
+        "address",
+        "amount_sats"
+      ],
+      "properties": {
+        "vin": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "previous_txid": {
+          "type": "string",
+          "pattern": "^[0-9a-fA-F]{64}$"
+        },
+        "previous_vout": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "address": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "amount_sats": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "vout",
+        "address",
+        "amount_sats"
+      ],
+      "properties": {
+        "vout": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "address": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "amount_sats": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "canonicality": {
+            "const": "CANONICAL"
+          }
+        },
+        "required": [
+          "canonicality"
+        ]
+      },
+      "then": {
+        "properties": {
+          "confirmation_status": {
+            "const": "CONFIRMED"
+          }
+        }
+      }
+    }
+  ]
+}
