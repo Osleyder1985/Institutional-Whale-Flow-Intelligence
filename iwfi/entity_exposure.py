@@ -220,8 +220,8 @@ def aggregate_entity_exposure_history(snapshots, claims, known_at_utc):
             "snapshot_time_utc": snapshot["snapshot_time_utc"],
             "block_height": height,
             "block_hash": block_hash,
-            "known_address_exposure_atomic": known_balance,
-            "total_entity_exposure_atomic": total_exposure,
+            "known_controlled_address_exposure_atomic": known_balance,
+            "total_controlled_address_exposure_atomic": total_exposure,
             "coverage_status": coverage_status,
             "addresses_observed": len(addresses),
             "addresses_attributed": attributed_count,
@@ -242,7 +242,7 @@ def aggregate_entity_exposure_history(snapshots, claims, known_at_utc):
         for previous, current in zip(rows, rows[1:]):
             same_address_set = previous["_address_set"] == current["_address_set"]
             known_delta = (
-                current["known_address_exposure_atomic"] - previous["known_address_exposure_atomic"]
+                current["known_controlled_address_exposure_atomic"] - previous["known_controlled_address_exposure_atomic"]
                 if same_address_set and previous["_address_set"] and previous["coverage_status"] != "UNKNOWN"
                 and current["coverage_status"] != "UNKNOWN" else None
             )
@@ -252,9 +252,9 @@ def aggregate_entity_exposure_history(snapshots, claims, known_at_utc):
             classification_status = "INCOMPLETE_COVERAGE"
             if (previous["coverage_status"] == "COMPLETE"
                     and current["coverage_status"] == "COMPLETE"):
-                total_delta = current["total_entity_exposure_atomic"] - previous["total_entity_exposure_atomic"]
-                if previous["total_entity_exposure_atomic"] > 0:
-                    relative_change = str(Fraction(total_delta, previous["total_entity_exposure_atomic"]))
+                total_delta = current["total_controlled_address_exposure_atomic"] - previous["total_controlled_address_exposure_atomic"]
+                if previous["total_controlled_address_exposure_atomic"] > 0:
+                    relative_change = str(Fraction(total_delta, previous["total_controlled_address_exposure_atomic"]))
                 direction = (
                     "NET_BALANCE_INCREASE" if total_delta > 0
                     else "NET_BALANCE_DECREASE" if total_delta < 0
@@ -265,8 +265,8 @@ def aggregate_entity_exposure_history(snapshots, claims, known_at_utc):
                 "from_snapshot_batch_id": previous["snapshot_batch_id"],
                 "to_snapshot_batch_id": current["snapshot_batch_id"],
                 "known_address_delta_atomic": known_delta,
-                "total_entity_delta_atomic": total_delta,
-                "relative_total_change": relative_change,
+                "total_controlled_address_delta_atomic": total_delta,
+                "relative_controlled_address_change": relative_change,
                 "candidate_direction": direction,
                 "classification_status": classification_status,
                 "same_attributed_address_set": same_address_set,
