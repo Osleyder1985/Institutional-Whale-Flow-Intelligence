@@ -1,0 +1,82 @@
+[
+  {
+    "contract_version": "1.0.0",
+    "execution_id": "btc-execution-001",
+    "event_type": "TRADE_EXECUTION",
+    "aggregation_level": "INDIVIDUAL_EXECUTION",
+    "execution_status": "EXECUTED",
+    "asset_base": "BTC",
+    "asset_quote": "USDT",
+    "instrument_type": "SPOT",
+    "venue_id": "venue-synthetic-btc",
+    "base_quantity": "0.25000000",
+    "quote_quantity": "25000.00000000",
+    "price": "100000.00000000",
+    "price_unit": "USDT_PER_BTC",
+    "fee_amount": null,
+    "fee_asset": null,
+    "aggressor_side": "BUY",
+    "participant_side": "UNKNOWN",
+    "participant_attribution_status": "UNKNOWN",
+    "participant_actor_id": null,
+    "attribution_claim_ids": [],
+    "event_time_utc": "2026-01-10T10:00:00Z",
+    "published_at_utc": "2026-01-10T10:00:01Z",
+    "available_at_utc": "2026-01-10T10:00:02Z",
+    "ingested_at_utc": "2026-01-10T10:00:03Z",
+    "computed_at_utc": "2026-01-10T10:00:04Z",
+    "source_observation_ids": [
+      "exec-evidence-btc"
+    ],
+    "source_evidence": [
+      {
+        "evidence_id": "exec-evidence-btc",
+        "evidence_type": "VENUE_EXECUTION_RECORD",
+        "source": "synthetic-venue",
+        "record_ref": "synthetic:btc:001",
+        "granularity": "INDIVIDUAL_EXECUTION"
+      }
+    ]
+  },
+  {
+    "contract_version": "1.0.0",
+    "execution_id": "eth-execution-001",
+    "event_type": "TRADE_EXECUTION",
+    "aggregation_level": "INDIVIDUAL_EXECUTION",
+    "execution_status": "PARTIALLY_EXECUTED",
+    "asset_base": "ETH",
+    "asset_quote": "USD",
+    "instrument_type": "SPOT",
+    "venue_id": "venue-synthetic-eth",
+    "base_quantity": "2.5",
+    "quote_quantity": "7500",
+    "price": "3000",
+    "price_unit": "USD_PER_ETH",
+    "fee_amount": "2.5",
+    "fee_asset": "USD",
+    "aggressor_side": "SELL",
+    "participant_side": "BUY",
+    "participant_attribution_status": "DIRECT",
+    "participant_actor_id": "actor-fund-northstar-btc",
+    "attribution_claim_ids": [
+      "claim-execution-eth-001"
+    ],
+    "event_time_utc": "2026-02-11T11:00:00Z",
+    "published_at_utc": "2026-02-11T11:00:00Z",
+    "available_at_utc": "2026-02-11T11:00:01Z",
+    "ingested_at_utc": "2026-02-11T11:00:02Z",
+    "computed_at_utc": "2026-02-11T11:00:03Z",
+    "source_observation_ids": [
+      "exec-evidence-eth"
+    ],
+    "source_evidence": [
+      {
+        "evidence_id": "exec-evidence-eth",
+        "evidence_type": "OFFICIAL_EXECUTION_DISCLOSURE",
+        "source": "synthetic-official-disclosure",
+        "record_ref": "synthetic:eth:001",
+        "granularity": "INDIVIDUAL_EXECUTION"
+      }
+    ]
+  }
+]
