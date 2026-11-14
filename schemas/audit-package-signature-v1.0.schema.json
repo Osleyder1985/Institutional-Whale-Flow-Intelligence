@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://iwfi.invalid/schemas/audit-package-signature-v1.0.schema.json",
+  "title": "IWFI Detached Audit Package Signature v1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "signature_version",
+    "signature_algorithm",
+    "archive_hash_algorithm",
+    "archive_sha256",
+    "package_manifest_hash",
+    "canonicalization_version",
+    "key_fingerprint_sha256",
+    "signature_hex"
+  ],
+  "properties": {
+    "signature_version": {"const": "1.0.0"},
+    "signature_algorithm": {"const": "Ed25519"},
+    "archive_hash_algorithm": {"const": "SHA-256"},
+    "archive_sha256": {"$ref": "#/$defs/hash"},
+    "package_manifest_hash": {"$ref": "#/$defs/hash"},
+    "canonicalization_version": {"const": "IWFI-JSON-C14N-1"},
+    "key_fingerprint_sha256": {"$ref": "#/$defs/hash"},
+    "signature_hex": {"type": "string", "pattern": "^[a-f0-9]{128}$"}
+  },
+  "$defs": {
+    "hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  }
+}
