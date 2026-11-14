@@ -177,6 +177,33 @@ class EntityExposureTests(unittest.TestCase):
         self.assertEqual(row["unit"], "wei")
         self.assertEqual(row["known_controlled_address_exposure_atomic"], 10**18)
 
+    def test_eth_address_matching_is_case_insensitive(self):
+        checksum_address = "0xAbCd000000000000000000000000000000001234"
+        lowercase_address = checksum_address.lower()
+        item = snapshot("eth-case", "2026-11-01T00:00:00Z",
+                         [(checksum_address, 10**18)],
+                         asset="ethereum:eth", network="eip155:1", unit="wei")
+        claims = [claim("eth-case-claim", lowercase_address, network="eip155:1")]
+        result = aggregate([item], claims)
+        row = result["histories"][0]["snapshots"][0]
+        self.assertEqual(row["known_controlled_address_exposure_atomic"], 10**18)
+        self.assertEqual(row["coverage_status"], "COMPLETE")
+
+    def test_eth_address_duplicates_are_detected_after_case_normalization(self):
+        address = "0xAbCd000000000000000000000000000000001234"
+        item = snapshot("eth-duplicate", "2026-11-01T00:00:00Z",
+                         [(address, 100), (address.lower(), 200)],
+                         asset="ethereum:eth", network="eip155:1", unit="wei")
+        with self.assertRaisesRegex(ValueError, "invalid_address_balance_record"):
+            aggregate([item], [claim("eth-duplicate-claim", address.lower(), network="eip155:1")])
+
+    def test_bitcoin_address_matching_remains_case_sensitive(self):
+        item = snapshot("btc-case", "2026-11-01T00:00:00Z", [("Bc1qAddress", 1000)])
+        result = aggregate([item], [claim("btc-lower-claim", "bc1qaddress")])
+        row = result["histories"][0]["snapshots"][0]
+        self.assertEqual(row["known_controlled_address_exposure_atomic"], 0)
+        self.assertEqual(row["coverage_status"], "PARTIAL")
+
     def test_future_snapshot_is_excluded_at_knowledge_cutoff(self):
         item = snapshot("future", "2026-11-16T00:00:00Z", [("bc1qaddress1", 1000)])
         result = aggregate([item], [claim("c1", "bc1qaddress1")])
