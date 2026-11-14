@@ -91,6 +91,9 @@ class EntityExposureTests(unittest.TestCase):
         history = result["histories"][0]
         self.assertEqual(history["snapshots"][0]["total_controlled_address_exposure_atomic"], 3000)
         self.assertEqual(history["snapshots"][1]["total_controlled_address_exposure_atomic"], 3500)
+        self.assertEqual(result["exposure_basis"], "CONTROLLED_ADDRESS_BALANCES_ONLY")
+        self.assertEqual(history["snapshots"][0]["address_resolutions"][0]["source_observation_id"], "obs-s1-0")
+        self.assertEqual(history["snapshots"][0]["inventory_coverage"]["computed_status"], "COMPLETE")
         change = history["changes"][0]
         self.assertEqual(change["total_controlled_address_delta_atomic"], 500)
         self.assertEqual(change["relative_controlled_address_change"], "1/6")
