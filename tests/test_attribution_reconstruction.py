@@ -198,6 +198,49 @@ class AttributionReconstructionTests(unittest.TestCase):
         )
         self.assertEqual(result["manifest_status"], "CLAIM_HASH_MISMATCH")
 
+
+    def test_execution_participant_claim_v1_1_binds_source_observation_snapshots(self):
+        schema_path = Path(__file__).parent.parent / "schemas" / "execution-participant-role-claim.schema.json"
+        schema = json.loads(schema_path.read_text(encoding="utf-8"))
+        claim = {
+            "contract_version": "1.1.0",
+            "claim_id": "exec-role-btc-001",
+            "execution_id": "execution-btc-001",
+            "actor_id": "actor-institution-001",
+            "candidate_actor_ids": [],
+            "participant_role": "BUYER",
+            "participant_side": "BUY",
+            "epistemic_status": "DIRECT",
+            "attribution_method": "OFFICIAL_NAMED_EXECUTION_DISCLOSURE",
+            "recorded_at_utc": "2026-11-12T11:00:00Z",
+            "known_at_utc": "2026-11-12T11:00:00Z",
+            "valid_from_utc": EVENT_TIME,
+            "valid_to_utc": "2026-11-12T10:00:00Z",
+            "source_observation_ids": ["obs-execution-btc"],
+            "supporting_evidence": [{
+                "evidence_type": "OFFICIAL_NAMED_EXECUTION_DISCLOSURE",
+                "source": "synthetic-fixture", "record_ref": "record-btc-001",
+                "observation_id": "obs-execution-btc"
+            }],
+            "counter_evidence": []
+        }
+        jsonschema.validate({"contract_version": "1.1.0", "claims": [claim]}, schema)
+        payload = b'{"execution":"btc","participant":"actor-institution-001"}'
+        snapshot = make_snapshot("snap-execution-btc", "synthetic-execution", payload)
+        manifest = build_attribution_reconstruction_manifest(
+            claim=claim, snapshot_descriptors=[snapshot],
+            observation_snapshot_map={"obs-execution-btc": "snap-execution-btc"},
+            knowledge_cutoff_utc=CUTOFF, valid_time_utc=EVENT_TIME,
+            algorithm_id="iwfi-execution-claim-reconstruction",
+            algorithm_version="1.0.0", parameters={"role_resolution": "direct-only"},
+        )
+        result = verify_attribution_reconstruction(
+            manifest=manifest, claim=claim,
+            snapshots_by_id={"snap-execution-btc": snapshot},
+            payloads_by_id={"snap-execution-btc": payload},
+        )
+        self.assertEqual(result["status"], "RECONSTRUCTION_INPUTS_VERIFIED")
+
     def test_payload_substitution_is_detected(self):
         claim, snapshots, payloads, manifest = build()
         payloads["snap-btc-support"] = b'{"asset":"ETH","side":"support"}'
