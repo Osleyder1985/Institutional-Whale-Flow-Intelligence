@@ -32,7 +32,7 @@
       "required": [
         "contract_version",
         "claim_id",
-        "trade_id",
+        "execution_id",
         "actor_id",
         "candidate_actor_ids",
         "participant_role",
@@ -56,7 +56,7 @@
           "minLength": 1,
           "pattern": "\\S"
         },
-        "trade_id": {
+        "execution_id": {
           "type": "string",
           "minLength": 1,
           "pattern": "\\S"
