@@ -1,0 +1,40 @@
+{
+  "contract_version": "1.1.0",
+  "execution_id": "synthetic-btc-trade-aggressor-only",
+  "event_type": "TRADE_EXECUTION",
+  "aggregation_level": "INDIVIDUAL_EXECUTION",
+  "execution_status": "EXECUTED",
+  "asset_base": "BTC",
+  "asset_quote": "USDT",
+  "instrument_type": "SPOT",
+  "venue_id": "venue-synthetic-btc",
+  "base_quantity": "0.25000000",
+  "quote_quantity": "25000.00000000",
+  "price": "100000.00000000",
+  "price_unit": "USDT_PER_BTC",
+  "fee_amount": null,
+  "fee_asset": null,
+  "aggressor_side": "BUY",
+  "participant_side": "UNKNOWN",
+  "participant_attribution_status": "UNKNOWN",
+  "participant_actor_id": null,
+  "attribution_claim_ids": [],
+  "event_time_utc": "2026-01-10T10:00:00Z",
+  "published_at_utc": "2026-01-10T10:00:01Z",
+  "available_at_utc": "2026-01-10T10:00:02Z",
+  "ingested_at_utc": "2026-01-10T10:00:03Z",
+  "computed_at_utc": "2026-01-10T10:00:04Z",
+  "source_observation_ids": [
+    "exec-evidence-btc"
+  ],
+  "source_evidence": [
+    {
+      "evidence_id": "exec-evidence-btc",
+      "evidence_type": "VENUE_EXECUTION_RECORD",
+      "source": "synthetic-venue",
+      "record_ref": "synthetic:btc:001",
+      "granularity": "INDIVIDUAL_EXECUTION"
+    }
+  ],
+  "participant_role_claim_ids": []
+}
