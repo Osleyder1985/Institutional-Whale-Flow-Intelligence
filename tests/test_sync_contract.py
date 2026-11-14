@@ -264,9 +264,9 @@ class ReferenceSyncProtocolSimulationTests(unittest.TestCase):
     def test_invalid_calendar_date_is_rejected_in_operation_timestamp(self):
         record = copy.deepcopy(FIXTURES["operations"][0])
         record["created_at_device_utc"] = "2026-02-30T10:00:00Z"
-        schema = json.loads(SCHEMAS["operations"].read_text(encoding="utf-8"))
-        validator = Draft202012Validator(schema, format_checker=FormatChecker())
-        self.assertFalse(validator.is_valid(record))
+        from iwfi.sync_contract import validate_operation_semantics
+        with self.assertRaises(ValueError):
+            validate_operation_semantics(record)
 
 
 if __name__ == "__main__":
