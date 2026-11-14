@@ -3,42 +3,6 @@
   "default_status": "UNASSESSED",
   "sources": [
     {
-      "source_id": "binance_vision_spot_trades_btcusdt",
-      "provider_name": "Binance Vision — Spot historical trades — BTCUSDT",
-      "assessment_status": "PENDING_EVIDENCE",
-      "policies": []
-    },
-    {
-      "source_id": "binance_vision_spot_trades_ethusdt",
-      "provider_name": "Binance Vision — Spot historical trades — ETHUSDT",
-      "assessment_status": "PENDING_EVIDENCE",
-      "policies": []
-    },
-    {
-      "source_id": "binance_vision_spot_aggtrades_btcusdt",
-      "provider_name": "Binance Vision — Spot historical aggregate trades — BTCUSDT",
-      "assessment_status": "PENDING_EVIDENCE",
-      "policies": []
-    },
-    {
-      "source_id": "binance_vision_spot_aggtrades_ethusdt",
-      "provider_name": "Binance Vision — Spot historical aggregate trades — ETHUSDT",
-      "assessment_status": "PENDING_EVIDENCE",
-      "policies": []
-    },
-    {
-      "source_id": "binance_spot_api_trades_btcusdt",
-      "provider_name": "Binance Spot public API /api/v3/trades — BTCUSDT",
-      "assessment_status": "PENDING_EVIDENCE",
-      "policies": []
-    },
-    {
-      "source_id": "binance_spot_api_trades_ethusdt",
-      "provider_name": "Binance Spot public API /api/v3/trades — ETHUSDT",
-      "assessment_status": "PENDING_EVIDENCE",
-      "policies": []
-    },
-    {
       "source_id": "binance_spot_api_aggtrades_btcusdt",
       "provider_name": "Binance Spot public API /api/v3/aggtrades — BTCUSDT",
       "assessment_status": "PENDING_EVIDENCE",
@@ -63,18 +27,6 @@
       "policies": []
     },
     {
-      "source_id": "binance_spot_api_ticker_btcusdt",
-      "provider_name": "Binance Spot public API /api/v3/ticker — BTCUSDT",
-      "assessment_status": "PENDING_EVIDENCE",
-      "policies": []
-    },
-    {
-      "source_id": "binance_spot_api_ticker_ethusdt",
-      "provider_name": "Binance Spot public API /api/v3/ticker — ETHUSDT",
-      "assessment_status": "PENDING_EVIDENCE",
-      "policies": []
-    },
-    {
       "source_id": "binance_spot_api_klines_btcusdt",
       "provider_name": "Binance Spot public API /api/v3/klines — BTCUSDT",
       "assessment_status": "PENDING_EVIDENCE",
@@ -83,6 +35,78 @@
     {
       "source_id": "binance_spot_api_klines_ethusdt",
       "provider_name": "Binance Spot public API /api/v3/klines — ETHUSDT",
+      "assessment_status": "PENDING_EVIDENCE",
+      "policies": []
+    },
+    {
+      "source_id": "binance_spot_api_ticker_24hr_btcusdt",
+      "provider_name": "Binance Spot public API /api/v3/ticker/24hr — BTCUSDT",
+      "assessment_status": "PENDING_EVIDENCE",
+      "policies": []
+    },
+    {
+      "source_id": "binance_spot_api_ticker_24hr_ethusdt",
+      "provider_name": "Binance Spot public API /api/v3/ticker/24hr — ETHUSDT",
+      "assessment_status": "PENDING_EVIDENCE",
+      "policies": []
+    },
+    {
+      "source_id": "binance_spot_api_ticker_bookticker_btcusdt",
+      "provider_name": "Binance Spot public API /api/v3/ticker/bookticker — BTCUSDT",
+      "assessment_status": "PENDING_EVIDENCE",
+      "policies": []
+    },
+    {
+      "source_id": "binance_spot_api_ticker_bookticker_ethusdt",
+      "provider_name": "Binance Spot public API /api/v3/ticker/bookticker — ETHUSDT",
+      "assessment_status": "PENDING_EVIDENCE",
+      "policies": []
+    },
+    {
+      "source_id": "binance_spot_api_ticker_price_btcusdt",
+      "provider_name": "Binance Spot public API /api/v3/ticker/price — BTCUSDT",
+      "assessment_status": "PENDING_EVIDENCE",
+      "policies": []
+    },
+    {
+      "source_id": "binance_spot_api_ticker_price_ethusdt",
+      "provider_name": "Binance Spot public API /api/v3/ticker/price — ETHUSDT",
+      "assessment_status": "PENDING_EVIDENCE",
+      "policies": []
+    },
+    {
+      "source_id": "binance_spot_api_trades_btcusdt",
+      "provider_name": "Binance Spot public API /api/v3/trades — BTCUSDT",
+      "assessment_status": "PENDING_EVIDENCE",
+      "policies": []
+    },
+    {
+      "source_id": "binance_spot_api_trades_ethusdt",
+      "provider_name": "Binance Spot public API /api/v3/trades — ETHUSDT",
+      "assessment_status": "PENDING_EVIDENCE",
+      "policies": []
+    },
+    {
+      "source_id": "binance_vision_spot_aggtrades_btcusdt",
+      "provider_name": "Binance Vision — Spot historical aggregate trades — BTCUSDT",
+      "assessment_status": "PENDING_EVIDENCE",
+      "policies": []
+    },
+    {
+      "source_id": "binance_vision_spot_aggtrades_ethusdt",
+      "provider_name": "Binance Vision — Spot historical aggregate trades — ETHUSDT",
+      "assessment_status": "PENDING_EVIDENCE",
+      "policies": []
+    },
+    {
+      "source_id": "binance_vision_spot_trades_btcusdt",
+      "provider_name": "Binance Vision — Spot historical trades — BTCUSDT",
+      "assessment_status": "PENDING_EVIDENCE",
+      "policies": []
+    },
+    {
+      "source_id": "binance_vision_spot_trades_ethusdt",
+      "provider_name": "Binance Vision — Spot historical trades — ETHUSDT",
       "assessment_status": "PENDING_EVIDENCE",
       "policies": []
     },
