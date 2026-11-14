@@ -114,6 +114,7 @@ class DocumentaryClaimProvenanceTests(unittest.TestCase):
                        contradiction_group_id="policy-version-conflict")
         second["evidence"][0]["snapshot_sha256"] = "1" * 64
         second["evidence"][0]["document_version"] = "v2"
+        second["evidence"][0]["retrieved_at_utc"] = "2026-11-15T12:00:00Z"
         catalog = [SNAPSHOT, {**SNAPSHOT, "snapshot_sha256": "1" * 64, "document_version": "v2",
                               "retrieved_at_utc": "2026-11-15T12:00:00Z"}]
         result = validate_claim_collection([first, second], catalog)
