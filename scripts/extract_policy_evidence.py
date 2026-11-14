@@ -45,7 +45,8 @@ def _sha256_file(path: Path) -> tuple[str, int]:
 
 
 def _safe_snapshot_path(evidence_dir: Path, filename: Any) -> Path:
-    if not isinstance(filename, str) or not filename or Path(filename).name != filename:
+    if (not isinstance(filename, str) or not filename or filename in {".", ".."}
+            or "/" in filename or "\\" in filename or Path(filename).name != filename):
         raise EvidenceExtractionError("SNAPSHOT_FILENAME_INVALID")
     path = evidence_dir / filename
     if path.is_symlink() or not path.is_file():
