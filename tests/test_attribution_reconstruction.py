@@ -167,6 +167,37 @@ class AttributionReconstructionTests(unittest.TestCase):
         self.assertEqual(result["status"], "INTEGRITY_FAILED")
         self.assertEqual(result["dependencies"][1]["status"], "SNAPSHOT_MISSING")
 
+
+    def test_valid_time_outside_claim_interval_is_rejected(self):
+        claim, snapshots, _, _ = build()
+        with self.assertRaisesRegex(ValueError, "precedes the claim validity interval"):
+            build_attribution_reconstruction_manifest(
+                claim=claim, snapshot_descriptors=snapshots,
+                observation_snapshot_map={"obs-btc-support": "snap-btc-support",
+                                          "obs-btc-counter": "snap-btc-counter"},
+                knowledge_cutoff_utc=CUTOFF,
+                valid_time_utc="2026-11-12T08:00:00Z",
+                algorithm_id="a", algorithm_version="1", parameters={},
+            )
+
+    def test_manifest_schema_rejects_missing_dependency_hash_algorithm(self):
+        schema_path = Path(__file__).parent.parent / "schemas" / "attribution-reconstruction-manifest-v1.0.schema.json"
+        schema = json.loads(schema_path.read_text(encoding="utf-8"))
+        _, _, _, manifest = build()
+        del manifest["dependencies"][0]["hash_algorithm"]
+        with self.assertRaises(jsonschema.ValidationError):
+            jsonschema.validate(manifest, schema)
+
+    def test_claim_contract_version_is_bound_to_manifest(self):
+        claim, snapshots, payloads, manifest = build()
+        claim["contract_version"] = "9.9.9"
+        result = verify_attribution_reconstruction(
+            manifest=manifest, claim=claim,
+            snapshots_by_id={item["source_snapshot_id"]: item for item in snapshots},
+            payloads_by_id=payloads,
+        )
+        self.assertEqual(result["manifest_status"], "CLAIM_HASH_MISMATCH")
+
     def test_payload_substitution_is_detected(self):
         claim, snapshots, payloads, manifest = build()
         payloads["snap-btc-support"] = b'{"asset":"ETH","side":"support"}'
