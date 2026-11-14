@@ -160,7 +160,10 @@
       ]
     },
     "checkpoint": {
-      "type": "object",
+      "type": [
+        "object",
+        "null"
+      ],
       "additionalProperties": false,
       "required": [
         "block_height",
@@ -355,6 +358,9 @@
             "type": [
               "null"
             ]
+          },
+          "checkpoint": {
+            "type": "object"
           }
         }
       }
