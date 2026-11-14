@@ -55,7 +55,8 @@ def create_artifact(root, artifact_id, artifact_type, depends_on_artifact_ids=No
         "local_sha256": hashlib.sha256(payload).hexdigest(),
         "terms_reviewed_at_utc": "2026-11-14T00:00:00Z",
         "purpose": "PERSONAL_NON_PRODUCTION_RESEARCH", "retention_policy_id": "retention-v1",
-        "revision_id": artifact_id, "storage_scope": "LOCAL_ONLY", "cloud_sync_allowed": False,\n        "depends_on_artifact_ids": depends_on_artifact_ids or [],
+        "revision_id": artifact_id, "storage_scope": "LOCAL_ONLY", "cloud_sync_allowed": False,
+        "depends_on_artifact_ids": depends_on_artifact_ids or [],
     }), encoding="utf-8")
 
 
