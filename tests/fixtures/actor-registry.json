@@ -23,6 +23,17 @@
           "evidence_refs": [
             "evidence-manager"
           ]
+        },
+        {
+          "value": "Northstar AM",
+          "alias_type": "FORMER_NAME",
+          "scope": "global",
+          "known_at_utc": "2024-01-02T00:00:00Z",
+          "valid_from_utc": "2018-01-01T00:00:00Z",
+          "valid_to_utc": "2022-12-31T00:00:00Z",
+          "evidence_refs": [
+            "evidence-manager-former-name"
+          ]
         }
       ],
       "classifications": [
@@ -257,7 +268,19 @@
       "known_at_utc": "2020-01-02T00:00:00Z",
       "valid_from_utc": "2017-01-01T00:00:00Z",
       "valid_to_utc": "2021-06-30T00:00:00Z",
-      "aliases": [],
+      "aliases": [
+        {
+          "value": "Closed BTC Vehicle",
+          "alias_type": "LEGAL_NAME",
+          "scope": "US",
+          "known_at_utc": "2020-01-02T00:00:00Z",
+          "valid_from_utc": "2017-01-01T00:00:00Z",
+          "valid_to_utc": "2021-06-30T00:00:00Z",
+          "evidence_refs": [
+            "dissolution-record"
+          ]
+        }
+      ],
       "classifications": [],
       "coverage": [],
       "evidence_refs": [
