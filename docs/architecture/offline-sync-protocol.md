@@ -71,7 +71,7 @@ The server maintains:
 - **SyncConflict:** immutable references to competing operations/records and their conflict class.
 - **Device:** registration, key reference, status, creation/revocation metadata and supported client versions.
 
-Cursors are opaque, server-issued tokens or monotonic sequence positions. A client must not invent, increment, or derive a cursor from wall-clock time. Cursor advancement is atomic with the corresponding page/batch acknowledgement. A page is complete only when the server returns its explicit continuation/terminal marker.
+Cursors are opaque, server-issued tokens or monotonic sequence positions. A client must not invent, increment, or derive a cursor from wall-clock time. Cursor advancement is atomic with the corresponding page/batch acknowledgement. A page is complete only when the server returns its explicit continuation/terminal marker. Before accepting a receipt, the client validates the complete outcome tuple: ACCEPTED/DUPLICATE must carry a positive non-boolean server sequence, non-empty cursor and valid commit timestamp; DEPENDENCY_PENDING/REJECTED/QUARANTINED/CONFLICT must carry a stable reason and must not carry a commit timestamp, sequence or cursor. Receipt timestamps are real UTC calendar values, not regex-only strings. A cursor must match the requesting device and stream, carry a real UTC issue timestamp, never move behind the last confirmed server sequence, and preserve the same opaque token when replaying the same sequence. Non-terminal pages require an explicit next token; terminal pages prohibit one.
 
 Server sequence numbers express commit order in the central authority, not the real-world event time of blockchain or provider observations.
 
