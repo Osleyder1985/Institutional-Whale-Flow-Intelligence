@@ -49,6 +49,16 @@ class SourcePolicyEvidenceRegistryTests(unittest.TestCase):
         with self.assertRaises(ValidationError):
             self.validator.validate({"registry_version": "1.0.0", "default_status": "UNASSESSED", "sources": [record]})
 
+    def test_approved_provider_without_policy_is_rejected(self):
+        record = {
+            "source_id": "synthetic:test-source",
+            "provider_name": "Synthetic provider",
+            "assessment_status": "APPROVED",
+            "policies": []
+        }
+        with self.assertRaises(ValidationError):
+            self.validator.validate({"registry_version": "1.0.0", "default_status": "UNASSESSED", "sources": [record]})
+
     def test_unverified_policy_cannot_be_marked_as_approved_evidence(self):
         record = {
             "source_id": "synthetic:test-source",
@@ -56,7 +66,7 @@ class SourcePolicyEvidenceRegistryTests(unittest.TestCase):
             "assessment_status": "APPROVED",
             "policies": [{
                 "policy_id": "synthetic-policy-1", "policy_version": "1.0",
-                "issuer": "Synthetic issuer", "document_ref": "synthetic-document",
+                "issuer": "Synthetic issuer", "rights_ref": "synthetic-rights-reference", "status": "ACTIVE", "document_ref": "synthetic-document",
                 "document_sha256": "a" * 64, "retrieved_at_utc": "2026-11-13T00:00:00Z",
                 "reviewed_at_utc": "2026-11-13T12:00:00Z", "review_status": "PENDING",
                 "reviewer_id": "synthetic-reviewer", "review_scope": ["RETAIN_LOCAL"],
