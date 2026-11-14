@@ -178,37 +178,49 @@ def validate_execution_participant_roles(registry, trades, actor_ids, observatio
     return sorted(set(errors))
 
 
-def resolve_execution_participants(registry, trade, as_of_utc):
-    """Resolve each role independently; malformed relevant claims cause explicit abstention."""
+def resolve_execution_participants(registry, trade, as_of_utc, actor_ids, observation_ids):
+    """Resolve claims visible to the system by cutoff; malformed eligible claims cause abstention."""
     as_of = _time(as_of_utc)
     event_time = _time(trade.get("event_time_utc")) if isinstance(trade, dict) else None
     trade_id = trade.get("trade_id") if isinstance(trade, dict) else None
     if as_of is None or event_time is None or not _nonempty(trade_id):
         return {"status": "INVALID_INPUT", "participants": [], "errors": ["invalid trade or as_of timestamp"]}
-    if not isinstance(registry, dict) or not isinstance(registry.get("claims"), list):
+    if not isinstance(registry, dict) or registry.get("contract_version") != "1.1.0" or not isinstance(registry.get("claims"), list):
         return {"status": "INVALID_INPUT", "participants": [], "errors": ["invalid claim registry"]}
 
-    active = []
+    eligible = []
     for claim in registry["claims"]:
         if not isinstance(claim, dict):
             return {"status": "INVALID_INPUT", "participants": [], "errors": ["malformed claim object"]}
         if claim.get("trade_id") != trade_id:
             continue
         known = _time(claim.get("known_at_utc"))
-        start_value, end_value = claim.get("valid_from_utc"), claim.get("valid_to_utc")
-        start = _time(start_value) if start_value is not None else None
-        end = _time(end_value) if end_value is not None else None
-        if known is None or (start_value is not None and start is None) or (end_value is not None and end is None):
-            return {"status": "INVALID_INPUT", "participants": [], "errors": ["malformed temporal claim"]}
-        if known > as_of or (start is not None and event_time < start) or (end is not None and event_time > end):
+        recorded = _time(claim.get("recorded_at_utc"))
+        if known is None or recorded is None:
+            return {"status": "INVALID_INPUT", "participants": [], "errors": ["malformed claim knowledge timestamps"]}
+        # A system as-of query cannot use a claim before it was ingested/recorded,
+        # even when the underlying information was publicly knowable earlier.
+        if known > as_of or recorded > as_of:
             continue
-        role, side, status = claim.get("participant_role"), claim.get("participant_side"), claim.get("epistemic_status")
-        if role not in _ROLES or side not in _SIDES or status not in _STATUSES or not _valid_role_side(role, side):
-            return {"status": "INVALID_INPUT", "participants": [], "errors": ["malformed role/side/status claim"]}
-        active.append(claim)
+        eligible.append(claim)
+
+    scoped_registry = {"contract_version": "1.1.0", "claims": eligible}
+    validation_errors = validate_execution_participant_roles(
+        scoped_registry, [trade], actor_ids, observation_ids
+    )
+    if validation_errors:
+        return {
+            "status": "INVALID_INPUT",
+            "participants": [],
+            "errors": validation_errors,
+        }
 
     by_role = {}
-    for claim in active:
+    for claim in eligible:
+        if claim["valid_from_utc"] is not None and event_time < _time(claim["valid_from_utc"]):
+            continue
+        if claim["valid_to_utc"] is not None and event_time > _time(claim["valid_to_utc"]):
+            continue
         by_role.setdefault(claim["participant_role"], []).append(claim)
 
     participants = []
@@ -219,8 +231,8 @@ def resolve_execution_participants(registry, trade, as_of_utc):
         else:
             named = [c for c in claims if c["epistemic_status"] in {"DIRECT", "INFERRED"}]
             actors = {c.get("actor_id") for c in named}
-            sides = {c.get("participant_side") for c in claims}
-            if len(actors) > 1 or len(sides) > 1:
+            known_sides = {c["participant_side"] for c in claims if c["participant_side"] != "UNKNOWN"}
+            if len(actors) > 1 or len(known_sides) > 1:
                 status = "DISPUTED"
             elif not named:
                 status = "UNKNOWN"
@@ -228,18 +240,30 @@ def resolve_execution_participants(registry, trade, as_of_utc):
                 status = "DIRECT"
             else:
                 status = "INFERRED"
+
         if status in {"DISPUTED", "UNKNOWN"}:
             actor_id = None
         else:
-            actor_id = next(c.get("actor_id") for c in claims if c["epistemic_status"] in {"DIRECT", "INFERRED"})
-        sides = {c.get("participant_side") for c in claims}
-        side = next(iter(sides)) if len(sides) == 1 else "UNKNOWN"
+            actor_id = next(c["actor_id"] for c in claims if c["epistemic_status"] in {"DIRECT", "INFERRED"})
+
+        known_sides = {c["participant_side"] for c in claims if c["participant_side"] != "UNKNOWN"}
+        side = next(iter(known_sides)) if len(known_sides) == 1 else "UNKNOWN"
+        named_actor_ids = {c["actor_id"] for c in claims if c["epistemic_status"] in {"DIRECT", "INFERRED"}}
+        explicit_candidates = {x for c in claims for x in c["candidate_actor_ids"]}
+        candidates = explicit_candidates | (named_actor_ids if status == "DISPUTED" else set())
         participants.append({
             "participant_role": role,
             "status": status,
             "actor_id": actor_id,
             "participant_side": side,
-            "claim_ids": sorted(c["claim_id"] for c in claims if _nonempty(c.get("claim_id"))),
-            "candidate_actor_ids": sorted({x for c in claims for x in c.get("candidate_actor_ids", [])}),
+            "claim_ids": sorted(c["claim_id"] for c in claims),
+            "candidate_actor_ids": sorted(candidates),
+            "conflict_reasons": (
+                ["multiple_actor_attributions"] if len(named_actor_ids) > 1 else []
+            ) + (
+                ["conflicting_participant_sides"] if len(known_sides) > 1 else []
+            ) + (
+                ["explicit_disputed_claim"] if any(c["epistemic_status"] == "DISPUTED" for c in claims) else []
+            ),
         })
     return {"status": "RESOLVED", "participants": participants, "errors": []}
