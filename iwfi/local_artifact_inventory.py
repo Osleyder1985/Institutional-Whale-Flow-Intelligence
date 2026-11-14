@@ -26,6 +26,7 @@ def build_local_artifact_inventory(root):
 
     records = {}
     entries = []
+    validation_report_links = []
     for path in sorted(root.iterdir(), key=lambda item: item.name):
         if path.name == "_deletion_audit":
             if path.is_symlink() or not path.is_dir():
@@ -64,12 +65,16 @@ def build_local_artifact_inventory(root):
                 f"depends_on_artifact_ids must be an explicit safe-ID list: {path.name}"
             )
         # Reconcile established schema lineage fields as well as the explicit graph.
-        for field in ("validation_report_artifact_id", "supersedes_artifact_id"):
-            reference = record.get(field)
-            if reference is not None:
-                if not isinstance(reference, str) or not _SAFE_ID.fullmatch(reference):
-                    raise ArtifactInventoryError(f"invalid {field}: {path.name}")
-                dependencies.append(reference)
+        report_reference = record.get("validation_report_artifact_id")
+        if report_reference is not None:
+            if not isinstance(report_reference, str) or not _SAFE_ID.fullmatch(report_reference):
+                raise ArtifactInventoryError(f"invalid validation_report_artifact_id: {path.name}")
+            validation_report_links.append((report_reference, path.name))
+        superseded_reference = record.get("supersedes_artifact_id")
+        if superseded_reference is not None:
+            if not isinstance(superseded_reference, str) or not _SAFE_ID.fullmatch(superseded_reference):
+                raise ArtifactInventoryError(f"invalid supersedes_artifact_id: {path.name}")
+            dependencies.append(superseded_reference)
         dependencies = sorted(set(dependencies))
         if path.name in dependencies:
             raise ArtifactInventoryError(f"artifact cannot depend on itself: {path.name}")
@@ -81,6 +86,18 @@ def build_local_artifact_inventory(root):
             "artifact_type": record["artifact_type"],
             "depends_on_artifact_ids": sorted(dependencies),
         })
+
+    entry_by_id = {entry["artifact_id"]: entry for entry in entries}
+    for report_id, source_artifact_id in validation_report_links:
+        if report_id not in records:
+            raise ArtifactInventoryError(
+                f"artifact {source_artifact_id} references missing validation report: {report_id}"
+            )
+        report_dependencies = records[report_id]["depends_on_artifact_ids"]
+        report_dependencies.append(source_artifact_id)
+        entry_by_id[report_id]["depends_on_artifact_ids"].append(source_artifact_id)
+    for entry in entries:
+        entry["depends_on_artifact_ids"] = sorted(set(entry["depends_on_artifact_ids"]))
 
     for artifact_id, record in records.items():
         missing = set(record["depends_on_artifact_ids"]) - set(records)
