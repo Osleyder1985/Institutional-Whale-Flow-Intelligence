@@ -6,6 +6,7 @@ polling, or mutation of supplied records is performed.
 import hashlib
 import json
 from copy import deepcopy
+from datetime import datetime, timezone, timedelta
 
 
 SUPPORTED_NETWORKS = {"bitcoin-mainnet", "eip155:1"}
@@ -30,17 +31,29 @@ def _source(item):
 
 
 def _later(left, right):
-    # Inputs are required by schema to be canonical UTC timestamps ending in Z.
+    # Parse UTC timestamps instead of relying on lexical order: optional
+    # fractional seconds make otherwise valid ISO-8601 strings non-sortable.
     a, b = left.get("observed_at_utc"), right.get("observed_at_utc")
-    return isinstance(a, str) and isinstance(b, str) and b > a
+    if not isinstance(a, str) or not isinstance(b, str):
+        return False
+    try:
+        earlier = datetime.fromisoformat(a.replace("Z", "+00:00"))
+        later = datetime.fromisoformat(b.replace("Z", "+00:00"))
+    except ValueError:
+        return False
+    return earlier.utcoffset() == later.utcoffset() == timedelta(0) and later > earlier
 
 
-def _fingerprint(network_id, transaction_id, evidence_ids, status, reason):
+def _fingerprint(network_id, transaction_id, records, status, reason):
+    canonical_evidence = sorted(
+        (deepcopy(item) for item in records),
+        key=lambda item: item["observation_id"],
+    )
     payload = {
         "policy_version": POLICY_VERSION,
         "network_id": network_id,
         "transaction_id": transaction_id,
-        "evidence_observation_ids": evidence_ids,
+        "evidence": canonical_evidence,
         "status": status,
         "reason_code": reason,
     }
@@ -144,7 +157,7 @@ def assess_chain_observations(observations):
             "inclusion_keys": serialized_keys,
             "movement_event_locators": serialized_locators,
             "reason_code": reason,
-            "assessment_fingerprint": _fingerprint(network_id, transaction_id, evidence_ids, status, reason),
+            "assessment_fingerprint": _fingerprint(network_id, transaction_id, records, status, reason),
         }
 
     if not inclusions:
