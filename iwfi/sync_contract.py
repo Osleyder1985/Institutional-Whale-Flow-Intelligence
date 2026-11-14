@@ -5,6 +5,7 @@ This module has no network, database, credential, retry, or background behavior.
 import hashlib
 import json
 import re
+from datetime import datetime
 from datetime import datetime, timezone
 
 
@@ -52,6 +53,15 @@ def validate_operation_semantics(operation):
     dependencies = operation.get("causal_dependencies")
     if not isinstance(operation_id, str) or not operation_id.strip():
         raise ValueError("operation_id must be a non-empty string")
+    timestamp = operation.get("created_at_device_utc")
+    if not isinstance(timestamp, str):
+        raise ValueError("created_at_device_utc must be a UTC timestamp")
+    try:
+        parsed_timestamp = datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%SZ")
+    except ValueError as exc:
+        raise ValueError("created_at_device_utc must be a valid UTC calendar timestamp") from exc
+    if parsed_timestamp.strftime("%Y-%m-%dT%H:%M:%SZ") != timestamp:
+        raise ValueError("created_at_device_utc must use canonical UTC seconds format")
     if not isinstance(dependencies, list):
         raise ValueError("causal_dependencies must be an array")
     if any(not isinstance(value, str) or not value.strip() for value in dependencies):
