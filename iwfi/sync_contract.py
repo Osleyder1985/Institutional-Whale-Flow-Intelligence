@@ -5,6 +5,7 @@ This module has no network, database, credential, retry, or background behavior.
 import hashlib
 import json
 import re
+from datetime import datetime, timezone
 
 
 _SHA256_RE = re.compile(r"^[a-f0-9]{64}$")
@@ -39,6 +40,15 @@ def validate_operation_semantics(operation):
     if not isinstance(operation, dict):
         raise ValueError("operation must be an object")
     operation_id = operation.get("operation_id")
+    timestamp = operation.get("created_at_device_utc")
+    if not isinstance(timestamp, str) or not re.fullmatch(r"\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z", timestamp):
+        raise ValueError("created_at_device_utc must be UTC with a Z suffix")
+    try:
+        parsed_timestamp = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise ValueError("created_at_device_utc must be a valid calendar timestamp") from exc
+    if parsed_timestamp.tzinfo != timezone.utc:
+        raise ValueError("created_at_device_utc must be UTC")
     dependencies = operation.get("causal_dependencies")
     if not isinstance(operation_id, str) or not operation_id.strip():
         raise ValueError("operation_id must be a non-empty string")
