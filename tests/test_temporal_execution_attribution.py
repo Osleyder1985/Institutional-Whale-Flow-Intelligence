@@ -103,6 +103,8 @@ class TemporalExecutionAttributionTests(unittest.TestCase):
         for status in ("UNKNOWN", "DISPUTED"):
             registry = copy.deepcopy(self.actors)
             registry["actors"][0]["identity_status"] = status
+            if status == "DISPUTED":
+                registry["actors"][0]["counter_evidence_refs"] = ["synthetic-identity-counter"]
             result = resolve_actor_identity_as_of(
                 registry, registry["actors"][0]["actor_id"],
                 "2026-02-11T12:30:00Z", self.trade["event_time_utc"]
@@ -160,6 +162,7 @@ class TemporalExecutionAttributionTests(unittest.TestCase):
         manager_claim["required_relationship_ids"] = ["synthetic-manager-manages-fund"]
         registry = copy.deepcopy(self.actors)
         registry["relationships"][0]["status"] = "DISPUTED"
+        registry["relationships"][0]["counter_evidence_refs"] = ["synthetic-management-counter"]
         result = resolve_execution_participants_as_of(
             claims, self.trade, "2026-02-11T12:30:00Z", registry, self.observation_ids
         )
@@ -222,6 +225,7 @@ class TemporalExecutionAttributionTests(unittest.TestCase):
     def test_disputed_relationship_does_not_enable_conclusive_link(self):
         registry = copy.deepcopy(self.actors)
         registry["relationships"][0]["status"] = "DISPUTED"
+        registry["relationships"][0]["counter_evidence_refs"] = ["synthetic-management-counter"]
         result = resolve_relationship_as_of(
             registry, "synthetic-eth-manager", "synthetic-eth-fund",
             "MANAGES", "2026-02-11T12:30:00Z", self.trade["event_time_utc"]
