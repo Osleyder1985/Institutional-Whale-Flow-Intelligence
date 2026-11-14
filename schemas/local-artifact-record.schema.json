@@ -4,7 +4,7 @@
   "title": "IWFI Local Artifact Version Record",
   "type": "object",
   "additionalProperties": false,
-  "required": ["record_version", "artifact_id", "artifact_type", "source_id", "source_url", "acquired_at_utc", "local_sha256", "terms_reviewed_at_utc", "purpose", "retention_policy_id", "revision_id", "storage_scope", "cloud_sync_allowed"],
+  "required": ["record_version", "artifact_id", "artifact_type", "source_id", "source_url", "acquired_at_utc", "local_sha256", "terms_reviewed_at_utc", "purpose", "retention_policy_id", "revision_id", "storage_scope", "cloud_sync_allowed", "depends_on_artifact_ids"],
   "properties": {
     "record_version": { "const": "1.0.0" },
     "artifact_id": { "type": "string", "minLength": 1 },
@@ -21,6 +21,7 @@
     "revision_id": { "type": "string", "minLength": 1 },
     "supersedes_artifact_id": { "type": ["string", "null"] },
     "storage_scope": { "const": "LOCAL_ONLY" },
-    "cloud_sync_allowed": { "const": false }
+    "cloud_sync_allowed": { "const": false },
+    "depends_on_artifact_ids": { "type": "array", "uniqueItems": true, "items": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" } }
   }
 }
