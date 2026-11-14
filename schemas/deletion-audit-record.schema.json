@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://iwfi.invalid/schemas/deletion-audit-record.schema.json",
+  "title": "IWFI Local Artifact Deletion Audit Record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["record_version", "deletion_id", "artifact_id", "artifact_type", "deleted_at_utc", "deletion_method", "verification_status", "dependent_artifact_ids_reviewed", "backup_artifact_ids_reviewed", "storage_scope"],
+  "properties": {
+    "record_version": { "const": "1.0.0" },
+    "deletion_id": { "type": "string", "minLength": 1 },
+    "artifact_id": { "type": "string", "minLength": 1 },
+    "artifact_type": { "enum": ["SOURCE_ARCHIVE", "CHECKSUM", "VALIDATION_REPORT", "NORMALIZED_OBSERVATION", "DERIVED_DATA", "SNAPSHOT", "LOG", "BACKUP"] },
+    "deleted_at_utc": { "type": "string", "format": "date-time", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$" },
+    "deletion_method": { "type": "string", "minLength": 1 },
+    "verification_status": { "enum": ["VERIFIED", "NOT_VERIFIED", "PARTIAL"] },
+    "dependent_artifact_ids_reviewed": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+    "backup_artifact_ids_reviewed": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+    "storage_scope": { "const": "LOCAL_ONLY" },
+    "notes": { "type": "string" }
+  }
+}
