@@ -25,12 +25,13 @@ def package_fixture():
     manifest = build_audit_package_manifest(
         package_id="signed-synthetic-package",
         reconstruction_manifest_hash=ROOT_HASH,
-        artifacts=[{"path": p, "role": r, "media_type": m, "content": b}
+        artifacts=[{"path": p, "role": r, "media_type": m,
+                    "source_ids": ["source:" + p], "content": b}
                    for p, r, m, b in items])
     payloads = {p: b for p, _, _, b in items}
     authorizations, policies, lineage = [], [], {}
     for index, item in enumerate(manifest["artifacts"]):
-        source = "source:" + item["path"]
+        source = item["source_ids"][0]
         lineage[source] = []
         authorizations.append({
             "authorization_id": "auth-" + str(index),
