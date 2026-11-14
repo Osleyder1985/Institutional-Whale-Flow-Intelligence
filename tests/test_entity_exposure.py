@@ -8,6 +8,7 @@ from iwfi.entity_exposure import aggregate_entity_exposure_history
 
 CUTOFF = "2026-11-15T00:00:00Z"
 REVIEWED = "2026-10-01T00:00:00Z"
+INVENTORY_REVIEWED = "2026-11-03T00:00:00Z"
 
 
 def claim(claim_id, address, entity="entity-a", *, network="bitcoin-mainnet",
@@ -67,7 +68,7 @@ def snapshot(batch_id, time, balances, *, coverage="COMPLETE", expected=None,
             "evidence_ref": "inventory-evidence:" + batch_id if coverage == "COMPLETE" else None,
             "review_status": "REVIEWED" if coverage == "COMPLETE" else "UNREVIEWED",
             "reviewer_id": "test-inventory-reviewer" if coverage == "COMPLETE" else None,
-            "reviewed_at_utc": REVIEWED if coverage == "COMPLETE" else None,
+            "reviewed_at_utc": INVENTORY_REVIEWED if coverage == "COMPLETE" else None,
         },
         "addresses": addresses,
     }
@@ -136,6 +137,13 @@ class EntityExposureTests(unittest.TestCase):
         self.assertEqual(row["known_controlled_address_exposure_atomic"], 0)
         self.assertIsNone(row["total_controlled_address_exposure_atomic"])
 
+    def test_inventory_review_before_snapshot_is_not_accepted_as_complete(self):
+        item = snapshot("s1", "2026-11-01T00:00:00Z", [("bc1qaddress1", 1000)])
+        item["inventory_coverage"]["reviewed_at_utc"] = "2026-10-31T23:59:59Z"
+        result = aggregate([item], [claim("c1", "bc1qaddress1")])
+        self.assertIsNone(result["histories"][0]["snapshots"][0]["total_controlled_address_exposure_atomic"])
+        self.assertEqual(result["histories"][0]["snapshots"][0]["coverage_status"], "PARTIAL")
+
     def test_open_inventory_without_reviewed_evidence_is_never_complete(self):
         item = snapshot("s1", "2026-11-01T00:00:00Z", [("bc1qaddress1", 1000)])
         item["inventory_coverage"]["reviewed_at_utc"] = None
@@ -155,7 +163,7 @@ class EntityExposureTests(unittest.TestCase):
                           coverage="PARTIAL")
         result = aggregate([first, second], claims)
         change = result["histories"][0]["changes"][0]
-        self.assertEqual(change["known_address_delta_atomic"], None)
+        self.assertEqual(change["known_controlled_address_delta_atomic"], None)
         self.assertEqual(change["candidate_direction"], "NOT_CLASSIFIED")
 
     def test_eth_snapshot_uses_wei_and_separate_network(self):
