@@ -40,7 +40,7 @@ For each BTCUSDT/ETHUSDT trades and aggregate-trades scope:
 
 ### Binance live public Spot API
 
-For each asset and endpoint (`trades`, `aggTrades`, `depth`, `ticker`, `klines`):
+For each asset and exact endpoint (`trades`, `aggTrades`, `depth`, `klines`, `ticker/24hr`, `ticker/bookTicker`, `ticker/price`):
 - Preserve the applicable official API documentation and the terms governing automated API access and local retention.
 - Do not apply Binance Vision Dataset Terms to live API responses unless the issuer explicitly establishes that scope.
 - Review rate limits, timestamp units, endpoint semantics, personal research, local retention, and derived-data rights.
@@ -53,6 +53,17 @@ For each asset and endpoint (`trades`, `aggTrades`, `depth`, `ticker`, `klines`)
 - Separate software licensing from rights/constraints affecting third-party datasets or hosted services.
 - Measure local disk, CPU, RAM, bandwidth, and synchronization requirements before selecting an operational method.
 - Ethereum scope here is native ETH and mainnet ledger data only; ERC-20/token events are not included.
+
+### Unresolved official-source contradiction — live public API
+
+The official Spot REST documentation and the Market Data Only FAQ currently list `https://data-api.binance.vision` as the no-authentication base for public REST market-data endpoints. However, a Binance Vision team contributor stated in the public Binance Public Data repository issue #502 (comment dated 2026-11-05) that `data-api.binance.vision` is not a live Binance endpoint and instructed users to rely only on `data.binance.vision` and its listed dataset endpoints. These statements conflict on the nature and scope of the host.
+
+Until Binance clarifies this directly through an authoritative support/legal response, the live API source IDs remain `PENDING_EVIDENCE`. Do not activate, poll, or retain responses from this host. Do not infer that Vision Dataset Terms govern it solely because the host name contains `binance.vision`, and do not ignore the contrary support statement. The exact intended use, applicable terms, and retention rights require explicit reconciliation.
+
+Official references:
+- Spot REST API: https://developers.binance.com/en/docs/products/spot/rest-api
+- Market Data Only URLs: https://developers.binance.com/en/docs/products/spot/faqs/market_data_only
+- Binance Public Data issue #502: https://github.com/binance/binance-public-data/issues/502
 
 ## Deliberately not instantiated
 
