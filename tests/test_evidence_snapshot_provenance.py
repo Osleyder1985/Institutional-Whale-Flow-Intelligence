@@ -1,5 +1,9 @@
 import hashlib
+import json
+from pathlib import Path
 import unittest
+
+import jsonschema
 
 from iwfi.evidence_snapshot_provenance import (
     build_reconstruction_manifest,
@@ -186,6 +190,27 @@ class EvidenceSnapshotProvenanceTests(unittest.TestCase):
             {snapshot["source_snapshot_id"]: b'{"asset":"BTC"}'},
         )
         self.assertEqual(result["manifest_status"], "MANIFEST_HASH_MISMATCH")
+
+
+    def test_btc_eth_snapshot_fixtures_validate_schema_and_hash(self):
+        root = Path(__file__).parent
+        schema = json.loads((root.parent / "schemas" / "evidence-snapshot-v1.0.schema.json").read_text(encoding="utf-8"))
+        fixture = json.loads((root / "fixtures" / "evidence-snapshots-v1.0.json").read_text(encoding="utf-8"))
+        self.assertEqual(fixture["fixture_version"], "1.0.0")
+        self.assertEqual(len(fixture["snapshots"]), 2)
+        for item in fixture["snapshots"]:
+            descriptor_data = item["descriptor"]
+            jsonschema.validate(descriptor_data, schema)
+            payload = item["payload_utf8"].encode("utf-8")
+            self.assertEqual(verify_snapshot_payload(descriptor_data, payload)["status"], "HASH_VERIFIED")
+
+    def test_snapshot_schema_rejects_missing_recorded_timestamp(self):
+        root = Path(__file__).parent
+        schema = json.loads((root.parent / "schemas" / "evidence-snapshot-v1.0.schema.json").read_text(encoding="utf-8"))
+        snapshot = descriptor()
+        snapshot.pop("recorded_at_utc")
+        with self.assertRaises(jsonschema.ValidationError):
+            jsonschema.validate(snapshot, schema)
 
     def test_missing_snapshot_fails_closed(self):
         snapshot = descriptor()
