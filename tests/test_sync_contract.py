@@ -298,6 +298,84 @@ class ReferenceSyncProtocolSimulationTests(unittest.TestCase):
         confirmed_cursor = retry[-1][0]
         next_page = [row for row in self.server_outbox if row[0] > confirmed_cursor][:1]
         self.assertEqual(next_page[0][0], 3)
+    def test_rejected_receipt_cannot_advance_sequence_or_cursor(self):
+        from iwfi.sync_contract import validate_receipt_semantics
+        receipt = copy.deepcopy(FIXTURES["receipts"][2])
+        receipt.update({"outcome": "REJECTED", "reason_code": "POLICY_REJECTED",
+                        "server_sequence": None, "cursor": None, "committed_at_utc": None,
+                        "idempotent_replay": False})
+        self.assertTrue(validate_receipt_semantics(receipt))
+        receipt["server_sequence"] = 102
+        with self.assertRaises(ValueError):
+            validate_receipt_semantics(receipt)
+
+    def test_receipt_rejects_boolean_server_sequence(self):
+        from iwfi.sync_contract import validate_receipt_semantics
+        receipt = copy.deepcopy(FIXTURES["receipts"][0])
+        receipt["server_sequence"] = True
+        with self.assertRaises(ValueError):
+            validate_receipt_semantics(receipt)
+
+    def test_receipt_rejects_invalid_calendar_timestamps(self):
+        from iwfi.sync_contract import validate_receipt_semantics
+        receipt = copy.deepcopy(FIXTURES["receipts"][0])
+        receipt["received_at_utc"] = "2026-02-30T10:00:00Z"
+        with self.assertRaises(ValueError):
+            validate_receipt_semantics(receipt)
+        receipt["received_at_utc"] = "2026-11-14T10:00:00Z"
+        receipt["committed_at_utc"] = "2026-02-30T10:00:00Z"
+        with self.assertRaises(ValueError):
+            validate_receipt_semantics(receipt)
+
+    def test_pending_receipt_requires_reason_and_no_commit(self):
+        from iwfi.sync_contract import validate_receipt_semantics
+        receipt = copy.deepcopy(FIXTURES["receipts"][2])
+        self.assertTrue(validate_receipt_semantics(receipt))
+        receipt["reason_code"] = None
+        with self.assertRaises(ValueError):
+            validate_receipt_semantics(receipt)
+
+    def test_cursor_rejects_wrong_device_or_stream(self):
+        from iwfi.sync_contract import validate_cursor_semantics
+        cursor = copy.deepcopy(FIXTURES["cursors"][0])
+        self.assertTrue(validate_cursor_semantics(cursor, cursor["device_id"], cursor["stream_id"]))
+        with self.assertRaises(ValueError):
+            validate_cursor_semantics(cursor, "another-device", cursor["stream_id"])
+        with self.assertRaises(ValueError):
+            validate_cursor_semantics(cursor, cursor["device_id"], "another-stream")
+
+    def test_cursor_cannot_move_backwards_or_change_token_at_same_sequence(self):
+        from iwfi.sync_contract import validate_cursor_semantics
+        cursor = copy.deepcopy(FIXTURES["cursors"][0])
+        with self.assertRaises(ValueError):
+            validate_cursor_semantics(cursor, cursor["device_id"], cursor["stream_id"],
+                                     last_server_sequence=cursor["server_sequence"] + 1)
+        with self.assertRaises(ValueError):
+            validate_cursor_semantics(cursor, cursor["device_id"], cursor["stream_id"],
+                                     last_server_sequence=cursor["server_sequence"],
+                                     previous_cursor="different-token")
+
+    def test_cursor_rejects_invalid_calendar_timestamp_and_boolean_sequence(self):
+        from iwfi.sync_contract import validate_cursor_semantics
+        cursor = copy.deepcopy(FIXTURES["cursors"][0])
+        cursor["issued_at_utc"] = "2026-02-30T10:00:00Z"
+        with self.assertRaises(ValueError):
+            validate_cursor_semantics(cursor, cursor["device_id"], cursor["stream_id"])
+        cursor["issued_at_utc"] = "2026-11-14T10:00:00Z"
+        cursor["server_sequence"] = True
+        with self.assertRaises(ValueError):
+            validate_cursor_semantics(cursor, cursor["device_id"], cursor["stream_id"])
+
+    def test_cursor_page_continuation_is_explicit_and_validated(self):
+        from iwfi.sync_contract import validate_cursor_semantics
+        cursor = copy.deepcopy(FIXTURES["cursors"][1])
+        self.assertTrue(validate_cursor_semantics(cursor, cursor["device_id"], cursor["stream_id"],
+                                                  last_server_sequence=99))
+        cursor["next_cursor"] = None
+        with self.assertRaises(ValueError):
+            validate_cursor_semantics(cursor, cursor["device_id"], cursor["stream_id"])
+
+
 
 if __name__ == "__main__":
     unittest.main()
