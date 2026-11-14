@@ -45,7 +45,7 @@ def _snapshot_status(snapshot):
 
 
 def _is_visible(record, cutoff, valid_time, require_validity):
-    known = _parse_time(record.get("known_at_utc"))
+    known = _parse_time(record.get("known_at_utc", record.get("retrieved_at_utc")) )
     recorded = _parse_time(record.get("recorded_at_utc", record.get("retrieved_at_utc")))
     if known is None or recorded is None or recorded < known:
         return False, "INVALID_TEMPORAL_METADATA"
