@@ -230,5 +230,32 @@ class ExecutionParticipantRoleTests(unittest.TestCase):
         self.assertEqual(buyer["participant_side"], "BUY")
 
 
+    def test_resolver_rejects_invalid_attribution_method(self):
+        registry = copy.deepcopy(self.registry)
+        registry["claims"][0]["attribution_method"] = "NONE"
+        result = resolve_execution_participants(
+            registry, self.trades[1], "2026-02-11T12:30:00Z",
+            self.actor_ids, self.observation_ids
+        )
+        self.assertEqual(result["status"], "INVALID_INPUT")
+        self.assertEqual(result["participants"], [])
+
+    def test_resolver_rejects_malformed_evidence_record(self):
+        registry = copy.deepcopy(self.registry)
+        registry["claims"][0]["supporting_evidence"][0]["record_ref"] = "   "
+        result = resolve_execution_participants(
+            registry, self.trades[1], "2026-02-11T12:30:00Z",
+            self.actor_ids, self.observation_ids
+        )
+        self.assertEqual(result["status"], "INVALID_INPUT")
+        self.assertEqual(result["participants"], [])
+
+    def test_schema_rejects_whitespace_only_actor_identifier(self):
+        registry = copy.deepcopy(self.registry)
+        registry["claims"][0]["actor_id"] = "   "
+        validator = Draft202012Validator(self.schema, format_checker=FormatChecker())
+        self.assertTrue(list(validator.iter_errors(registry)))
+
+
 if __name__ == "__main__":
     unittest.main()
