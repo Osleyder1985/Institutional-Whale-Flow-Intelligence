@@ -52,6 +52,11 @@ class TradeExecutionContractTests(unittest.TestCase):
             execution["event_type"] = value
             self.assertIn("event_type must be TRADE_EXECUTION", validate_trade_execution(execution, self.evidence_ids))
 
+    def test_source_reference_set_must_match_execution_evidence(self):
+        execution = copy.deepcopy(self.executions[0])
+        execution["source_observation_ids"] = ["exec-evidence-eth"]
+        self.assertIn("source_observation_ids must match source_evidence IDs", validate_trade_execution(execution, self.evidence_ids))
+
     def test_missing_evidence_reference_is_rejected(self):
         execution = copy.deepcopy(self.executions[0])
         execution["source_observation_ids"] = ["not-present"]
