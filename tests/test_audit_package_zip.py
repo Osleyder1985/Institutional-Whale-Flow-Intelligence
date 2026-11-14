@@ -22,6 +22,7 @@ def fixture():
     artifacts = [
         {"path": path, "role": role, "media_type": media_type, "content": content}
         for (path, role, media_type, content) in [
+            ("reconstruction/manifest-v1.2.json", "RECONSTRUCTION_MANIFEST", "application/json", payloads["reconstruction/manifest-v1.2.json"]),
             ("claims/root-claim.json", "ROOT_CLAIM", "application/json", payloads["claims/root-claim.json"]),
             ("registry/actor-registry.json", "ACTOR_REGISTRY", "application/json", payloads["registry/actor-registry.json"]),
             ("snapshots/evidence-001.bin", "EVIDENCE_SNAPSHOT", "application/octet-stream", payloads["snapshots/evidence-001.bin"]),
@@ -45,6 +46,18 @@ class AuditPackageZipTests(unittest.TestCase):
         second = build_audit_package_zip(manifest=manifest, artifacts_by_path=payloads)
         self.assertEqual(first, second)
         self.assertEqual(self.verify(first)["status"], "AUDIT_PACKAGE_VERIFIED")
+
+    def test_reconstruction_manifest_payload_must_be_included_and_bound(self):
+        artifacts = [
+            {"path": "claims/root-claim.json", "role": "ROOT_CLAIM",
+             "media_type": "application/json", "content": b'{"claim_id":"synthetic"}'}
+        ]
+        manifest = build_audit_package_manifest(
+            package_id="missing-root-manifest",
+            reconstruction_manifest_hash=ROOT_HASH, artifacts=artifacts)
+        with self.assertRaisesRegex(ValueError, "reconstruction manifest artifact"):
+            build_audit_package_zip(manifest=manifest, artifacts_by_path={
+                "claims/root-claim.json": b'{"claim_id":"synthetic"}'})
 
     def test_inventory_must_verify_before_export(self):
         manifest, payloads = fixture()
