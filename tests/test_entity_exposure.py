@@ -205,6 +205,25 @@ class EntityExposureTests(unittest.TestCase):
         self.assertEqual(row["known_controlled_address_exposure_atomic"], 0)
         self.assertEqual(row["coverage_status"], "PARTIAL")
 
+    def test_unsupported_snapshot_contract_version_is_excluded(self):
+        item = snapshot("unsupported", "2026-11-01T00:00:00Z", [("bc1qaddress1", 1000)])
+        item["contract_version"] = "9.9.9"
+        result = aggregate([item], [claim("c1", "bc1qaddress1")])
+        self.assertEqual(result["histories"], [])
+        self.assertEqual(result["excluded"]["unsupported_contract_version"], 1)
+
+    def test_claim_review_cannot_precede_claim_recording(self):
+        item = snapshot("review-order", "2026-11-01T00:00:00Z", [("bc1qaddress1", 1000)])
+        malformed_chronology = claim(
+            "c1", "bc1qaddress1",
+            recorded="2026-10-02T00:00:00Z",
+            reviewed="2026-10-01T00:00:00Z",
+        )
+        result = aggregate([item], [malformed_chronology])
+        row = result["histories"][0]["snapshots"][0]
+        self.assertEqual(row["known_controlled_address_exposure_atomic"], 0)
+        self.assertIsNone(row["total_controlled_address_exposure_atomic"])
+
     def test_future_snapshot_is_excluded_at_knowledge_cutoff(self):
         item = snapshot("future", "2026-11-16T00:00:00Z", [("bc1qaddress1", 1000)])
         result = aggregate([item], [claim("c1", "bc1qaddress1")])
