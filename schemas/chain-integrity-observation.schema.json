@@ -28,6 +28,7 @@
       "required": [
         "kind",
         "source_id",
+        "view_id",
         "method"
       ],
       "properties": {
