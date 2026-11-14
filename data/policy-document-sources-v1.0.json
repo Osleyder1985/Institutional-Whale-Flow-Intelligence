@@ -14,7 +14,8 @@
       "redistribution_basis": "Source text is publicly available; no independent redistribution permission has been established in this registry.",
       "retention_status": "NOT_ASSESSED",
       "snapshot_storage": "REPOSITORY_COPY_PRESENT",
-      "review_status": "REVIEW_REQUIRED"
+      "review_status": "REVIEW_REQUIRED",
+      "baseline_etag": "\"305dbf1892163216e562ac2e7369263a91264d92277d2bf04d765c69f859a3ad\""
     },
     {
       "document_id": "cc_by_nc_sa_4_0_legal_code",
@@ -28,7 +29,9 @@
       "redistribution_basis": "The legal-code text states in its closing notice that the text of Creative Commons public licenses is dedicated to the public domain under CC0; trademark use remains subject to Creative Commons policies.",
       "retention_status": "NOT_ASSESSED",
       "snapshot_storage": "REPOSITORY_COPY_PRESENT",
-      "review_status": "SOURCE_NOTICE_RECORDED"
+      "review_status": "SOURCE_NOTICE_RECORDED",
+      "baseline_etag": "W/\"5172-6051c4d9d4647-gzip\"",
+      "baseline_last_modified": "Mon, 11 Sep 2023 21:49:39 GMT"
     },
     {
       "document_id": "binance_terms_of_use_adgm_2026_01_05",
@@ -42,7 +45,8 @@
       "redistribution_basis": "Official public PDF URL; no independent redistribution permission has been established in this registry.",
       "retention_status": "NOT_ASSESSED",
       "snapshot_storage": "OFFICIAL_REFERENCE_AND_HASH_ONLY",
-      "review_status": "REVIEW_REQUIRED"
+      "review_status": "REVIEW_REQUIRED",
+      "baseline_last_modified": "Mon, 05 Jan 2026 14:05:49 GMT"
     }
   ],
   "status_dimensions": [
