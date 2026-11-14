@@ -2,6 +2,9 @@ import copy
 import hashlib
 import json
 import unittest
+from pathlib import Path
+
+from jsonschema import Draft202012Validator
 
 from iwfi.audit_package_manifest import (
     build_audit_package_manifest, verify_audit_package_manifest,
@@ -32,6 +35,13 @@ class AuditPackageManifestTests(unittest.TestCase):
         return verify_audit_package_manifest(
             manifest=manifest, artifacts_by_path=payloads,
             expected_reconstruction_manifest_hash=expected)
+
+    def test_manifest_conforms_to_versioned_json_schema(self):
+        manifest, _ = fixture()
+        schema_path = Path(__file__).resolve().parents[1] / "schemas" / "audit-package-manifest-v1.0.schema.json"
+        schema = json.loads(schema_path.read_text(encoding="utf-8"))
+        Draft202012Validator.check_schema(schema)
+        Draft202012Validator(schema).validate(manifest)
 
     def test_exact_inventory_and_bytes_verify(self):
         manifest, payloads = fixture()
