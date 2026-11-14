@@ -72,8 +72,38 @@ class RootClaimReconstructionV12Tests(unittest.TestCase):
 
     def test_root_claim_snapshot_after_cutoff_fails(self):
         data = list(root_fixture())
-        data[2] = dict(data[2], retrieved_at_utc="2026-11-12T13:00:00Z")
+        manifest = copy.deepcopy(data[6])
+        descriptor = dict(data[2], retrieved_at_utc="2026-11-12T13:00:00Z")
+        manifest["root_claim_snapshot"] = dict(
+            manifest["root_claim_snapshot"],
+            retrieved_at_utc="2026-11-12T13:00:00Z",
+        )
+        unsigned = {k: v for k, v in manifest.items() if k != "manifest_hash"}
+        manifest["manifest_hash"] = __import__("hashlib").sha256(
+            json.dumps(unsigned, sort_keys=True, separators=(",", ":"),
+                       ensure_ascii=False, allow_nan=False).encode()).hexdigest()
+        data[2], data[6] = descriptor, manifest
+        self.assertEqual(self.verify(tuple(data))["reason"], "ROOT_CLAIM_SNAPSHOT_AFTER_CUTOFF")
+
+    def test_unbound_root_descriptor_metadata_mutation_fails(self):
+        data = list(root_fixture())
+        data[2] = dict(data[2], rights_policy_ref="policy:substituted")
         self.assertEqual(self.verify(tuple(data))["reason"], "ROOT_CLAIM_SNAPSHOT_DESCRIPTOR_MISMATCH")
+
+    def test_root_snapshot_id_cannot_collide_with_registry_snapshot(self):
+        claim, raw, descriptor, registry, snapshots, _, _ = root_fixture()
+        colliding = dict(descriptor, source_snapshot_id="snap-eth")
+        with self.assertRaisesRegex(ValueError, "must be distinct"):
+            build_actor_registry_reconstruction_manifest_v1_2(
+                root_claim=claim, root_claim_snapshot_descriptor=colliding,
+                root_claim_payload=raw, actor_registry=registry,
+                snapshot_descriptors=list(snapshots.values()),
+                reference_snapshot_map={
+                    "SOURCE_OBSERVATION:obs-eth": "snap-eth",
+                    "SOURCE_OBSERVATION:obs-btc-counter": "snap-counter",
+                    "ATTRIBUTION_CLAIM:claim-eth": "snap-claim",
+                }, knowledge_cutoff_utc=CUTOFF, valid_time_utc=VALID,
+                algorithm_id="test", algorithm_version="1", parameters={})
 
     def test_missing_root_claim_bytes_fails_closed(self):
         data = list(root_fixture())
