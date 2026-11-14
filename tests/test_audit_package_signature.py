@@ -19,6 +19,7 @@ ROOT_HASH = hashlib.sha256(b"synthetic reconstruction manifest").hexdigest()
 
 def package_fixture():
     items = [
+        ("reconstruction/manifest-v1.2.json", "RECONSTRUCTION_MANIFEST", "application/json", b"synthetic reconstruction manifest"),
         ("claims/root-claim.json", "ROOT_CLAIM", "application/json", b'{"claim_id":"synthetic"}'),
         ("snapshots/evidence.bin", "EVIDENCE_SNAPSHOT", "application/octet-stream", b"synthetic evidence"),
     ]
