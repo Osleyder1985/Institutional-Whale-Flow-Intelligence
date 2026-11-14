@@ -18,7 +18,7 @@ MANIFEST_NAME = "policy-document-evidence-manifest-v1.0.json"
 BUNDLE_NAME = "policy-document-extraction-bundle-v1.0.json"
 SHA256_RE = re.compile(r"^[a-f0-9]{64}$")
 HEADING_RE = re.compile(
-    r"^\s*(?:(?:#{1,6}\s*)|(?:§\s*)|(?:Section\s+))"
+    r"^\s*(?:#{1,6}\s*)?(?:§\s*|Section\s+)?"
     r"(?P<section>\d+(?:\.\d+)*(?:[A-Za-z])?)\s*[\.:–—-]?\s*(?P<title>.*)$",
     re.IGNORECASE,
 )
