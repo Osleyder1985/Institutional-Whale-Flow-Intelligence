@@ -167,6 +167,51 @@ class TemporalExecutionAttributionTests(unittest.TestCase):
         self.assertEqual(manager["status"], "UNKNOWN")
         self.assertIsNone(manager["actor_id"])
 
+    def test_inferred_relationship_caps_direct_claim_to_inferred(self):
+        claims = copy.deepcopy(self.claims)
+        manager_claim = next(x for x in claims["claims"] if x["claim_id"] == "claim-eth-manager")
+        manager_claim["required_relationship_ids"] = ["synthetic-manager-manages-fund"]
+        registry = copy.deepcopy(self.actors)
+        registry["relationships"][0]["status"] = "INFERRED"
+        result = resolve_execution_participants_as_of(
+            claims, self.trade, "2026-02-11T12:30:00Z", registry, self.observation_ids
+        )
+        manager = next(x for x in result["participants"] if x["participant_role"] == "ASSET_MANAGER")
+        self.assertEqual(manager["status"], "INFERRED")
+
+    def test_required_relationship_must_include_attributed_actor(self):
+        claims = copy.deepcopy(self.claims)
+        manager_claim = next(x for x in claims["claims"] if x["claim_id"] == "claim-eth-manager")
+        manager_claim["required_relationship_ids"] = ["synthetic-manager-manages-fund"]
+        registry = copy.deepcopy(self.actors)
+        registry["relationships"][0]["subject_actor_id"] = "synthetic-eth-buyer-a"
+        registry["relationships"][0]["object_actor_id"] = "synthetic-eth-broker"
+        result = resolve_execution_participants_as_of(
+            claims, self.trade, "2026-02-11T12:30:00Z", registry, self.observation_ids
+        )
+        self.assertEqual(result["status"], "INVALID_INPUT")
+        self.assertEqual(result["participants"], [])
+
+    def test_malformed_required_relationship_ids_fail_closed(self):
+        claims = copy.deepcopy(self.claims)
+        manager_claim = next(x for x in claims["claims"] if x["claim_id"] == "claim-eth-manager")
+        manager_claim["required_relationship_ids"] = "synthetic-manager-manages-fund"
+        result = resolve_execution_participants_as_of(
+            claims, self.trade, "2026-02-11T12:30:00Z", self.actors, self.observation_ids
+        )
+        self.assertEqual(result["status"], "INVALID_INPUT")
+        self.assertEqual(result["participants"], [])
+
+    def test_relationship_requires_both_endpoint_identities_to_be_eligible(self):
+        registry = copy.deepcopy(self.actors)
+        fund = next(x for x in registry["actors"] if x["actor_id"] == "synthetic-eth-fund")
+        fund["identity_status"] = "UNKNOWN"
+        result = resolve_relationship_as_of(
+            registry, "synthetic-eth-manager", "synthetic-eth-fund",
+            "MANAGES", "2026-02-11T12:30:00Z", self.trade["event_time_utc"]
+        )
+        self.assertEqual(result["status"], "UNKNOWN")
+
     def test_relationship_discovered_after_cutoff_is_unknown(self):
         result = resolve_relationship_as_of(
             self.actors, "synthetic-eth-manager", "synthetic-eth-fund",
