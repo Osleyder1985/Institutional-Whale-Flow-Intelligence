@@ -121,6 +121,12 @@ def observe_source(source, opener=None, observed_at=None):
                 change_status = "BASELINE_NOT_ESTABLISHED"
             elif sha256 != baseline:
                 change_status = "CONTENT_CHANGED"
+            elif (
+                (source.get("baseline_etag") is not None and headers.get("ETag") != source.get("baseline_etag"))
+                or (source.get("baseline_last_modified") is not None
+                    and headers.get("Last-Modified") != source.get("baseline_last_modified"))
+            ):
+                change_status = "METADATA_CHANGED"
             else:
                 change_status = "UNCHANGED"
             return {
