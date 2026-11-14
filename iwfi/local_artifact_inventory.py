@@ -101,6 +101,25 @@ def build_local_artifact_inventory(root):
     }
 
 
+
+def related_backup_artifact_ids_for(inventory, target_artifact_id):
+    dependencies = {
+        entry["artifact_id"]: set(entry["depends_on_artifact_ids"])
+        for entry in inventory["entries"]
+    }
+    closure = {target_artifact_id}
+    changed = True
+    while changed:
+        changed = False
+        for artifact_id, refs in dependencies.items():
+            if artifact_id not in closure and refs.intersection(closure):
+                closure.add(artifact_id)
+                changed = True
+    return sorted(
+        artifact_id for artifact_id in inventory["backup_artifact_ids"]
+        if artifact_id in closure
+    )
+
 def dependent_artifact_ids_for(inventory, target_artifact_id):
     dependencies = {
         entry["artifact_id"]: set(entry["depends_on_artifact_ids"])
