@@ -171,6 +171,8 @@ def validate_cursor_semantics(cursor, device_id, stream_id, last_server_sequence
         raise ValueError("terminal cursor cannot advertise a next page")
     if not terminal and (not isinstance(next_cursor, str) or not next_cursor.strip()):
         raise ValueError("non-terminal cursor requires a next page token")
+    if not terminal and next_cursor == token:
+        raise ValueError("non-terminal cursor cannot point to itself")
     return True
 def validate_receipt_binding(operation, receipt):
     """Ensure a receipt and its cursor belong to the exact originating operation stream."""
