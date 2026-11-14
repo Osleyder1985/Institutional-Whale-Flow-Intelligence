@@ -129,6 +129,19 @@ def verify_signed_checkpoint(checkpoint, trusted_public_key_pem, journal_path=No
         if checkpoint.get("canonicalization_version") != _CANON:
             return {"status": "INVALID_INPUT", "reason": "UNSUPPORTED_CANONICALIZATION"}
         _parse_utc(checkpoint.get("issued_at_utc"))
+        if not isinstance(checkpoint.get("journal_id"), str) or not checkpoint["journal_id"].strip():
+            return {"status": "INVALID_INPUT", "reason": "JOURNAL_ID_REQUIRED"}
+        sequence = checkpoint.get("sequence")
+        if not isinstance(sequence, int) or isinstance(sequence, bool) or sequence < 0:
+            return {"status": "INVALID_INPUT", "reason": "INVALID_SEQUENCE"}
+        for field in ("journal_head_hash", "previous_checkpoint_hash"):
+            value = checkpoint.get(field)
+            if not isinstance(value, str) or len(value) != 64:
+                return {"status": "INVALID_INPUT", "reason": "INVALID_" + field.upper()}
+            try:
+                int(value, 16)
+            except ValueError:
+                return {"status": "INVALID_INPUT", "reason": "INVALID_" + field.upper()}
         public = _load_public(trusted_public_key_pem)
         if checkpoint.get("key_fingerprint_sha256") != _public_fingerprint(public):
             return {"status": "SIGNATURE_INVALID", "reason": "TRUSTED_KEY_FINGERPRINT_MISMATCH"}
