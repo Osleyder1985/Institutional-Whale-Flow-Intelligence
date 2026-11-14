@@ -1,0 +1,298 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://iwfi.invalid/schemas/trade-execution.schema.json",
+  "title": "IWFI Individual Trade Execution",
+  "description": "Evidence-backed individual trade execution. Transfers, orders, holdings and aggregate flows are not executions.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "execution_id",
+    "event_type",
+    "aggregation_level",
+    "execution_status",
+    "asset_base",
+    "asset_quote",
+    "instrument_type",
+    "venue_id",
+    "base_quantity",
+    "quote_quantity",
+    "price",
+    "price_unit",
+    "fee_amount",
+    "fee_asset",
+    "aggressor_side",
+    "participant_side",
+    "participant_attribution_status",
+    "participant_actor_id",
+    "attribution_claim_ids",
+    "event_time_utc",
+    "published_at_utc",
+    "available_at_utc",
+    "ingested_at_utc",
+    "computed_at_utc",
+    "source_observation_ids",
+    "source_evidence"
+  ],
+  "properties": {
+    "contract_version": {
+      "const": "1.0.0"
+    },
+    "execution_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "event_type": {
+      "const": "TRADE_EXECUTION"
+    },
+    "aggregation_level": {
+      "const": "INDIVIDUAL_EXECUTION"
+    },
+    "execution_status": {
+      "enum": [
+        "EXECUTED",
+        "PARTIALLY_EXECUTED",
+        "CORRECTED",
+        "CANCELLED",
+        "BUSTED",
+        "UNKNOWN"
+      ]
+    },
+    "asset_base": {
+      "enum": [
+        "BTC",
+        "ETH"
+      ]
+    },
+    "asset_quote": {
+      "type": "string",
+      "minLength": 1
+    },
+    "instrument_type": {
+      "enum": [
+        "SPOT",
+        "PERPETUAL",
+        "FUTURE",
+        "OPTION",
+        "ETF_SECONDARY"
+      ]
+    },
+    "venue_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "base_quantity": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+    },
+    "quote_quantity": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+    },
+    "price": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+    },
+    "price_unit": {
+      "type": "string",
+      "minLength": 1
+    },
+    "fee_amount": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+    },
+    "fee_asset": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "aggressor_side": {
+      "enum": [
+        "BUY",
+        "SELL",
+        "UNKNOWN"
+      ]
+    },
+    "participant_side": {
+      "enum": [
+        "BUY",
+        "SELL",
+        "UNKNOWN"
+      ]
+    },
+    "participant_attribution_status": {
+      "enum": [
+        "DIRECT",
+        "INFERRED",
+        "AGGREGATED",
+        "UNKNOWN",
+        "DISPUTED"
+      ]
+    },
+    "participant_actor_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "attribution_claim_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "event_time_utc": {
+      "$ref": "#/$defs/utc"
+    },
+    "published_at_utc": {
+      "$ref": "#/$defs/utc"
+    },
+    "available_at_utc": {
+      "$ref": "#/$defs/utc"
+    },
+    "ingested_at_utc": {
+      "$ref": "#/$defs/utc"
+    },
+    "computed_at_utc": {
+      "$ref": "#/$defs/utc"
+    },
+    "source_observation_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "source_evidence": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "evidence_id",
+          "evidence_type",
+          "source",
+          "record_ref",
+          "granularity"
+        ],
+        "properties": {
+          "evidence_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "evidence_type": {
+            "enum": [
+              "VENUE_EXECUTION_RECORD",
+              "OFFICIAL_EXECUTION_DISCLOSURE"
+            ]
+          },
+          "source": {
+            "type": "string",
+            "minLength": 1
+          },
+          "record_ref": {
+            "type": "string",
+            "minLength": 1
+          },
+          "granularity": {
+            "const": "INDIVIDUAL_EXECUTION"
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "utc": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "participant_attribution_status": {
+            "const": "UNKNOWN"
+          }
+        },
+        "required": [
+          "participant_attribution_status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "participant_actor_id": {
+            "type": "null"
+          },
+          "participant_side": {
+            "const": "UNKNOWN"
+          },
+          "attribution_claim_ids": {
+            "maxItems": 0
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "participant_attribution_status": {
+            "const": "DIRECT"
+          }
+        },
+        "required": [
+          "participant_attribution_status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "participant_actor_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "attribution_claim_ids": {
+            "minItems": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "participant_attribution_status": {
+            "const": "DISPUTED"
+          }
+        },
+        "required": [
+          "participant_attribution_status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "participant_side": {
+            "const": "UNKNOWN"
+          }
+        }
+      }
+    }
+  ]
+}
