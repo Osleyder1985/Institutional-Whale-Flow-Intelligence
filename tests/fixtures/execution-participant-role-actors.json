@@ -1,0 +1,26 @@
+{
+  "contract_version": "1.1.0",
+  "actors": [
+    {
+      "actor_id": "synthetic-eth-buyer-a"
+    },
+    {
+      "actor_id": "synthetic-eth-broker"
+    },
+    {
+      "actor_id": "synthetic-eth-venue"
+    },
+    {
+      "actor_id": "synthetic-eth-custodian"
+    },
+    {
+      "actor_id": "synthetic-eth-fund"
+    },
+    {
+      "actor_id": "synthetic-eth-manager"
+    },
+    {
+      "actor_id": "synthetic-eth-buyer-b"
+    }
+  ]
+}
