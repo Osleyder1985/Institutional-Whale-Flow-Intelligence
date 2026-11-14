@@ -239,5 +239,30 @@ class ReferenceSyncProtocolSimulationTests(unittest.TestCase):
         self.assertEqual(pending["cursor"], None)
         self.assertEqual(self.clients["android"]["cursor"], 0)
 
+    def test_receipt_is_bound_to_originating_device_stream_and_full_operation(self):
+        from iwfi.sync_contract import operation_fingerprint, validate_receipt_binding
+        operation = copy.deepcopy(FIXTURES["operations"][0])
+        receipt = copy.deepcopy(FIXTURES["receipts"][0])
+        receipt["operation_fingerprint"] = operation_fingerprint(operation)
+        self.assertTrue(validate_receipt_binding(operation, receipt))
+        receipt["device_id"] = "different-device"
+        with self.assertRaises(ValueError):
+            validate_receipt_binding(operation, receipt)
+
+    def test_receipt_cannot_advance_an_unrelated_stream_cursor(self):
+        from iwfi.sync_contract import operation_fingerprint, validate_receipt_binding
+        operation = copy.deepcopy(FIXTURES["operations"][0])
+        receipt = copy.deepcopy(FIXTURES["receipts"][0])
+        receipt["operation_fingerprint"] = operation_fingerprint(operation)
+        receipt["stream_id"] = "another-stream"
+        with self.assertRaises(ValueError):
+            validate_receipt_binding(operation, receipt)
+
+    def test_invalid_calendar_date_is_rejected_in_operation_timestamp(self):
+        record = copy.deepcopy(FIXTURES["operations"][0])
+        record["created_at_device_utc"] = "2026-02-30T10:00:00Z"
+        self.assertFalse(self.validators["operations"].is_valid(record))
+
+
 if __name__ == "__main__":
     unittest.main()
