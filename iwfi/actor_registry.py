@@ -28,6 +28,8 @@ def validate_actor_registry(registry):
     """Return deterministic integrity errors; ambiguous aliases remain queryable, never auto-resolved."""
     if not isinstance(registry, dict):
         return ["registry must be an object"]
+    if registry.get("contract_version") != "1.0.0":
+        return ["unsupported registry contract_version"]
     actors = registry.get("actors")
     if not isinstance(actors, list):
         return ["registry.actors must be a list"]
