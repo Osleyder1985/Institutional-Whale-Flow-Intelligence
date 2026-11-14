@@ -88,7 +88,11 @@ class AuditPackageZipTests(unittest.TestCase):
             with zipfile.ZipFile(altered, "w", compression=zipfile.ZIP_STORED) as target:
                 for info in source.infolist():
                     name = "../escape.bin" if info.filename == "claims/root-claim.json" else info.filename
-                    target.writestr(name, source.read(info))
+                    rewritten = zipfile.ZipInfo(name, date_time=info.date_time)
+                    rewritten.compress_type = info.compress_type
+                    rewritten.create_system = info.create_system
+                    rewritten.external_attr = info.external_attr
+                    target.writestr(rewritten, source.read(info))
         self.assertEqual(self.verify(altered.getvalue())["reason"], "UNSAFE_ARCHIVE_PATH")
 
     def test_manifest_cannot_be_supplied_as_an_artifact(self):
