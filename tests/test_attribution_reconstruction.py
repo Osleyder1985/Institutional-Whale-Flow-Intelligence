@@ -1,3 +1,4 @@
+import hashlib
 import json
 from pathlib import Path
 import unittest
@@ -240,6 +241,20 @@ class AttributionReconstructionTests(unittest.TestCase):
             payloads_by_id={"snap-execution-btc": payload},
         )
         self.assertEqual(result["status"], "RECONSTRUCTION_INPUTS_VERIFIED")
+
+
+    def test_manifest_cannot_drop_or_invent_claim_observation_dependencies(self):
+        claim, snapshots, payloads, manifest = build()
+        manifest["dependencies"][0]["observation_ids"] = ["invented-observation"]
+        unsigned = {key: value for key, value in manifest.items() if key != "manifest_hash"}
+        encoded = json.dumps(unsigned, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+        manifest["manifest_hash"] = hashlib.sha256(encoded).hexdigest()
+        result = verify_attribution_reconstruction(
+            manifest=manifest, claim=claim,
+            snapshots_by_id={item["source_snapshot_id"]: item for item in snapshots},
+            payloads_by_id=payloads,
+        )
+        self.assertEqual(result["manifest_status"], "OBSERVATION_DEPENDENCY_MISMATCH")
 
     def test_payload_substitution_is_detected(self):
         claim, snapshots, payloads, manifest = build()
