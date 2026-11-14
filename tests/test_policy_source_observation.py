@@ -7,7 +7,7 @@ from urllib.error import HTTPError
 
 from scripts.observe_policy_sources import (
     ObservationError, AllowlistedRedirectHandler, observe_source,
-    run_observations, write_observation,
+    run_observations, write_observation, ROOT,
 )
 
 
@@ -102,6 +102,20 @@ class PolicySourceObservationTests(unittest.TestCase):
             registry.write_text(json.dumps({"manifest_version":"1.0.0","documents":[source()]}))
             with self.assertRaisesRegex(ObservationError, "SOURCE_ID_NOT_REGISTERED"):
                 run_observations(registry, Path(directory)/"out", ["other"])
+
+    def test_registry_rejects_unapproved_host(self):
+        with tempfile.TemporaryDirectory() as directory:
+            registry = Path(directory) / "registry.json"
+            bad = source()
+            bad["url"] = "https://attacker.example/policy.txt"
+            registry.write_text(json.dumps({"manifest_version": "1.0.0", "documents": [bad]}))
+            with self.assertRaisesRegex(ObservationError, "SOURCE_RECORD_INVALID"):
+                run_observations(registry, Path(directory) / "out", ["policy_a"])
+
+    def test_observation_output_inside_repository_is_rejected(self):
+        record = observe_source(source(), FakeOpener(FakeResponse(b"x")))
+        with self.assertRaisesRegex(ObservationError, "OBSERVATION_OUTPUT_INSIDE_REPOSITORY"):
+            write_observation(record, ROOT / "tests" / "should-not-be-created")
 
     def test_authorization_states_are_never_promoted(self):
         record = observe_source(source(), FakeOpener(FakeResponse(b"x")))
