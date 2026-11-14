@@ -10,7 +10,7 @@ from iwfi.retention_policy import authorize_artifact_write
 
 _SAFE_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 _REQUIRED_RECORD_FIELDS = (
-    "artifact_id", "artifact_type", "source_id", "source_url", "acquired_at_utc",
+    "record_version", "artifact_id", "artifact_type", "source_id", "source_url", "acquired_at_utc",
     "local_sha256", "terms_reviewed_at_utc", "purpose", "retention_policy_id",
     "revision_id", "storage_scope", "cloud_sync_allowed",
 )
@@ -35,10 +35,14 @@ def _valid_utc(value):
 def _validate_record(record, source_policy, retention_policy, payload_digest):
     if not isinstance(record, dict):
         raise ArtifactStoreError("artifact record must be an object")
+    if not isinstance(source_policy, dict) or not isinstance(retention_policy, dict):
+        raise ArtifactStoreError("source and retention policies must be objects")
+    if record.get("record_version") != "1.0.0":
+        raise ArtifactStoreError("unsupported artifact record_version")
     missing = [field for field in _REQUIRED_RECORD_FIELDS if field not in record]
     if missing:
         raise ArtifactStoreError("missing artifact record fields: " + ", ".join(missing))
-    if not _SAFE_ID.fullmatch(record["artifact_id"]) or record["artifact_id"] in {".", ".."}:
+    if not isinstance(record["artifact_id"], str) or not _SAFE_ID.fullmatch(record["artifact_id"]) or record["artifact_id"] in {".", ".."}:
         raise ArtifactStoreError("artifact_id is not a safe local identifier")
     if record["artifact_type"] not in {
         "SOURCE_ARCHIVE", "CHECKSUM", "VALIDATION_REPORT", "NORMALIZED_OBSERVATION",
