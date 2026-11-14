@@ -89,22 +89,19 @@ class RootClaimReconstructionV12Tests(unittest.TestCase):
 
     def test_root_claim_snapshot_cannot_be_metadata_only(self):
         claim, raw, descriptor, registry, snapshots, payloads, _ = root_fixture()
-        descriptor = dict(descriptor, payload_retention="NOT_RETAINED_POLICY")
-        self.assertEqual(verify_actor_registry_reconstruction_manifest_v1_2(
-            manifest=build_actor_registry_reconstruction_manifest_v1_2(
-                root_claim=claim, root_claim_snapshot_descriptor=descriptor,
+        metadata_only = dict(descriptor, payload_retention="NOT_RETAINED_POLICY")
+        with self.assertRaisesRegex(ValueError, "bytes must be retained"):
+            build_actor_registry_reconstruction_manifest_v1_2(
+                root_claim=claim, root_claim_snapshot_descriptor=metadata_only,
                 root_claim_payload=raw, actor_registry=registry,
                 snapshot_descriptors=list(snapshots.values()),
                 reference_snapshot_map={
-                    "SOURCE_OBSERVATION:obs-eth":"snap-eth",
-                    "SOURCE_OBSERVATION:obs-btc-counter":"snap-counter",
-                    "ATTRIBUTION_CLAIM:claim-eth":"snap-claim",
+                    "SOURCE_OBSERVATION:obs-eth": "snap-eth",
+                    "SOURCE_OBSERVATION:obs-btc-counter": "snap-counter",
+                    "ATTRIBUTION_CLAIM:claim-eth": "snap-claim",
                 }, knowledge_cutoff_utc=CUTOFF, valid_time_utc=VALID,
-                algorithm_id="test", algorithm_version="1", parameters={}),
-            root_claim_snapshot_descriptor=descriptor, root_claim_payload=raw,
-            actor_registry=registry, snapshots_by_id=snapshots, payloads_by_id=payloads,
-            knowledge_cutoff_utc=CUTOFF, valid_time_utc=VALID)["reason"],
-            "ROOT_CLAIM_PAYLOAD_NOT_RETAINED")
+                algorithm_id="test", algorithm_version="1", parameters={})
+
 
 
 if __name__ == "__main__":
