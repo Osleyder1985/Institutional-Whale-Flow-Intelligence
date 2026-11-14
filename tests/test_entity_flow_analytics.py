@@ -114,6 +114,23 @@ class EntityFlowAnalyticsTests(unittest.TestCase):
         self.assertEqual(result["entities"], [])
         self.assertEqual(result["statistics"]["unknown_endpoints"], 2)
 
+    def test_operated_by_is_not_treated_as_economic_control(self):
+        claims = [
+            claim("claim-a", "bc1qsource", "operator-entity", predicate="OPERATED_BY")
+        ]
+        result = run_aggregation([movement("move-1", "bc1qsource", "bc1qunknown")], claims)
+        self.assertEqual(result["entities"], [])
+        self.assertEqual(result["statistics"]["unknown_endpoints"], 2)
+
+    def test_dispute_recorded_after_cutoff_does_not_rewrite_historical_knowledge(self):
+        claims = [
+            claim("claim-a", "bc1qsource", "entity-a"),
+            claim("claim-b", "bc1qsource", "entity-b", epistemic="DISPUTED",
+                  review_status="DISPUTED", recorded="2026-11-03T00:00:01Z"),
+        ]
+        result = run_aggregation([movement("move-1", "bc1qsource", "bc1qunknown")], claims)
+        self.assertEqual(result["entities"][0]["entity_id"], "entity-a")
+
     def test_claim_recorded_after_cutoff_is_not_used(self):
         claims = [claim("claim-a", "bc1qsource", "entity-a",
                         recorded="2026-11-03T00:00:01Z")]
