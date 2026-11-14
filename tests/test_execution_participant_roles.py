@@ -7,6 +7,7 @@ from jsonschema import Draft202012Validator, FormatChecker
 
 from iwfi.execution_participant_roles import (
     resolve_execution_participants,
+    validate_execution_participant_role_links,
     validate_execution_participant_roles,
 )
 
