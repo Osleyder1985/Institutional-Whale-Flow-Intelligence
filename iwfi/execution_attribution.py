@@ -18,6 +18,13 @@ def _time(value):
     except ValueError:
         return None
 
+def _string_set(values):
+    if not isinstance(values, (list, tuple, set)):
+        return None
+    if any(not isinstance(value, str) or not value.strip() for value in values):
+        return None
+    return set(values)
+
 def validate_execution_attributions(registry, executions, actor_ids, observation_ids):
     """Validate cross-contract references and evidence without selecting a disputed participant."""
     if not isinstance(registry, dict) or registry.get("contract_version") != "1.0.0":
@@ -25,13 +32,27 @@ def validate_execution_attributions(registry, executions, actor_ids, observation
     claims = registry.get("claims")
     if not isinstance(claims, list):
         return ["claims must be a list"]
-    executions_by_id = {
-        item.get("execution_id"): item for item in executions
-        if isinstance(item, dict) and isinstance(item.get("execution_id"), str)
-    } if isinstance(executions, list) else {}
-    actors = set(actor_ids or [])
-    observations = set(observation_ids or [])
+    if not isinstance(executions, list):
+        return ["executions must be a list"]
+    actors = _string_set(actor_ids)
+    observations = _string_set(observation_ids)
+    if actors is None:
+        return ["actor_ids must be a collection of non-empty strings"]
+    if observations is None:
+        return ["observation_ids must be a collection of non-empty strings"]
+    executions_by_id = {}
     errors = []
+    for index, item in enumerate(executions):
+        if not isinstance(item, dict):
+            errors.append(f"executions[{index}] must be an object")
+            continue
+        execution_id = item.get("execution_id")
+        if not isinstance(execution_id, str) or not execution_id.strip():
+            errors.append(f"executions[{index}] has invalid execution_id")
+        elif execution_id in executions_by_id:
+            errors.append(f"duplicate execution_id: {execution_id}")
+        else:
+            executions_by_id[execution_id] = item
     seen = set()
     for index, claim in enumerate(claims):
         if not isinstance(claim, dict):
@@ -55,16 +76,17 @@ def validate_execution_attributions(registry, executions, actor_ids, observation
         candidates = claim.get("candidate_actor_ids", [])
         side = claim.get("participant_side")
         if status in {"DIRECT", "INFERRED"}:
-            if actor_id not in actors:
+            if not isinstance(actor_id, str) or actor_id not in actors:
                 errors.append(f"participant actor not found: {actor_id}")
         elif status == "UNKNOWN":
             if actor_id is not None or candidates or side != "UNKNOWN":
                 errors.append("UNKNOWN attribution must not name an actor, candidates or participant side")
         elif status == "DISPUTED":
-            if actor_id is not None or side != "UNKNOWN" or not isinstance(candidates, list) or len(set(candidates)) < 2:
+            candidate_set = _string_set(candidates)
+            if actor_id is not None or side != "UNKNOWN" or candidate_set is None or len(candidate_set) < 2:
                 errors.append("DISPUTED attribution requires at least two candidates and no selected actor or side")
-            for candidate in candidates:
-                if candidate not in actors:
+            elif not candidate_set.issubset(actors):
+                for candidate in sorted(candidate_set - actors):
                     errors.append(f"disputed candidate actor not found: {candidate}")
         known = _time(claim.get("known_at_utc"))
         recorded = _time(claim.get("recorded_at_utc"))
@@ -87,32 +109,54 @@ def validate_execution_attributions(registry, executions, actor_ids, observation
             if start is None or end is None or event_time is None or not (start <= event_time <= end):
                 errors.append(f"claim {attribution_id}: validity interval does not cover execution event time")
         refs = claim.get("source_observation_ids", [])
-        if not isinstance(refs, list) or len(refs) != len(set(refs)):
-            errors.append(f"claim {attribution_id}: invalid or duplicate source_observation_ids")
-            refs = []
-        for ref in refs:
-            if ref not in observations:
-                errors.append(f"claim {attribution_id}: source observation not found: {ref}")
+        ref_set = _string_set(refs)
+        if ref_set is None:
+            errors.append(f"claim {attribution_id}: invalid source_observation_ids")
+            ref_set = set()
         evidence = claim.get("supporting_evidence", [])
         if not isinstance(evidence, list):
             errors.append(f"claim {attribution_id}: supporting_evidence must be a list")
             evidence = []
-        if status == "DIRECT":
-            direct_types = {item.get("evidence_type") for item in evidence if isinstance(item, dict)}
-            if not (direct_types & _DIRECT_EVIDENCE):
-                errors.append(f"claim {attribution_id}: DIRECT attribution lacks participant-specific evidence")
-        if status in {"DIRECT", "INFERRED"} and (not refs or not evidence):
+        evidence_observation_ids = set()
+        direct_types = set()
+        for evidence_index, item in enumerate(evidence):
+            if not isinstance(item, dict):
+                errors.append(f"claim {attribution_id}: supporting_evidence[{evidence_index}] must be an object")
+                continue
+            direct_types.add(item.get("evidence_type"))
+            observation_id = item.get("observation_id")
+            if observation_id is not None:
+                if not isinstance(observation_id, str) or not observation_id.strip():
+                    errors.append(f"claim {attribution_id}: invalid evidence observation_id")
+                else:
+                    evidence_observation_ids.add(observation_id)
+                    if observation_id not in observations:
+                        errors.append(f"claim {attribution_id}: evidence observation not found: {observation_id}")
+        if not evidence_observation_ids.issubset(ref_set):
+            errors.append(f"claim {attribution_id}: evidence observation IDs must be listed in source_observation_ids")
+        if status == "DIRECT" and not (direct_types & _DIRECT_EVIDENCE):
+            errors.append(f"claim {attribution_id}: DIRECT attribution lacks participant-specific evidence")
+        if status in {"DIRECT", "INFERRED"} and (not ref_set or not evidence):
             errors.append(f"claim {attribution_id}: attributed participant requires source observations and supporting evidence")
+        if status in {"DIRECT", "INFERRED"}:
+            if attribution_id not in execution.get("attribution_claim_ids", []):
+                errors.append(f"execution {execution_id}: attribution claim reference missing: {attribution_id}")
+            if execution.get("participant_actor_id") != actor_id:
+                errors.append(f"execution {execution_id}: participant actor does not match claim {attribution_id}")
+            if execution.get("participant_side") != side:
+                errors.append(f"execution {execution_id}: participant side does not match claim {attribution_id}")
+            if execution.get("participant_attribution_status") != status:
+                errors.append(f"execution {execution_id}: attribution status does not match claim {attribution_id}")
     return sorted(set(errors))
 
 def resolve_execution_participant(registry, execution, as_of_utc):
     """Resolve only claims known by as_of and valid at execution time; conflicts abstain."""
     as_of = _time(as_of_utc)
     event_time = _time(execution.get("event_time_utc")) if isinstance(execution, dict) else None
-    if as_of is None or event_time is None or not isinstance(registry, dict):
+    if as_of is None or event_time is None or not isinstance(registry, dict) or not isinstance(registry.get("claims"), list):
         return {"status": "UNKNOWN", "actor_id": None, "participant_side": "UNKNOWN", "attribution_ids": []}
     active = []
-    for claim in registry.get("claims", []):
+    for claim in registry["claims"]:
         if not isinstance(claim, dict) or claim.get("execution_id") != execution.get("execution_id"):
             continue
         known = _time(claim.get("known_at_utc"))
