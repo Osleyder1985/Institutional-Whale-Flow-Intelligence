@@ -77,6 +77,9 @@ class RootClaimReconstructionV12Tests(unittest.TestCase):
         manifest["root_claim_snapshot"] = dict(
             manifest["root_claim_snapshot"],
             retrieved_at_utc="2026-11-12T13:00:00Z",
+            descriptor_hash=__import__("hashlib").sha256(
+                json.dumps(descriptor, sort_keys=True, separators=(",", ":"),
+                           ensure_ascii=False, allow_nan=False).encode()).hexdigest(),
         )
         unsigned = {k: v for k, v in manifest.items() if k != "manifest_hash"}
         manifest["manifest_hash"] = __import__("hashlib").sha256(
