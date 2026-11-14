@@ -16,14 +16,14 @@ class ActorRegistryContractTests(unittest.TestCase):
     def test_schema_is_valid_and_all_actor_records_validate(self):
         Draft202012Validator.check_schema(self.schema)
         validator = Draft202012Validator(self.schema, format_checker=FormatChecker())
-        for actor in self.registry["actors"]:
-            self.assertEqual(list(validator.iter_errors(actor)), [])
+        self.assertEqual(list(validator.iter_errors(self.registry)), [])
 
     def test_multiple_aliases_and_distinct_fund_manager_records_are_preserved(self):
         ids = {item["actor_id"] for item in self.registry["actors"]}
         self.assertIn("actor-manager-northstar", ids)
         self.assertIn("actor-fund-northstar-btc", ids)
         self.assertNotEqual("actor-manager-northstar", "actor-fund-northstar-btc")
+        self.assertEqual(len(next(a for a in self.registry["actors"] if a["actor_id"] == "actor-manager-northstar")["aliases"]), 2)
 
     def test_alias_collision_is_ambiguous_not_first_match_wins(self):
         result = resolve_actor_alias(self.registry, "Atlas", "2025-01-01T00:00:00Z", "BRAND", "global")
