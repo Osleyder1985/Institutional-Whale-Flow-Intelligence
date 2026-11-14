@@ -113,7 +113,7 @@ def delete_artifacts(root, artifact_id, dependent_artifact_ids_reviewed,
 
     records = {}
     paths = {}
-    for item_id in all_ids:
+    for item_id in deletion_ids:
         path = _safe_artifact_directory(root, item_id)
         record_path = path / "record.json"
         if record_path.is_symlink() or not record_path.is_file():
@@ -149,8 +149,7 @@ def delete_artifacts(root, artifact_id, dependent_artifact_ids_reviewed,
     }
     try:
         with started_path.open("x", encoding="utf-8", newline="") as stream:
-            stream.write(json.dumps(started_audit, sort_keys=True, separators=(",", ":")) + "
-")
+            stream.write(json.dumps(started_audit, sort_keys=True, separators=(",", ":")) + "\n")
             stream.flush()
             os.fsync(stream.fileno())
     except FileExistsError as exc:
@@ -158,7 +157,7 @@ def delete_artifacts(root, artifact_id, dependent_artifact_ids_reviewed,
 
     deleted_ids = []
     failures = []
-    for item_id in all_ids:
+    for item_id in deletion_ids:
         try:
             shutil.rmtree(paths[item_id])
             if paths[item_id].exists():
