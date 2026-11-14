@@ -107,8 +107,34 @@
       "known_at_utc": "2026-02-11T12:00:00Z",
       "valid_from_utc": "2020-01-01T00:00:00Z",
       "valid_to_utc": null,
-      "aliases": [],
-      "classifications": [],
+      "aliases": [
+        {
+          "value": "Synthetic ETH Manager",
+          "alias_type": "LEGAL_NAME",
+          "scope": "global",
+          "known_at_utc": "2026-02-11T12:00:00Z",
+          "recorded_at_utc": "2026-02-11T12:00:02Z",
+          "valid_from_utc": "2020-01-01T00:00:00Z",
+          "valid_to_utc": null,
+          "evidence_refs": [
+            "synthetic-manager-alias"
+          ]
+        }
+      ],
+      "classifications": [
+        {
+          "classification": "ASSET_MANAGER",
+          "status": "VERIFIED",
+          "method": "OFFICIAL_REGISTRY",
+          "known_at_utc": "2026-02-11T12:00:00Z",
+          "recorded_at_utc": "2026-02-11T12:00:02Z",
+          "valid_from_utc": "2020-01-01T00:00:00Z",
+          "valid_to_utc": null,
+          "evidence_refs": [
+            "synthetic-manager-classification"
+          ]
+        }
+      ],
       "coverage": [],
       "evidence_refs": [
         "synthetic-actor-record"
