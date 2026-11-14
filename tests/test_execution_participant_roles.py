@@ -111,7 +111,7 @@ class ExecutionParticipantRoleTests(unittest.TestCase):
 
     def test_transfer_id_cannot_be_used_as_trade_reference(self):
         registry = copy.deepcopy(self.registry)
-        registry["claims"][0]["trade_id"] = "synthetic-movement-transfer-001"
+        registry["claims"][0]["execution_id"] = "synthetic-movement-transfer-001"
         errors = validate_execution_participant_roles(
             registry, self.trades, self.actor_ids, self.observation_ids
         )
@@ -139,7 +139,7 @@ class ExecutionParticipantRoleTests(unittest.TestCase):
         registry = {"contract_version": "1.1.0", "claims": [{
             "contract_version": "1.1.0",
             "claim_id": "claim-btc-buyer-identity-unknown",
-            "trade_id": "synthetic-btc-trade-aggressor-only",
+            "execution_id": "synthetic-btc-trade-aggressor-only",
             "actor_id": None,
             "candidate_actor_ids": [],
             "participant_role": "BUYER",
@@ -204,7 +204,7 @@ class ExecutionParticipantRoleTests(unittest.TestCase):
         unknown_buyer = {
             "contract_version": "1.1.0",
             "claim_id": "claim-eth-buyer-identity-unknown",
-            "trade_id": "synthetic-eth-trade-multi-role",
+            "execution_id": "synthetic-eth-trade-multi-role",
             "actor_id": None,
             "candidate_actor_ids": [],
             "participant_role": "BUYER",
