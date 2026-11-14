@@ -18,9 +18,24 @@ class SourcePolicyEvidenceRegistryTests(unittest.TestCase):
         self.validator = Draft202012Validator(self.schema)
 
     def test_empty_registry_is_valid_and_unassessed(self):
+        empty_registry = {
+            "registry_version": "1.0.0",
+            "default_status": "UNASSESSED",
+            "sources": []
+        }
+        self.validator.validate(empty_registry)
+        self.assertEqual(empty_registry["default_status"], "UNASSESSED")
+        self.assertEqual(empty_registry["sources"], [])
+
+    def test_seeded_source_scopes_remain_pending_without_policy_evidence(self):
         self.validator.validate(self.registry)
         self.assertEqual(self.registry["default_status"], "UNASSESSED")
-        self.assertEqual(self.registry["sources"], [])
+        self.assertGreater(len(self.registry["sources"]), 0)
+        source_ids = [source["source_id"] for source in self.registry["sources"]]
+        self.assertEqual(len(source_ids), len(set(source_ids)))
+        for source in self.registry["sources"]:
+            self.assertEqual(source["assessment_status"], "PENDING_EVIDENCE")
+            self.assertEqual(source["policies"], [])
 
     def test_provider_policy_requires_original_document_hash_and_review(self):
         record = {
