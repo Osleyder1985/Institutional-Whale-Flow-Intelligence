@@ -148,24 +148,6 @@ def delete_artifacts(root, artifact_id, dependent_artifact_ids_reviewed,
     audit = {
         "record_version": "1.0.0",
         "deletion_id": deletion_id,
-        "artifact_id": artifact_id,
-        "artifact_type": records[artifact_id]["artifact_type"],
-        "deleted_at_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "deletion_method": deletion_method,
-        "verification_status": status,
-        "dependent_artifact_ids_reviewed": dependent_artifact_ids_reviewed,
-        "backup_artifact_ids_reviewed": backup_artifact_ids_reviewed,
-        "storage_scope": "LOCAL_ONLY",
-        "notes": (
-            "reviewed_at_utc=" + reviewed_at_utc +
-            "; deleted_artifact_ids=" + ",".join(deleted_ids) +
-            "; failed_artifact_ids=" + ",".join(failures)
-        ),
-    }
-
-    audit = {
-        "record_version": "1.0.0",
-        "deletion_id": deletion_id,
         "phase": "DELETION_COMPLETED" if status == "VERIFIED" else "DELETION_INCOMPLETE",
         "artifact_id": artifact_id,
         "artifact_type": records[artifact_id]["artifact_type"],
