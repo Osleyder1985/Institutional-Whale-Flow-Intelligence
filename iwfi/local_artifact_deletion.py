@@ -64,13 +64,16 @@ def delete_artifacts(root, artifact_id, dependent_artifact_ids_reviewed,
         raise ArtifactDeletionError("deletion_method is required")
     if not isinstance(dependent_artifact_ids_reviewed, list) or not isinstance(backup_artifact_ids_reviewed, list):
         raise ArtifactDeletionError("dependency and backup reviews must be explicit lists")
+    all_reviewed_ids = dependent_artifact_ids_reviewed + backup_artifact_ids_reviewed
+    if any(not isinstance(item, str) or not _SAFE_ID.fullmatch(item) for item in all_reviewed_ids):
+        raise ArtifactDeletionError("all reviewed artifact IDs must be safe strings")
     if len(backup_artifact_ids_reviewed) != len(set(backup_artifact_ids_reviewed)):
         raise ArtifactDeletionError("backup artifact IDs must be unique")
     all_ids = [artifact_id] + dependent_artifact_ids_reviewed + [
         item for item in backup_artifact_ids_reviewed if item != artifact_id
     ]
-    if any(not isinstance(item, str) or not _SAFE_ID.fullmatch(item) for item in all_ids):
-        raise ArtifactDeletionError("all reviewed artifact IDs must be safe strings")
+    if len(all_ids) != len(set(all_ids)):
+        raise ArtifactDeletionError("artifact IDs must be unique across target, dependencies, and backups")
     if len(all_ids) != len(set(all_ids)):
         raise ArtifactDeletionError("artifact IDs must be unique across target, dependencies, and backups")
     if not _SAFE_ID.fullmatch(artifact_id):
@@ -155,8 +158,7 @@ def delete_artifacts(root, artifact_id, dependent_artifact_ids_reviewed,
     }
     try:
         with started_path.open("x", encoding="utf-8", newline="") as stream:
-            stream.write(json.dumps(started_audit, sort_keys=True, separators=(",", ":")) + "
-")
+            stream.write(json.dumps(started_audit, sort_keys=True, separators=(",", ":")) + "\n")
             stream.flush()
             os.fsync(stream.fileno())
     except FileExistsError as exc:
@@ -202,8 +204,7 @@ def delete_artifacts(root, artifact_id, dependent_artifact_ids_reviewed,
     }
     try:
         with completed_path.open("x", encoding="utf-8", newline="") as stream:
-            stream.write(json.dumps(audit, sort_keys=True, separators=(",", ":")) + "
-")
+            stream.write(json.dumps(audit, sort_keys=True, separators=(",", ":")) + "\n")
             stream.flush()
             os.fsync(stream.fileno())
     except FileExistsError as exc:
