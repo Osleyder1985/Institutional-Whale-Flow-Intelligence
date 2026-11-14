@@ -79,6 +79,23 @@ def delete_artifacts(root, artifact_id, dependent_artifact_ids_reviewed,
     if reviewed.strftime("%Y-%m-%dT%H:%M:%SZ") != reviewed_at_utc:
         raise ArtifactDeletionError("reviewed_at_utc is not a valid UTC timestamp")
 
+    try:
+        inventory = build_local_artifact_inventory(root)
+    except ArtifactInventoryError as exc:
+        raise ArtifactDeletionError("local artifact inventory incomplete: " + str(exc)) from exc
+    expected_dependents = dependent_artifact_ids_for(inventory, artifact_id)
+    expected_backups = inventory["backup_artifact_ids"]
+    if set(dependent_artifact_ids_reviewed) != set(expected_dependents):
+        raise ArtifactDeletionError(
+            "dependency review does not match complete local inventory; expected: "
+            + ", ".join(expected_dependents)
+        )
+    if set(backup_artifact_ids_reviewed) != set(expected_backups):
+        raise ArtifactDeletionError(
+            "backup review does not match complete local inventory; expected: "
+            + ", ".join(expected_backups)
+        )
+
     audit_dir = root / "_deletion_audit"
     if audit_dir.is_symlink() or (audit_dir.exists() and not audit_dir.is_dir()):
         raise ArtifactDeletionError("deletion audit path must be a non-symlink directory")
@@ -123,7 +140,7 @@ def delete_artifacts(root, artifact_id, dependent_artifact_ids_reviewed,
         "reviewed_at_utc": reviewed_at_utc, "deletion_method": deletion_method,
         "dependent_artifact_ids_reviewed": dependent_artifact_ids_reviewed,
         "backup_artifact_ids_reviewed": backup_artifact_ids_reviewed,
-        "storage_scope": "LOCAL_ONLY", "secure_erasure_claimed": False,
+        "storage_scope": "LOCAL_ONLY", "secure_erasure_claimed": False,\n        "inventory_sha256": inventory["inventory_sha256"],\n        "inventory_scope": inventory["scope"],
     }
     try:
         with started_path.open("x", encoding="utf-8", newline="") as stream:
