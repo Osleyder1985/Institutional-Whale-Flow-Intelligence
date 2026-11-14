@@ -4,14 +4,14 @@ Status: analytical implementation candidate; synthetic balance snapshots only. N
 
 ## Inputs
 
-Each snapshot batch contains:
+Each snapshot batch must declare contract version 1.0.0 and contains:
 - entity scope and asset/network;
 - snapshot time, recording time, block height/hash and canonicality/confirmation;
 - one address balance per record, in satoshis (BTC) or wei (ETH);
 - a source observation reference for every address balance;
 - an inventory-coverage declaration with expected/observed/unresolved address counts, evidence reference and review provenance; the inventory review must occur at or after the snapshot time and no later than the knowledge cutoff.
 
-Address claims are resolved at the snapshot time and knowledge cutoff. Only VERIFIED + REVIEWED CONTROLLED_BY claims with supporting evidence, no counterevidence, known validity bounds and both recorded/reviewed timestamps at or before the cutoff are admitted.
+Address claims are resolved at the snapshot time and knowledge cutoff. EVM addresses are normalized case-insensitively for matching and duplicate detection; Bitcoin address strings remain case-sensitive. Claims whose review timestamp precedes their recording timestamp are not admissible. Only VERIFIED + REVIEWED CONTROLLED_BY claims with supporting evidence, no counterevidence, known validity bounds and both recorded/reviewed timestamps at or before the cutoff are admitted.
 
 ## Exposure semantics
 
