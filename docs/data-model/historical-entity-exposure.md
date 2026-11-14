@@ -26,7 +26,7 @@ A partial or unresolved inventory never becomes a total controlled-address expos
 
 For adjacent snapshots of the same entity and asset:
 - known controlled-address delta is emitted only when the same non-empty attributed address set is present in both snapshots;
-- total entity delta and relative change are emitted only when both snapshots have complete coverage;
+- total controlled-address delta and relative change are emitted only when both snapshots have complete coverage;
 - candidate direction is a descriptive net balance increase/decrease/flat state, not proof of purchases, sales, intent or market accumulation/distribution;
 - every candidate remains `NOT_CALIBRATED`; no thresholds, probabilities or trading signals are invented.
 
