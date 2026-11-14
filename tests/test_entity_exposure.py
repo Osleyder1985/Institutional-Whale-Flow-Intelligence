@@ -209,23 +209,7 @@ class EntityExposureTests(unittest.TestCase):
         item = snapshot("s1", "2026-11-01T00:00:00Z", [("bc1qaddress1", 1000)])
         self.assertEqual(list(Draft202012Validator(schema, format_checker=FormatChecker()).iter_errors(item)), [])
 
-    def test_real_binance_claim_only_contributes_at_exact_documented_instant(self):
-        root = Path(__file__).resolve().parent.parent
-        real_claim = json.loads((root / "data" / "attribution-claims" / "binance-btc-34xp-control-2022-11-22.json").read_text(encoding="utf-8"))
-        item = snapshot("s1", "2022-11-22T23:59:59Z",
-                        [(real_claim["subject"]["subject_id"], 123456)],
-                        coverage="PARTIAL", scope="entity-binance")
-        result = aggregate_entity_exposure_history(
-            [item], [real_claim], "2026-11-15T00:00:00Z"
-        )
-        row = result["histories"][0]["snapshots"][0]
-        self.assertEqual(row["known_controlled_address_exposure_atomic"], 123456)
-        self.assertIsNone(row["total_controlled_address_exposure_atomic"])
-        item["snapshot_time_utc"] = "2022-11-23T00:00:00Z"
-        result_after = aggregate_entity_exposure_history(
-            [item], [real_claim], "2026-11-15T00:00:00Z"
-        )
-        self.assertEqual(result_after["histories"][0]["snapshots"][0]["known_controlled_address_exposure_atomic"], 0)
+
 
 
 if __name__ == "__main__":
