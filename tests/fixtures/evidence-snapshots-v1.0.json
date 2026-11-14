@@ -1,0 +1,54 @@
+{
+  "fixture_version": "1.0.0",
+  "description": "Synthetic-only BTC and ETH evidence snapshot fixtures; no provider data.",
+  "snapshots": [
+    {
+      "payload_utf8": "{\"asset\":\"BTC\",\"event\":\"synthetic-transfer\"}",
+      "descriptor": {
+        "contract_version": "1.0.0",
+        "source_id": "synthetic-btc",
+        "source_snapshot_id": "snap-btc-synthetic-001",
+        "retrieved_at_utc": "2026-11-12T10:00:00Z",
+        "published_at_utc": null,
+        "source_version": "fixture-1",
+        "etag": null,
+        "last_modified": null,
+        "media_type": "application/json",
+        "payload_retention": "RETAINED",
+        "hash_status": "AVAILABLE",
+        "hash_scope": "RAW_BYTES",
+        "payload_hash": "af1a82985a92accf30f7657a3ac333b0b7ecce398c9ec87e599e4fb317e5aab5",
+        "hash_algorithm": "SHA-256",
+        "payload_size_bytes": 44,
+        "canonicalization_version": null,
+        "storage_ref": "fixture://btc/snap-btc-synthetic-001",
+        "rights_policy_ref": "policy:synthetic-only",
+        "recorded_at_utc": "2026-11-12T10:00:00Z"
+      }
+    },
+    {
+      "payload_utf8": "{\"asset\":\"ETH\",\"event\":\"synthetic-filing\"}",
+      "descriptor": {
+        "contract_version": "1.0.0",
+        "source_id": "synthetic-eth",
+        "source_snapshot_id": "snap-eth-synthetic-001",
+        "retrieved_at_utc": "2026-11-12T10:05:00Z",
+        "published_at_utc": null,
+        "source_version": "fixture-1",
+        "etag": null,
+        "last_modified": null,
+        "media_type": "application/json",
+        "payload_retention": "RETAINED",
+        "hash_status": "AVAILABLE",
+        "hash_scope": "RAW_BYTES",
+        "payload_hash": "1d80158363b7e8fe39f9690da1bbfd0971ed0fbd73a425a069e4d27c3702cef0",
+        "hash_algorithm": "SHA-256",
+        "payload_size_bytes": 42,
+        "canonicalization_version": null,
+        "storage_ref": "fixture://eth/snap-eth-synthetic-001",
+        "rights_policy_ref": "policy:synthetic-only",
+        "recorded_at_utc": "2026-11-12T10:05:00Z"
+      }
+    }
+  ]
+}

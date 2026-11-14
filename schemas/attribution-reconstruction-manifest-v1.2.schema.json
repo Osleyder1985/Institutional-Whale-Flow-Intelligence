@@ -1,0 +1,249 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://iwfi.invalid/schemas/attribution-reconstruction-manifest-v1.2.schema.json",
+  "title": "IWFI Attribution Reconstruction Manifest v1.2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "manifest_version",
+    "root_claim_id",
+    "root_claim_contract_version",
+    "root_claim_hash",
+    "actor_registry_contract_version",
+    "actor_registry_hash",
+    "actor_registry_hash_algorithm",
+    "actor_registry_canonicalization_version",
+    "knowledge_cutoff_utc",
+    "valid_time_utc",
+    "algorithm_id",
+    "algorithm_version",
+    "parameters",
+    "references",
+    "dependencies",
+    "manifest_hash_algorithm",
+    "manifest_canonicalization_version",
+    "manifest_hash",
+    "root_claim_snapshot"
+  ],
+  "properties": {
+    "manifest_version": {
+      "const": "1.2.0"
+    },
+    "root_claim_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "root_claim_contract_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "root_claim_hash": {
+      "$ref": "#/$defs/hash"
+    },
+    "actor_registry_contract_version": {
+      "const": "1.2.0"
+    },
+    "actor_registry_hash": {
+      "$ref": "#/$defs/hash"
+    },
+    "actor_registry_hash_algorithm": {
+      "const": "SHA-256"
+    },
+    "actor_registry_canonicalization_version": {
+      "const": "IWFI-JSON-C14N-1"
+    },
+    "knowledge_cutoff_utc": {
+      "$ref": "#/$defs/utc"
+    },
+    "valid_time_utc": {
+      "$ref": "#/$defs/utc"
+    },
+    "algorithm_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "algorithm_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "parameters": {
+      "type": "object"
+    },
+    "references": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/reference"
+      },
+      "uniqueItems": true
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/dependency"
+      },
+      "uniqueItems": true
+    },
+    "manifest_hash_algorithm": {
+      "const": "SHA-256"
+    },
+    "manifest_canonicalization_version": {
+      "const": "IWFI-JSON-C14N-1"
+    },
+    "manifest_hash": {
+      "$ref": "#/$defs/hash"
+    },
+    "root_claim_snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_id",
+        "source_snapshot_id",
+        "retrieved_at_utc",
+        "payload_hash",
+        "hash_algorithm",
+        "hash_scope",
+        "canonicalization_version",
+        "media_type",
+        "payload_retention",
+        "descriptor_hash"
+      ],
+      "properties": {
+        "source_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_snapshot_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "retrieved_at_utc": {
+          "$ref": "#/$defs/utc"
+        },
+        "payload_hash": {
+          "$ref": "#/$defs/hash"
+        },
+        "hash_algorithm": {
+          "const": "SHA-256"
+        },
+        "hash_scope": {
+          "enum": [
+            "RAW_BYTES",
+            "CANONICAL_JSON"
+          ]
+        },
+        "canonicalization_version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "media_type": {
+          "const": "application/json"
+        },
+        "payload_retention": {
+          "const": "RETAINED"
+        },
+        "descriptor_hash": {
+          "$ref": "#/$defs/hash"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "utc": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+    },
+    "reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "record_path",
+        "polarity",
+        "ref_type",
+        "ref_id",
+        "snapshot_ids"
+      ],
+      "properties": {
+        "record_path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "polarity": {
+          "enum": [
+            "evidence_refs",
+            "counter_evidence_refs"
+          ]
+        },
+        "ref_type": {
+          "enum": [
+            "SOURCE_OBSERVATION",
+            "ATTRIBUTION_CLAIM"
+          ]
+        },
+        "ref_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "snapshot_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      }
+    },
+    "dependency": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_id",
+        "source_snapshot_id",
+        "retrieved_at_utc",
+        "payload_hash",
+        "hash_algorithm",
+        "hash_scope",
+        "canonicalization_version"
+      ],
+      "properties": {
+        "source_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_snapshot_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "retrieved_at_utc": {
+          "$ref": "#/$defs/utc"
+        },
+        "payload_hash": {
+          "$ref": "#/$defs/hash"
+        },
+        "hash_algorithm": {
+          "const": "SHA-256"
+        },
+        "hash_scope": {
+          "enum": [
+            "RAW_BYTES",
+            "CANONICAL_JSON"
+          ]
+        },
+        "canonicalization_version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    }
+  }
+}
