@@ -72,8 +72,13 @@ class LocalArtifactDeletionTests(unittest.TestCase):
             self.assertEqual(result["status"], "VERIFIED")
             for artifact_id in ("archive-001", "feature-001", "backup-001"):
                 self.assertFalse((Path(temp) / artifact_id).exists())
+            started = json.loads(Path(result["started_audit_record"]).read_text(encoding="utf-8"))
             audit = json.loads(Path(result["audit_record"]).read_text(encoding="utf-8"))
+            self.assertEqual(started["phase"], "DELETION_STARTED")
+            self.assertEqual(started["verification_status"], "NOT_VERIFIED")
+            self.assertEqual(audit["phase"], "DELETION_COMPLETED")
             self.assertEqual(audit["verification_status"], "VERIFIED")
+            self.assertFalse(audit["secure_erasure_claimed"])
             self.assertEqual(audit["dependent_artifact_ids_reviewed"], ["feature-001"])
             self.assertEqual(audit["backup_artifact_ids_reviewed"], ["backup-001"])
 
@@ -103,7 +108,7 @@ class LocalArtifactDeletionTests(unittest.TestCase):
                                  "deletion-001", "test-unlink", source_policy(),
                                  retention_policy(), "2026-11-14T00:00:00Z")
             (Path(temp) / "_deletion_audit").mkdir()
-            (Path(temp) / "_deletion_audit" / "deletion-001.json").write_text("{}")
+            (Path(temp) / "_deletion_audit" / "deletion-001.started.json").write_text("{}")
             with self.assertRaisesRegex(ArtifactDeletionError, "already exists"):
                 delete_artifacts(temp, "archive-001", [], [], "deletion-001",
                                  "test-unlink", source_policy(), retention_policy(),
