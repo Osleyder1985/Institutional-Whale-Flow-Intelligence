@@ -161,6 +161,13 @@ class BitcoinEntityDeltaTests(unittest.TestCase):
         ])
         self.assertEqual(result["entities"], [])
 
+    def test_review_completed_after_cutoff_is_not_used(self):
+        tx = transaction()
+        reviewed_claim = claim("c1", "bc1qentitya1", "entity-a")
+        reviewed_claim["review"]["reviewed_at_utc"] = "2026-11-03T00:00:01Z"
+        result = aggregate([tx], [reviewed_claim])
+        self.assertEqual(result["entities"], [])
+
     def test_noncanonical_or_unconfirmed_transaction_is_excluded(self):
         tx = transaction()
         tx["canonicality"] = "UNKNOWN"
