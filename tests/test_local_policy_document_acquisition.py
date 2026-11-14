@@ -1,18 +1,22 @@
+import copy
 import hashlib
 import json
 import tempfile
 import unittest
 from pathlib import Path
+from urllib.error import URLError
 from unittest.mock import patch
 
 from scripts.acquire_policy_documents import (
     AcquisitionError,
     DOCUMENTS,
+    EXPECTED_DOCUMENT_IDS,
     MANIFEST_NAME,
     _download_one,
     _validate_document_id,
     _validate_url,
     acquire,
+    load_source_manifest_payload,
 )
 
 
@@ -43,6 +47,15 @@ class FakeResponse:
         return self.url
 
 
+class FailingResponse(FakeResponse):
+    def read(self, size):
+        if self.offset:
+            raise URLError("simulated interrupted transfer")
+        block = self.body[:4]
+        self.offset = len(block)
+        return block
+
+
 class FakeOpener:
     def __init__(self, response):
         self.response = response
@@ -63,6 +76,18 @@ class LocalDocumentAcquisitionTests(unittest.TestCase):
             _validate_url("https://evil.example/document.txt")
         with self.assertRaisesRegex(AcquisitionError, "URL_NOT_ALLOWLISTED"):
             _validate_url("https://creativecommons.org/other.txt")
+
+    def test_source_manifest_must_be_complete_and_unique(self):
+        from scripts.acquire_policy_documents import SOURCE_MANIFEST_PATH
+        payload = json.loads(SOURCE_MANIFEST_PATH.read_text(encoding="utf-8"))
+        incomplete = copy.deepcopy(payload)
+        incomplete["documents"].pop()
+        with self.assertRaisesRegex(AcquisitionError, "SOURCE_MANIFEST_INCOMPLETE"):
+            load_source_manifest_payload(incomplete)
+        duplicated = copy.deepcopy(payload)
+        duplicated["documents"].append(copy.deepcopy(duplicated["documents"][0]))
+        with self.assertRaisesRegex(AcquisitionError, "SOURCE_MANIFEST_DUPLICATE_ID"):
+            load_source_manifest_payload(duplicated)
 
     def test_capture_hash_matches_independent_hash_of_exact_bytes(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -97,6 +122,20 @@ class LocalDocumentAcquisitionTests(unittest.TestCase):
                 _download_one("cc_by_nc_sa_4_0_legal_code", Path(directory), FakeOpener(response))
             self.assertEqual(list(Path(directory).iterdir()), [])
 
+    def test_interrupted_transfer_removes_partial_snapshot(self):
+        with tempfile.TemporaryDirectory() as directory:
+            with self.assertRaisesRegex(AcquisitionError, "NETWORK_RETRIEVAL_FAILED"):
+                _download_one("cc_by_nc_sa_4_0_legal_code", Path(directory),
+                              FakeOpener(FailingResponse()))
+            self.assertEqual(list(Path(directory).iterdir()), [])
+
+    def test_expected_sha256_mismatch_rejects_snapshot(self):
+        with tempfile.TemporaryDirectory() as directory:
+            with patch.dict(DOCUMENTS["cc_by_nc_sa_4_0_legal_code"], {"expected_sha256": "0" * 64}):
+                with self.assertRaisesRegex(AcquisitionError, "EXPECTED_SHA256_MISMATCH"):
+                    _download_one("cc_by_nc_sa_4_0_legal_code", Path(directory), FakeOpener(FakeResponse()))
+            self.assertEqual(list(Path(directory).iterdir()), [])
+
     def test_existing_snapshot_is_never_overwritten(self):
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory)
@@ -124,15 +163,13 @@ class LocalDocumentAcquisitionTests(unittest.TestCase):
 
     def test_manifest_marks_capture_as_unreviewed_and_not_authorized(self):
         with tempfile.TemporaryDirectory() as directory:
-            response = FakeResponse()
             with patch("scripts.acquire_policy_documents._download_one") as download:
-                record = {
+                download.return_value = {
                     "document_id": "cc_by_nc_sa_4_0_legal_code",
                     "sha256": "a" * 64,
                     "authorization_status": "NOT_GRANTED",
                     "evidence_status": "CAPTURED_UNREVIEWED",
                 }
-                download.return_value = record
                 manifest_path, manifest = acquire(["cc_by_nc_sa_4_0_legal_code"], directory)
             parsed = json.loads(manifest_path.read_text(encoding="utf-8"))
             self.assertEqual(parsed["storage_scope"], "LOCAL_ONLY")
