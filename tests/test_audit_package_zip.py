@@ -3,6 +3,9 @@ import io
 import json
 import unittest
 import zipfile
+from pathlib import Path
+
+from jsonschema import Draft202012Validator
 
 from iwfi.audit_package_manifest import build_audit_package_manifest
 from iwfi.audit_package_zip import (
@@ -107,9 +110,8 @@ class AuditPackageZipTests(unittest.TestCase):
         with zipfile.ZipFile(io.BytesIO(first), "r") as archive:
             decision = json.loads(archive.read(RETENTION_PATH).decode("utf-8"))
         self.assertEqual(len(decision["authorization_evidence"]["artifact_authorizations"]), 4)
-        schema_path = __import__("pathlib").Path(__file__).resolve().parents[1] / "schemas" / "audit-package-retention-decision-v1.0.schema.json"
-        import json as json_module
-        schema = json_module.loads(schema_path.read_text(encoding="utf-8"))
+        schema_path = Path(__file__).resolve().parents[1] / "schemas" / "audit-package-retention-decision-v1.0.schema.json"
+        schema = json.loads(schema_path.read_text(encoding="utf-8"))
         Draft202012Validator.check_schema(schema)
         Draft202012Validator(schema).validate(decision)
 
