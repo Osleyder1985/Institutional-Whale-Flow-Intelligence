@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://iwfi.invalid/schemas/local-artifact-record.schema.json",
+  "title": "IWFI Local Artifact Version Record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["record_version", "artifact_id", "artifact_type", "source_id", "source_url", "acquired_at_utc", "local_sha256", "terms_reviewed_at_utc", "purpose", "retention_policy_id", "revision_id", "storage_scope", "cloud_sync_allowed"],
+  "properties": {
+    "record_version": { "const": "1.0.0" },
+    "artifact_id": { "type": "string", "minLength": 1 },
+    "artifact_type": { "enum": ["SOURCE_ARCHIVE", "CHECKSUM", "VALIDATION_REPORT", "NORMALIZED_OBSERVATION", "DERIVED_DATA", "SNAPSHOT", "LOG", "BACKUP"] },
+    "source_id": { "type": "string", "minLength": 1 },
+    "source_url": { "type": "string", "format": "uri", "pattern": "^https://" },
+    "acquired_at_utc": { "type": "string", "format": "date-time", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$" },
+    "provider_checksum": { "type": ["string", "null"] },
+    "local_sha256": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+    "validation_report_artifact_id": { "type": ["string", "null"] },
+    "terms_reviewed_at_utc": { "type": "string", "format": "date-time", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$" },
+    "purpose": { "const": "PERSONAL_NON_PRODUCTION_RESEARCH" },
+    "retention_policy_id": { "type": "string", "minLength": 1 },
+    "revision_id": { "type": "string", "minLength": 1 },
+    "supersedes_artifact_id": { "type": ["string", "null"] },
+    "storage_scope": { "const": "LOCAL_ONLY" },
+    "cloud_sync_allowed": { "const": false }
+  }
+}
