@@ -6,6 +6,7 @@ import unittest
 import jsonschema
 
 from iwfi.evidence_snapshot_provenance import (
+    AppendOnlySnapshotLedger,
     build_reconstruction_manifest,
     build_snapshot_descriptor,
     build_snapshot_relation,
@@ -211,6 +212,29 @@ class EvidenceSnapshotProvenanceTests(unittest.TestCase):
         snapshot.pop("recorded_at_utc")
         with self.assertRaises(jsonschema.ValidationError):
             jsonschema.validate(snapshot, schema)
+
+
+    def test_append_only_ledger_rejects_snapshot_replacement(self):
+        snapshot = descriptor()
+        ledger = AppendOnlySnapshotLedger([snapshot])
+        with self.assertRaises(ValueError):
+            ledger.append(dict(snapshot))
+        self.assertEqual(len(ledger.snapshots), 1)
+        self.assertEqual(ledger.get(snapshot["source_snapshot_id"])["payload_hash"], snapshot["payload_hash"])
+
+    def test_append_only_ledger_preserves_previous_snapshot_after_new_version(self):
+        first = descriptor(snapshot_id="snap-btc-v1")
+        second = descriptor(payload=b'{"asset":"BTC","revision":2}', snapshot_id="snap-btc-v2")
+        ledger = AppendOnlySnapshotLedger([first])
+        ledger.append(second)
+        self.assertEqual(len(ledger.snapshots), 2)
+        self.assertEqual(ledger.get("snap-btc-v1")["payload_hash"], first["payload_hash"])
+        self.assertEqual(ledger.get("snap-btc-v2")["payload_hash"], second["payload_hash"])
+
+    def test_append_only_ledger_records_are_read_only(self):
+        ledger = AppendOnlySnapshotLedger([descriptor()])
+        with self.assertRaises(TypeError):
+            ledger.snapshots[0]["payload_hash"] = "0" * 64
 
     def test_missing_snapshot_fails_closed(self):
         snapshot = descriptor()
