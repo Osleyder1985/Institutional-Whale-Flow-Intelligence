@@ -1,0 +1,425 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://iwfi.invalid/schemas/execution-participant-role-claim.schema.json",
+  "title": "IWFI Execution Participant Role Claim",
+  "description": "Versioned, evidence-backed claim for one participant role in one individual trade execution. Multiple independent claims may reference the same trade.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "claims"
+  ],
+  "properties": {
+    "contract_version": {
+      "const": "1.1.0"
+    },
+    "claims": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/claim"
+      }
+    }
+  },
+  "$defs": {
+    "utc": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+    },
+    "claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract_version",
+        "claim_id",
+        "trade_id",
+        "actor_id",
+        "candidate_actor_ids",
+        "participant_role",
+        "participant_side",
+        "epistemic_status",
+        "attribution_method",
+        "recorded_at_utc",
+        "known_at_utc",
+        "valid_from_utc",
+        "valid_to_utc",
+        "source_observation_ids",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "properties": {
+        "contract_version": {
+          "const": "1.1.0"
+        },
+        "claim_id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "trade_id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "actor_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "candidate_actor_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "uniqueItems": true
+        },
+        "participant_role": {
+          "enum": [
+            "BUYER",
+            "SELLER",
+            "BROKER",
+            "EXECUTING_VENUE",
+            "CUSTODIAN",
+            "CLEARING_PARTICIPANT",
+            "FUND",
+            "ASSET_MANAGER",
+            "BENEFICIAL_OWNER",
+            "OTHER",
+            "UNKNOWN"
+          ]
+        },
+        "participant_side": {
+          "enum": [
+            "BUY",
+            "SELL",
+            "NOT_APPLICABLE",
+            "UNKNOWN"
+          ]
+        },
+        "epistemic_status": {
+          "enum": [
+            "DIRECT",
+            "INFERRED",
+            "UNKNOWN",
+            "DISPUTED"
+          ]
+        },
+        "attribution_method": {
+          "enum": [
+            "OFFICIAL_NAMED_EXECUTION_DISCLOSURE",
+            "VENUE_PARTICIPANT_DISCLOSURE",
+            "AUTHORIZED_ACCOUNT_LINK",
+            "EVIDENCE_CORROBORATION",
+            "PROVIDER_LABEL",
+            "NONE",
+            "CONFLICT_REVIEW",
+            "OTHER"
+          ]
+        },
+        "recorded_at_utc": {
+          "$ref": "#/$defs/utc"
+        },
+        "known_at_utc": {
+          "$ref": "#/$defs/utc"
+        },
+        "valid_from_utc": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/utc"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "valid_to_utc": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/utc"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "source_observation_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "uniqueItems": true
+        },
+        "supporting_evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/evidence"
+          }
+        },
+        "counter_evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/evidence"
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "epistemic_status": {
+                "const": "DIRECT"
+              }
+            },
+            "required": [
+              "epistemic_status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "actor_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "candidate_actor_ids": {
+                "maxItems": 0
+              },
+              "valid_from_utc": {
+                "$ref": "#/$defs/utc"
+              },
+              "valid_to_utc": {
+                "$ref": "#/$defs/utc"
+              },
+              "source_observation_ids": {
+                "minItems": 1
+              },
+              "supporting_evidence": {
+                "minItems": 1
+              },
+              "attribution_method": {
+                "enum": [
+                  "OFFICIAL_NAMED_EXECUTION_DISCLOSURE",
+                  "VENUE_PARTICIPANT_DISCLOSURE",
+                  "AUTHORIZED_ACCOUNT_LINK"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "epistemic_status": {
+                "const": "INFERRED"
+              }
+            },
+            "required": [
+              "epistemic_status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "actor_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "candidate_actor_ids": {
+                "maxItems": 0
+              },
+              "valid_from_utc": {
+                "$ref": "#/$defs/utc"
+              },
+              "valid_to_utc": {
+                "$ref": "#/$defs/utc"
+              },
+              "source_observation_ids": {
+                "minItems": 1
+              },
+              "supporting_evidence": {
+                "minItems": 1
+              },
+              "attribution_method": {
+                "enum": [
+                  "EVIDENCE_CORROBORATION",
+                  "OTHER"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "epistemic_status": {
+                "const": "UNKNOWN"
+              }
+            },
+            "required": [
+              "epistemic_status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "actor_id": {
+                "type": "null"
+              },
+              "candidate_actor_ids": {
+                "maxItems": 0
+              },
+              "participant_side": {
+                "const": "UNKNOWN"
+              },
+              "attribution_method": {
+                "const": "NONE"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "epistemic_status": {
+                "const": "DISPUTED"
+              }
+            },
+            "required": [
+              "epistemic_status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "actor_id": {
+                "type": "null"
+              },
+              "candidate_actor_ids": {
+                "minItems": 2
+              },
+              "participant_side": {
+                "const": "UNKNOWN"
+              },
+              "attribution_method": {
+                "const": "CONFLICT_REVIEW"
+              },
+              "counter_evidence": {
+                "minItems": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "participant_role": {
+                "const": "BUYER"
+              }
+            },
+            "required": [
+              "participant_role"
+            ]
+          },
+          "then": {
+            "properties": {
+              "participant_side": {
+                "const": "BUY"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "participant_role": {
+                "const": "SELLER"
+              }
+            },
+            "required": [
+              "participant_role"
+            ]
+          },
+          "then": {
+            "properties": {
+              "participant_side": {
+                "const": "SELL"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "participant_role": {
+                "enum": [
+                  "BROKER",
+                  "EXECUTING_VENUE",
+                  "CUSTODIAN",
+                  "CLEARING_PARTICIPANT",
+                  "FUND",
+                  "ASSET_MANAGER",
+                  "BENEFICIAL_OWNER",
+                  "OTHER"
+                ]
+              }
+            },
+            "required": [
+              "participant_role"
+            ]
+          },
+          "then": {
+            "properties": {
+              "participant_side": {
+                "enum": [
+                  "NOT_APPLICABLE",
+                  "UNKNOWN"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_type",
+        "source",
+        "record_ref",
+        "observation_id"
+      ],
+      "properties": {
+        "evidence_type": {
+          "enum": [
+            "OFFICIAL_NAMED_EXECUTION_DISCLOSURE",
+            "VENUE_PARTICIPANT_DISCLOSURE",
+            "AUTHORIZED_ACCOUNT_LINK",
+            "PROVIDER_ATTRIBUTION",
+            "ON_CHAIN_OBSERVATION",
+            "OTHER"
+          ]
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "record_ref": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "observation_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        }
+      }
+    }
+  }
+}
