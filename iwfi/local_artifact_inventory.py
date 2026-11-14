@@ -58,8 +58,16 @@ def build_local_artifact_inventory(root):
             raise ArtifactInventoryError(
                 f"depends_on_artifact_ids must be an explicit safe-ID list: {path.name}"
             )
-        if len(dependencies) != len(set(dependencies)) or path.name in dependencies:
-            raise ArtifactInventoryError(f"invalid or duplicate artifact dependencies: {path.name}")
+        # Reconcile established schema lineage fields as well as the explicit graph.
+        for field in ("validation_report_artifact_id", "supersedes_artifact_id"):
+            reference = record.get(field)
+            if reference is not None:
+                if not isinstance(reference, str) or not _SAFE_ID.fullmatch(reference):
+                    raise ArtifactInventoryError(f"invalid {field}: {path.name}")
+                dependencies.append(reference)
+        dependencies = sorted(set(dependencies))
+        if path.name in dependencies:
+            raise ArtifactInventoryError(f"artifact cannot depend on itself: {path.name}")
         records[path.name] = record
         entries.append({
             "artifact_id": path.name,
