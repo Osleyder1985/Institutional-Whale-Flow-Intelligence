@@ -222,6 +222,32 @@ class BitcoinEntityDeltaTests(unittest.TestCase):
         result = aggregate([tx], [])
         self.assertEqual(result["statistics"]["transactions_excluded"]["malformed_accounting_fields"], 1)
 
+    def test_real_binance_btc_control_claim_validates_and_is_point_in_time_only(self):
+        from jsonschema import Draft202012Validator, FormatChecker
+        from iwfi.attribution_integrity import validate_claim_collection
+        root = Path(__file__).resolve().parent.parent
+        claim_path = root / "data" / "attribution-claims" / "binance-btc-34xp-control-2022-11-22.json"
+        schema_path = root / "schemas" / "entity-attribution-claim.schema.json"
+        real_claim = json.loads(claim_path.read_text(encoding="utf-8"))
+        schema = json.loads(schema_path.read_text(encoding="utf-8"))
+        self.assertEqual(list(Draft202012Validator(schema, format_checker=FormatChecker()).iter_errors(real_claim)), [])
+        self.assertEqual(validate_claim_collection([real_claim]), [])
+
+        tx = transaction(
+            inputs=[{"vin": 0, "previous_txid": "1" * 64, "previous_vout": 0,
+                     "address": real_claim["subject"]["subject_id"], "amount_sats": 1000}],
+            outputs=[{"vout": 0, "address": "bc1qunknown", "amount_sats": 990}],
+            fee=10,
+        )
+        tx["event_time_utc"] = "2022-11-22T23:59:59Z"
+        result = aggregate([tx], [real_claim])
+        self.assertEqual(result["entities"][0]["entity_id"], "entity-binance")
+        self.assertEqual(result["entities"][0]["observed_address_delta_sats"], -1000)
+
+        tx["event_time_utc"] = "2022-11-23T00:00:00Z"
+        result_after = aggregate([tx], [real_claim])
+        self.assertEqual(result_after["entities"], [])
+
     def test_schema_accepts_valid_synthetic_transaction(self):
         from jsonschema import Draft202012Validator, FormatChecker
         root = Path(__file__).resolve().parent.parent
