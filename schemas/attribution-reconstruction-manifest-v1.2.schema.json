@@ -104,7 +104,8 @@
         "hash_scope",
         "canonicalization_version",
         "media_type",
-        "payload_retention"
+        "payload_retention",
+        "descriptor_hash"
       ],
       "properties": {
         "source_id": {
@@ -141,6 +142,9 @@
         },
         "payload_retention": {
           "const": "RETAINED"
+        },
+        "descriptor_hash": {
+          "$ref": "#/$defs/hash"
         }
       }
     }
