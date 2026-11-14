@@ -43,7 +43,7 @@ Statuses are per **signal + endpoint + asset/instrument + intended use**, not gl
 | News, events, regulation and macro | Primary announcements; secondary reporting; rumors/leaks; listings/delistings; outages/incidents; upgrades; unlocks; regulatory stages/effective dates; rates, inflation, employment, USD, liquidity; vintage/revisions | [#34](https://github.com/Osleyder1985/Institutional-Whale-Flow-Intelligence/issues/34), #3, #29, #36 | SPECIFIED at family level; source licensing and historical availability pending |
 | Technical structure and regimes | Trend/swings; confirmed pivots; HH/HL/LH/LL; support/resistance zones; breakouts/retests/false breaks; gaps; momentum/returns; realized/historical volatility; ATR; trend/range/volatility/liquidity/stress regimes | [#35](https://github.com/Osleyder1985/Institutional-Whale-Flow-Intelligence/issues/35), #23, #27, #29, #36 | SPECIFIED at family level; definitions must remain causal in time |
 | Social sentiment, attention and positioning | Sentiment by asset/topic; mentions/authors; search/attention; bot/spam/coordinated activity; social/news divergence; surveys; aggregate positioning; source population and bias | [#37](https://github.com/Osleyder1985/Institutional-Whale-Flow-Intelligence/issues/37), #32, #34, #29, #36 | SPECIFIED at family level; not a universal market sentiment measure |
-| Cross-market and liquidity context | BTC/ETH relative strength and correlation; cross-asset/market relationships; stablecoin supply/flows; cross-venue/cross-chain liquidity; event calendar and regime interactions | #23, #29, #36; gap review tracked by #38 | NOT_RESEARCHED as a complete standalone feature family; overlapping parts are candidates in #31–#35 |
+| Cross-market and liquidity context | BTC/ETH relative strength and correlation; cross-asset/market relationships; stablecoin supply/flows; cross-venue/cross-chain liquidity; event calendar and regime interactions | [#40](https://github.com/Osleyder1985/Institutional-Whale-Flow-Intelligence/issues/40), #23, #29, #36 | SPECIFIED at research-scope level; operational definitions and sources pending |
 
 ### Important boundary distinctions
 
@@ -109,7 +109,7 @@ A missing asset/endpoint is recorded as unavailable or unverified, never zero an
 | Gap ID | Gap | Existing owner | Next action |
 |---|---|---|---|
 | GAP-001 | No single cross-family signal/source/Issue/feature/test/experiment index | #38 | Build the versioned catalog and validate links/IDs |
-| GAP-002 | Cross-market relationships and stablecoin liquidity are not yet a dedicated, fully specified family | #38; related inputs in #31–#35 | Determine scope and incremental value before proposing a new Issue |
+| GAP-002 | Cross-market relationships and stablecoin/liquidity context require dedicated operational definitions | #40 | Specify signal semantics, BTC/ETH coverage, sources and point-in-time behavior; test incremental value under #36 |
 | GAP-003 | Individual endpoint-to-feature mappings and BTC/ETH coverage are not yet evidenced for every candidate provider | #3 | Complete endpoint-level due diligence and permission review |
 | GAP-004 | Social/news/derivatives positioning overlap can double-count similar populations | #32, #34, #37 | Define semantic boundaries and overlap controls in feature specs |
 | GAP-005 | A family being specified does not establish implemented or validated features | #29, #36 | Track each signal through implementation, data-quality tests and preregistered OOS experiments |
@@ -133,4 +133,4 @@ No ranking, weights, thresholds or predictive claims are assigned in this draft.
 
 - 2026-11-13 — Initial cross-family coverage audit created from repository Issues #3, #6, #8, #12, #23, #25, #27, #29 and #31–#37. Added preliminary cross-market/stablecoin gap and endpoint-level verification requirements. No source approvals or predictive validation claimed.
 - 2026-11-13 — Added GAP-006 after reviewing the legacy requirements register.
-- 2026-11-13 — Reconciled GAP-006 by clarifying that news/social are in the overall research scope but deferred from first-slice production ingestion. No collection authorization or causal claim added.
+- 2026-11-13 — Reconciled GAP-006 by clarifying that news/social are in the overall research scope but deferred from first-slice production ingestion. No collection authorization or causal claim added.\n- 2026-11-13 — Assigned GAP-002 to new Issue #40 for cross-market, stablecoin and liquidity signal specifications; no predictive value or source coverage assumed.
