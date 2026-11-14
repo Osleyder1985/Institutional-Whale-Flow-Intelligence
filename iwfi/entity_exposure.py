@@ -49,7 +49,8 @@ def _resolve_control(address, network_id, snapshot_time, known_at, claim_index):
         review = claim.get("review")
         reviewed_at = _parse_utc(review.get("reviewed_at_utc")) if isinstance(review, dict) else None
         if (recorded is None or valid_from is None or valid_to is None
-                or reviewed_at is None or recorded > known_at or reviewed_at > known_at
+                or reviewed_at is None or reviewed_at < recorded
+                or recorded > known_at or reviewed_at > known_at
                 or valid_from > valid_to or not (valid_from <= snapshot_time <= valid_to)):
             continue
         if claim.get("epistemic_status") == "DISPUTED" or claim.get("review_status") == "DISPUTED":
@@ -113,6 +114,9 @@ def aggregate_entity_exposure_history(snapshots, claims, known_at_utc):
         if batch_id in seen_ids:
             raise ValueError(f"duplicate snapshot_batch_id: {batch_id}")
         seen_ids.add(batch_id)
+        if snapshot.get("contract_version") != "1.0.0":
+            excluded["unsupported_contract_version"] += 1
+            continue
 
         scope_entity_id = snapshot.get("scope_entity_id")
         if not isinstance(scope_entity_id, str) or not scope_entity_id:
