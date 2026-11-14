@@ -256,8 +256,8 @@ def aggregate_entity_exposure_history(snapshots, claims, known_at_utc):
                 if previous["total_entity_exposure_atomic"] > 0:
                     relative_change = str(Decimal(total_delta) / Decimal(previous["total_entity_exposure_atomic"]))
                 direction = (
-                    "NET_ACCUMULATION" if total_delta > 0
-                    else "NET_DISTRIBUTION" if total_delta < 0
+                    "NET_BALANCE_INCREASE" if total_delta > 0
+                    else "NET_BALANCE_DECREASE" if total_delta < 0
                     else "FLAT"
                 )
                 classification_status = "NOT_CALIBRATED"
