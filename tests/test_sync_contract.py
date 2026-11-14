@@ -40,7 +40,9 @@ class SyncContractTests(unittest.TestCase):
     def test_operation_id_must_be_uuid(self):
         record = copy.deepcopy(FIXTURES["operations"][0])
         record["operation_id"] = "not-a-uuid"
-        self.assertFalse(self.validators["operations"].is_valid(record))
+        schema = json.loads(SCHEMAS["operations"].read_text(encoding="utf-8"))
+        validator = Draft202012Validator(schema, format_checker=FormatChecker())
+        self.assertFalse(validator.is_valid(record))
 
     def test_operation_rejects_non_utc_device_timestamp(self):
         record = copy.deepcopy(FIXTURES["operations"][0])
