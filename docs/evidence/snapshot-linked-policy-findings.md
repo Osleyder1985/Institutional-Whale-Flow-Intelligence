@@ -24,6 +24,7 @@ The full extraction bundle contains source text and must remain private. The rev
 ```powershell
 python scripts/validate_policy_findings.py `
   --bundle "$HOME\IWFI-private-evidence\policy-documents\policy-document-extraction-bundle-v1.0.json" `
+  --evidence-dir "$HOME\\IWFI-private-evidence\\policy-documents" `
   --review-register "data\policy-reviews\example-review-register.json" `
   --output "$HOME\IWFI-private-evidence\policy-documents\policy-review-validation.json"
 ```
