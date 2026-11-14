@@ -104,6 +104,14 @@ class AuditPackageZipTests(unittest.TestCase):
         self.assertEqual(result["status"], "AUDIT_PACKAGE_VERIFIED")
         self.assertEqual(result["retention_status"], "RETENTION_AUTHORIZED")
         self.assertEqual(result["package_mode"], "LOCAL_ONLY")
+        with zipfile.ZipFile(io.BytesIO(first), "r") as archive:
+            decision = json.loads(archive.read(RETENTION_PATH).decode("utf-8"))
+        self.assertEqual(len(decision["authorization_evidence"]["artifact_authorizations"]), 4)
+        schema_path = __import__("pathlib").Path(__file__).resolve().parents[1] / "schemas" / "audit-package-retention-decision-v1.0.schema.json"
+        import json as json_module
+        schema = json_module.loads(schema_path.read_text(encoding="utf-8"))
+        Draft202012Validator.check_schema(schema)
+        Draft202012Validator(schema).validate(decision)
 
     def test_reconstruction_manifest_payload_must_be_included_and_bound(self):
         artifacts = [{
