@@ -147,6 +147,7 @@ def aggregate_entity_exposure_history(snapshots, claims, known_at_utc):
         unresolved_count = 0
         address_set = set()
         claim_ids = set()
+        address_resolutions = []
         valid_records = True
         for record in addresses:
             if not isinstance(record, dict):
@@ -165,7 +166,16 @@ def aggregate_entity_exposure_history(snapshots, claims, known_at_utc):
                 break
             seen_addresses.add(address)
             resolution = _resolve_control(address, network_id, snapshot_time, cutoff, claim_index)
-            if resolution["status"] == "ATTRIBUTED" and resolution["entity_id"] == snapshot.get("scope_entity_id"):
+            address_resolutions.append({
+                "address": address,
+                "balance_atomic": amount,
+                "unit": unit,
+                "source_observation_id": observation_id,
+                "resolution_status": resolution["status"],
+                "resolved_entity_id": resolution["entity_id"],
+                "claim_ids": resolution["claim_ids"],
+            })
+            if resolution["status"] == "ATTRIBUTED" and resolution["entity_id"] == scope_entity_id:
                 known_balance += amount
                 attributed_count += 1
                 address_set.add(address)
@@ -226,6 +236,19 @@ def aggregate_entity_exposure_history(snapshots, claims, known_at_utc):
             "addresses_observed": len(addresses),
             "addresses_attributed": attributed_count,
             "addresses_unresolved": unresolved_count,
+            "inventory_coverage": {
+                "declared_status": coverage.get("status"),
+                "computed_status": coverage_status,
+                "expected_address_count": expected_count,
+                "observed_address_count": observed_count,
+                "declared_unresolved_address_count": inventory_unresolved,
+                "computed_unresolved_address_count": unresolved_count,
+                "evidence_ref": coverage.get("evidence_ref"),
+                "review_status": coverage.get("review_status"),
+                "reviewer_id": coverage.get("reviewer_id"),
+                "reviewed_at_utc": coverage.get("reviewed_at_utc"),
+            },
+            "address_resolutions": address_resolutions,
             "claim_ids": sorted(claim_ids),
             "_address_set": address_set,
         })
@@ -284,6 +307,7 @@ def aggregate_entity_exposure_history(snapshots, claims, known_at_utc):
 
     return {
         "contract_version": "1.0.0",
+        "exposure_basis": "CONTROLLED_ADDRESS_BALANCES_ONLY",
         "known_at_utc": known_at_utc,
         "histories": histories,
         "excluded": dict(sorted(excluded.items())),
