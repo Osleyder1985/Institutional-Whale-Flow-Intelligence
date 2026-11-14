@@ -97,6 +97,7 @@ def dependent_artifact_ids_for(inventory, target_artifact_id):
     dependencies = {
         entry["artifact_id"]: set(entry["depends_on_artifact_ids"])
         for entry in inventory["entries"]
+        if entry["artifact_type"] != "BACKUP"
     }
     closure = {target_artifact_id}
     dependents = set()
