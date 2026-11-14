@@ -1,0 +1,125 @@
+"""Tests for explicit local artifact deletion and audit evidence."""
+import hashlib
+import json
+import tempfile
+import unittest
+from pathlib import Path
+
+from iwfi.local_artifact_deletion import ArtifactDeletionError, delete_artifacts
+
+
+ARTIFACTS = ("SOURCE_ARCHIVE", "CHECKSUM", "VALIDATION_REPORT", "NORMALIZED_OBSERVATION",
+             "DERIVED_DATA", "SNAPSHOT", "LOG", "BACKUP")
+
+
+def source_policy():
+    return {
+        "contract_version": "1.0.0", "source_id": "binance-vision-spot-aggtrades",
+        "license_id": "CC-BY-NC-SA-4.0",
+        "terms_url": "https://github.com/binance/binance-public-data/blob/master/TERMS_AND_CONDITIONS.md",
+        "terms_reviewed_at_utc": "2026-11-14T00:00:00Z",
+        "rights_evidence_url": "https://github.com/binance/binance-public-data/issues/502",
+        "allowed_purpose": "PERSONAL_NON_PRODUCTION_RESEARCH", "storage_scope": "LOCAL_ONLY",
+        "retention_policy_id": "retention-v1", "retention_approved": True,
+        "derived_data_scope": "INHERITS_SOURCE_RESTRICTIONS", "cloud_sync_allowed": False,
+        "redistribution_allowed": False, "commercial_use_allowed": False,
+        "live_trading_allowed": False, "public_service_allowed": False,
+    }
+
+
+def retention_policy():
+    return {
+        "contract_version": "1.0.0", "policy_id": "retention-v1",
+        "source_id": "binance-vision-spot-aggtrades", "status": "APPROVED",
+        "storage_scope": "LOCAL_ONLY", "cloud_sync_allowed": False, "external_cost_usd": 0,
+        "artifact_rules": {
+            name: {"status": "APPROVED", "retention_basis": "Synthetic test rule",
+                   "retention_mode": "UNTIL_EVENT", "retention_end_event": "Synthetic event",
+                   "deletion_method": "test-unlink", "deletion_evidence_required": True,
+                   "inherits_source_restrictions": True}
+            for name in ARTIFACTS
+        },
+    }
+
+
+def create_artifact(root, artifact_id, artifact_type):
+    folder = Path(root) / artifact_id
+    folder.mkdir()
+    payload = b"synthetic"
+    (folder / "payload.bin").write_bytes(payload)
+    (folder / "record.json").write_text(json.dumps({
+        "record_version": "1.0.0", "artifact_id": artifact_id, "artifact_type": artifact_type,
+        "source_id": "binance-vision-spot-aggtrades",
+        "source_url": "https://data.binance.vision/test",
+        "acquired_at_utc": "2026-11-14T00:00:00Z",
+        "local_sha256": hashlib.sha256(payload).hexdigest(),
+        "terms_reviewed_at_utc": "2026-11-14T00:00:00Z",
+        "purpose": "PERSONAL_NON_PRODUCTION_RESEARCH", "retention_policy_id": "retention-v1",
+        "revision_id": artifact_id, "storage_scope": "LOCAL_ONLY", "cloud_sync_allowed": False,
+    }), encoding="utf-8")
+
+
+class LocalArtifactDeletionTests(unittest.TestCase):
+    def test_deletes_primary_derivative_and_backup_and_writes_audit(self):
+        with tempfile.TemporaryDirectory() as temp:
+            create_artifact(temp, "archive-001", "SOURCE_ARCHIVE")
+            create_artifact(temp, "feature-001", "DERIVED_DATA")
+            create_artifact(temp, "backup-001", "BACKUP")
+            result = delete_artifacts(
+                temp, "archive-001", ["feature-001"], ["backup-001"], "deletion-001",
+                "test-unlink", source_policy(), retention_policy(), "2026-11-14T00:00:00Z"
+            )
+            self.assertEqual(result["status"], "VERIFIED")
+            for artifact_id in ("archive-001", "feature-001", "backup-001"):
+                self.assertFalse((Path(temp) / artifact_id).exists())
+            audit = json.loads(Path(result["audit_record"]).read_text(encoding="utf-8"))
+            self.assertEqual(audit["verification_status"], "VERIFIED")
+            self.assertEqual(audit["dependent_artifact_ids_reviewed"], ["feature-001"])
+            self.assertEqual(audit["backup_artifact_ids_reviewed"], ["backup-001"])
+
+    def test_missing_dependency_blocks_before_any_deletion(self):
+        with tempfile.TemporaryDirectory() as temp:
+            create_artifact(temp, "archive-001", "SOURCE_ARCHIVE")
+            with self.assertRaisesRegex(ArtifactDeletionError, "missing or unsafe"):
+                delete_artifacts(temp, "archive-001", ["missing-derivative"], [],
+                                 "deletion-001", "test-unlink", source_policy(),
+                                 retention_policy(), "2026-11-14T00:00:00Z")
+            self.assertTrue((Path(temp) / "archive-001").exists())
+
+    def test_unapproved_or_wrong_deletion_method_blocks(self):
+        with tempfile.TemporaryDirectory() as temp:
+            create_artifact(temp, "archive-001", "SOURCE_ARCHIVE")
+            with self.assertRaisesRegex(ArtifactDeletionError, "not approved"):
+                delete_artifacts(temp, "archive-001", [], [], "deletion-001",
+                                 "other-method", source_policy(), retention_policy(),
+                                 "2026-11-14T00:00:00Z")
+            self.assertTrue((Path(temp) / "archive-001").exists())
+
+    def test_duplicate_ids_and_existing_audit_id_block(self):
+        with tempfile.TemporaryDirectory() as temp:
+            create_artifact(temp, "archive-001", "SOURCE_ARCHIVE")
+            with self.assertRaisesRegex(ArtifactDeletionError, "unique"):
+                delete_artifacts(temp, "archive-001", ["archive-001"], [],
+                                 "deletion-001", "test-unlink", source_policy(),
+                                 retention_policy(), "2026-11-14T00:00:00Z")
+            (Path(temp) / "_deletion_audit").mkdir()
+            (Path(temp) / "_deletion_audit" / "deletion-001.json").write_text("{}")
+            with self.assertRaisesRegex(ArtifactDeletionError, "already exists"):
+                delete_artifacts(temp, "archive-001", [], [], "deletion-001",
+                                 "test-unlink", source_policy(), retention_policy(),
+                                 "2026-11-14T00:00:00Z")
+            self.assertTrue((Path(temp) / "archive-001").exists())
+
+    def test_symlink_inside_artifact_blocks(self):
+        with tempfile.TemporaryDirectory() as temp, tempfile.TemporaryDirectory() as other:
+            create_artifact(temp, "archive-001", "SOURCE_ARCHIVE")
+            (Path(temp) / "archive-001" / "linked").symlink_to(other, target_is_directory=True)
+            with self.assertRaisesRegex(ArtifactDeletionError, "symlink"):
+                delete_artifacts(temp, "archive-001", [], [], "deletion-001",
+                                 "test-unlink", source_policy(), retention_policy(),
+                                 "2026-11-14T00:00:00Z")
+            self.assertTrue((Path(temp) / "archive-001").exists())
+
+
+if __name__ == "__main__":
+    unittest.main()
