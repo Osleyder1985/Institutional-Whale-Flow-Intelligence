@@ -161,7 +161,7 @@ class ExecutionParticipantRoleTests(unittest.TestCase):
         )
         self.assertEqual(errors, [])
         result = resolve_execution_participants(
-            registry, self.trades[0], "2026-01-10T10:00:10Z"
+            registry, self.trades[0], "2026-01-10T10:00:10Z", self.actor_ids, self.observation_ids
         )
         buyer = result["participants"][0]
         self.assertEqual(buyer["participant_role"], "BUYER")
