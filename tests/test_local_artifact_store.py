@@ -31,7 +31,7 @@ def retention_policy():
     return {
         "contract_version": "1.0.0", "policy_id": "retention-v1",
         "source_id": "binance-vision-spot-aggtrades", "status": "APPROVED",
-        "storage_scope": "LOCAL_ONLY", "cloud_sync_allowed": False, "external_cost_usd": 0,
+        "storage_scope": "LOCAL_ONLY", "cloud_sync_allowed": False,\n        "depends_on_artifact_ids": [], "external_cost_usd": 0,
         "artifact_rules": {
             name: {"status": "APPROVED", "retention_basis": "Test-only owner-approved rule",
                    "retention_mode": "UNTIL_EVENT", "retention_end_event": "Test-only event",
