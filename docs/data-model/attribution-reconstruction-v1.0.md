@@ -48,8 +48,14 @@ Estados como `SNAPSHOT_MISSING`, `PAYLOAD_UNAVAILABLE`, `SNAPSHOT_REFERENCE_MISM
 
 Un hash local prueba consistencia de bytes con el descriptor, no autoría, firma del proveedor, veracidad ni autorización legal. Si el payload no puede retenerse, el claim no puede declararse plenamente reconstruible a partir de ese payload: el resultado debe permanecer incompleto explícitamente.
 
+## Persistencia append-only local
+
+`iwfi/append_only_journal.py` añade un journal JSONL local de referencia con secuencia, hash del registro anterior, hash del registro actual, rechazo de IDs duplicados y `fsync` por append. `verify_journal` detecta alteración, reordenamiento, truncamiento y ruptura de la cadena.
+
+Es una referencia local de un solo escritor, no almacenamiento WORM ni garantía contra un administrador privilegiado. Una reescritura total con recálculo de hashes requiere anclaje externo independiente o firma para ser detectada. La persistencia del journal no convierte por sí sola un claim en reconstruible: los payloads restringidos o no disponibles siguen siendo incompletos.
+
 ## Límites
 
-Esta capa congela y verifica las entradas de una atribución. No vuelve a ejecutar todavía un motor de inferencia de identidad/causalidad ni genera de nuevo el contenido semántico del claim desde las observaciones. Tampoco aporta persistencia durable, firma criptográfica del manifiesto, almacenamiento WORM, matriz real de derechos por proveedor ni canonicalización RFC 8785.
+Esta capa congela y verifica entradas de atribución. No vuelve a ejecutar todavía el motor semántico que deriva identidad, lado BUY/SELL o rol económico desde observaciones; tampoco demuestra causalidad. Siguen pendientes integración durable con los contratos Source Observation y Actor Registry, replay semántico determinista, firma/anclaje externo, control de concurrencia multi-proceso, matriz real de derechos por proveedor y almacenamiento WORM.
 
 No habilita captura real, polling, backfill ni almacenamiento productivo. Fixtures sintéticos únicamente; coste externo 0 USD.
