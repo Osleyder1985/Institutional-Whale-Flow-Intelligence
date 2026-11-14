@@ -68,6 +68,32 @@ The workstation's previously reported 16 GB RAM only matches the stated minimum 
 
 **Next technical gate:** request only a small, explicitly bounded set of recent/known Ethereum block and transaction observations through PublicNode's ordinary public RPC, but only after the source-policy snapshot and local storage/retention gates in Issues #3 and #71 are closed. For Bitcoin, continue to treat the public Esplora route as prototype/light-use only; a reproducible zero-cost allowance and endpoint retention terms remain insufficiently documented. Do not use this document as authorization to call either endpoint.
 
+## Ethereum — bounded one-off sample protocol (design only)
+
+Official JSON-RPC method semantics: https://ethereum.org/developers/docs/apis/json-rpc/
+
+After Issues #3 and #71 are closed and the exact free-use scope is confirmed, the first Ethereum sample should use only the ordinary public RPC endpoint `https://ethereum-rpc.publicnode.com` and the following bounded sequence:
+
+1. `eth_chainId` — require `0x1`; otherwise stop with `WRONG_NETWORK`.
+2. `eth_getBlockByNumber(["finalized", false])` — request only a finalized block header and transaction hashes, not full transaction objects. If the method/tag is unsupported or the result is null, stop; do not silently fall back to `latest`, scan older blocks, or request archive access.
+3. If the returned block contains no transaction hashes, stop with `EMPTY_SAMPLE`; do not advance to another block automatically.
+4. Select exactly the first transaction hash in the returned block in the provider's returned order. Call `eth_getTransactionByHash([tx_hash])`.
+5. Call `eth_getTransactionReceipt([tx_hash])`.
+
+This is a maximum of four JSON-RPC requests for a non-empty sample (chain ID, finalized block, transaction, receipt); an empty block or failed prerequisite stops earlier. No retries, polling, address-history scans, `eth_getLogs`, trace/debug methods, archive methods, or fallback providers are included.
+
+Validation requirements:
+- Every JSON-RPC response must have `jsonrpc="2.0"`, the matching request ID, and exactly one of `result` or `error`; malformed/error responses stop the sample.
+- Chain ID must be Ethereum mainnet (`0x1`).
+- Block number/hash and transaction list must be present and well-formed.
+- Transaction hash, block hash and block number must match the selected block and receipt. A null transaction/receipt or mismatch yields `INCOMPLETE_OR_CONFLICTED`; it is not repaired by searching another block.
+- Preserve integer quantities exactly. Convert wei only with exact integer arithmetic; do not use floating point.
+- The sample covers only top-level transaction `value`. It does not observe internal contract-call value transfers, ERC-20 transfers, token balances, or beneficial ownership. Do not infer those from logs or top-level calldata.
+- A finalized-tag response is provider-reported execution-layer evidence; it is not an independent consensus proof. Record provider, endpoint, retrieval time, block number/hash, transaction hash, receipt status, and response hashes. If an independent source is unavailable, retain that limitation.
+- This sample plan does not authorize storage of raw responses. Retention classification remains subject to Issue #71 and source-specific terms. Do not place payloads in Git or another cloud service as a workaround.
+
+No RPC call has been made under this design. It is a future execution protocol, not capture authorization.
+
 ## Source selection consequences
 
 1. A free endpoint is not automatically an approved source. Cost, terms, request limits, retention and data semantics are independent gates.
