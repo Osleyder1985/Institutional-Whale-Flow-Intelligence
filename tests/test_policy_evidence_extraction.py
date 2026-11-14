@@ -76,15 +76,21 @@ class PolicyEvidenceExtractionTests(unittest.TestCase):
     def test_incomplete_manifest_is_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            (root / MANIFEST_NAME).write_text('{"documents": []}', encoding="utf-8")
-            with self.assertRaisesRegex(EvidenceExtractionError, "EVIDENCE_STORAGE_SCOPE_NOT_LOCAL_ONLY"):
+            manifest = {
+                "storage_scope": "LOCAL_ONLY",
+                "external_upload_performed": False,
+                "external_sync_performed": False,
+                "documents": [],
+            }
+            (root / MANIFEST_NAME).write_text(json.dumps(manifest), encoding="utf-8")
+            with self.assertRaisesRegex(EvidenceExtractionError, "EVIDENCE_DOCUMENT_SET_EMPTY"):
                 build_extraction_bundle(root)
 
     def test_path_traversal_filename_is_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             manifest = self._fixture(root)
-            manifest["documents"][0]["local_filename"] = "../outside.md"
+            manifest["documents"][0]["local_filename"] = r"..\\outside.md"
             (root / MANIFEST_NAME).write_text(json.dumps(manifest), encoding="utf-8")
             with self.assertRaisesRegex(EvidenceExtractionError, "SNAPSHOT_FILENAME_INVALID"):
                 build_extraction_bundle(root)
