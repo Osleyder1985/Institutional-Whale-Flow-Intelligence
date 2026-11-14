@@ -202,6 +202,26 @@ class BitcoinEntityDeltaTests(unittest.TestCase):
         result = aggregate([tx], [])
         self.assertEqual(result["statistics"]["transactions_excluded"]["invalid_input"], 1)
 
+    def test_duplicate_prevout_is_excluded(self):
+        tx = transaction(
+            inputs=[
+                {"vin": 0, "previous_txid": "1" * 64, "previous_vout": 0,
+                 "address": "bc1qentitya1", "amount_sats": 500},
+                {"vin": 1, "previous_txid": "1" * 64, "previous_vout": 0,
+                 "address": "bc1qentitya2", "amount_sats": 500},
+            ],
+            outputs=[{"vout": 0, "address": "bc1qentitya3", "amount_sats": 990}],
+            fee=10,
+        )
+        result = aggregate([tx], [])
+        self.assertEqual(result["statistics"]["transactions_excluded"]["invalid_input"], 1)
+
+    def test_missing_source_observation_reference_is_excluded(self):
+        tx = transaction()
+        tx["source_observation_ids"] = []
+        result = aggregate([tx], [])
+        self.assertEqual(result["statistics"]["transactions_excluded"]["malformed_accounting_fields"], 1)
+
     def test_schema_accepts_valid_synthetic_transaction(self):
         from jsonschema import Draft202012Validator, FormatChecker
         root = Path(__file__).resolve().parent.parent
