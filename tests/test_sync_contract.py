@@ -1,6 +1,5 @@
 """Versioned offline synchronization envelope, receipt and cursor contracts."""
 import copy
-import hashlib
 import json
 import unittest
 from pathlib import Path
