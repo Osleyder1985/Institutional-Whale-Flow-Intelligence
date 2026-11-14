@@ -36,9 +36,13 @@ Official directory references:
 - Ethereum developer tools: https://ethereum.org/developers/tools
 - Ethereum network infrastructure providers: https://ethereum.org/developers/tools/categories/network-infrastructure/
 
-ethereum.org lists PublicNode as providing free Ethereum RPC endpoints without an API key. This is evidence of a publicly advertised free access route, not a complete endpoint contract. The directory does not establish the exact quotas, retention/logging policy, SLA, historical-state availability, or the right to retain returned payloads for this project's lifecycle.
+The current PublicNode terms expressly permit automated access to listed RPC, WebSocket and gRPC endpoints, including scripts, bots, indexers and AI agents, for development and production without prior authorization. They also state that technical Usage Limits apply, may change without notice, and can result in HTTP 429. Higher limits, archive data and Yellowstone gRPC require an API key through Allnodes. The Ethereum endpoint page separately labels archive access as requiring an additional access step; therefore ordinary public RPC access must not be treated as archive access.
 
-**Operational rule:** PublicNode remains a candidate only. No adapter may assume an unlimited quota, archive access, stable availability, or zero retention by the provider. Before a sample, preserve the provider's current terms/privacy policy and endpoint documentation; verify the exact methods required for native ETH observations and confirm that the recurring use remains zero external cash cost.
+The terms permit returned blockchain data to be used in the user's own applications/services, but prohibit reselling endpoint access or the data as a standalone product without written consent. The service is revocable, may be changed/discontinued at discretion, and is supplied as-is without an uptime or accuracy warranty. This is not an SLA-backed production dependency.
+
+The privacy policy states that, when PublicNode is used as an RPC provider, it will not store the user's IP address or data for more than 24 hours and says IP addresses are not linked/correlated to wallet addresses. This is a provider representation, not an independently audited guarantee. It gives IWFI a documented maximum retention statement to preserve with a dated policy snapshot, but it does not remove the need to assess the privacy implications of sending address/transaction queries to a third party.
+
+**Operational rule:** PublicNode is the stronger candidate for a strictly bounded one-off Ethereum sample after Issues #3 and #71 close. Do not use archive methods, assume unlimited quotas, implement polling/backfill, or treat the service as guaranteed. Before any request, preserve dated copies/hashes of the terms and privacy policy, confirm that the exact selected RPC methods are included in the free public endpoint and incur zero external cash cost, and record the 24-hour provider retention statement. The project's own retention obligations remain separate.
 
 ## Ethereum — self-operated node feasibility
 
