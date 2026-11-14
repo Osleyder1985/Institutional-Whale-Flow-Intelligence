@@ -17,17 +17,17 @@
         "properties": {
           "source_id": { "type": "string", "minLength": 1 },
           "provider_name": { "type": "string", "minLength": 1 },
-          "assessment_status": { "enum": ["UNASSESSED", "PENDING_EVIDENCE", "UNDER_REVIEW", "APPROVED", "REJECTED", "EXPIRED", "REVOKED"] },
+          "assessment_status": { "enum": ["UNASSESSED", "PENDING_EVIDENCE", "UNDER_REVIEW", "APPROVED", "REJECTED", "EXPIRED", "REVOKED"] },\n          "allOf": [{ "if": { "properties": { "assessment_status": { "const": "APPROVED" } }, "required": ["assessment_status"] }, "then": { "properties": { "policies": { "minItems": 1 } } } }],
           "policies": {
             "type": "array",
             "items": {
               "type": "object",
               "additionalProperties": false,
-              "required": ["policy_id", "policy_version", "issuer", "document_ref", "document_sha256", "retrieved_at_utc", "reviewed_at_utc", "review_status", "reviewer_id", "review_scope", "allowed_actions", "prohibited_actions", "valid_from_utc", "expires_at_utc"],
+              "required": ["policy_id", "policy_version", "issuer", "rights_ref", "status", "document_ref", "document_sha256", "retrieved_at_utc", "reviewed_at_utc", "review_status", "reviewer_id", "review_scope", "allowed_actions", "prohibited_actions", "valid_from_utc", "expires_at_utc"],
               "properties": {
                 "policy_id": { "type": "string", "minLength": 1 },
                 "policy_version": { "type": "string", "minLength": 1 },
-                "issuer": { "type": "string", "minLength": 1 },
+                "issuer": { "type": "string", "minLength": 1 },\n                "rights_ref": { "type": "string", "minLength": 1 },\n                "status": { "enum": ["ACTIVE", "INACTIVE", "REVOKED", "SUPERSEDED"] },
                 "document_ref": { "type": "string", "minLength": 1 },
                 "document_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
                 "retrieved_at_utc": { "type": "string", "format": "date-time" },
