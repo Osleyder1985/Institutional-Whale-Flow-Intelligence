@@ -323,7 +323,10 @@
           "then": {
             "properties": {
               "participant_side": {
-                "const": "BUY"
+                "enum": [
+                  "BUY",
+                  "UNKNOWN"
+                ]
               }
             }
           }
@@ -342,7 +345,10 @@
           "then": {
             "properties": {
               "participant_side": {
-                "const": "SELL"
+                "enum": [
+                  "SELL",
+                  "UNKNOWN"
+                ]
               }
             }
           }
@@ -374,6 +380,58 @@
                   "NOT_APPLICABLE",
                   "UNKNOWN"
                 ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "participant_role": {
+                "const": "BUYER"
+              },
+              "epistemic_status": {
+                "enum": [
+                  "DIRECT",
+                  "INFERRED"
+                ]
+              }
+            },
+            "required": [
+              "participant_role",
+              "epistemic_status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "participant_side": {
+                "const": "BUY"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "participant_role": {
+                "const": "SELLER"
+              },
+              "epistemic_status": {
+                "enum": [
+                  "DIRECT",
+                  "INFERRED"
+                ]
+              }
+            },
+            "required": [
+              "participant_role",
+              "epistemic_status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "participant_side": {
+                "const": "SELL"
               }
             }
           }
