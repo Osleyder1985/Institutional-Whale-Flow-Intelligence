@@ -131,6 +131,13 @@ class EntityFlowAnalyticsTests(unittest.TestCase):
         result = run_aggregation([movement("move-1", "bc1qsource", "bc1qunknown")], claims)
         self.assertEqual(result["entities"][0]["entity_id"], "entity-a")
 
+    def test_claim_reviewed_after_cutoff_is_not_used(self):
+        item = movement("move-review-cutoff", "bc1qsource", "bc1qunknown")
+        reviewed_claim = claim("claim-a", "bc1qsource", "entity-a")
+        reviewed_claim["review"]["reviewed_at_utc"] = "2026-11-03T00:00:01Z"
+        result = run_aggregation([item], [reviewed_claim])
+        self.assertEqual(result["entities"], [])
+
     def test_claim_recorded_after_cutoff_is_not_used(self):
         claims = [claim("claim-a", "bc1qsource", "entity-a",
                         recorded="2026-11-03T00:00:01Z")]
