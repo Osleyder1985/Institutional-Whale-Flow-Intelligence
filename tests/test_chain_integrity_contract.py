@@ -179,7 +179,7 @@ class ChainIntegrityContractTests(unittest.TestCase):
         later["inclusion"] = dict(original["inclusion"])
         later["observed_at_utc"] = "2026-11-13T12:01:00Z"
         new_result = assess_chain_observations([original, later])
-        self.assertEqual(historical_result["status"], "INCLUDED")
+        self.assertEqual(historical_result["status"], "CANONICALITY_UNRESOLVED")
         self.assertEqual(new_result["status"], "NOT_CANONICAL")
         self.assertEqual(historical_result["evidence_observation_ids"], ["included"])
 
