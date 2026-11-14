@@ -270,5 +270,34 @@ class ReferenceSyncProtocolSimulationTests(unittest.TestCase):
             validate_operation_semantics(record)
 
 
+
+    def test_server_restore_replays_inbox_without_duplicate_domain_effects(self):
+        accepted = self.submit("desktop", "restore-op", "a" * 64, entity={"observation_id": "obs-restore"})
+        self.assertEqual(accepted["outcome"], "ACCEPTED")
+        restored_inbox = copy.deepcopy(self.server_inbox)
+        restored_outbox = copy.deepcopy(self.server_outbox)
+        restored_sequence = self.server_sequence
+        self.server_inbox = restored_inbox
+        self.server_outbox = restored_outbox
+        self.server_sequence = restored_sequence
+        replay = self.submit("desktop", "restore-op", "a" * 64, entity={"observation_id": "obs-restore"})
+        self.assertEqual(replay["outcome"], "DUPLICATE")
+        self.assertEqual(self.server_sequence, 1)
+        self.assertEqual(len(self.server_outbox), 1)
+
+    def test_cursor_page_retry_after_lost_ack_does_not_skip_events(self):
+        self.submit("desktop", "page-1", "1" * 64)
+        self.submit("android", "page-2", "2" * 64)
+        self.submit("ios", "page-3", "3" * 64)
+        confirmed_cursor = 1
+        first_attempt = [row for row in self.server_outbox if row[0] > confirmed_cursor][:1]
+        self.assertEqual(first_attempt[0][0], 2)
+        # The page response is lost: the client must not advance its confirmed cursor.
+        retry = [row for row in self.server_outbox if row[0] > confirmed_cursor][:1]
+        self.assertEqual(retry, first_attempt)
+        confirmed_cursor = retry[-1][0]
+        next_page = [row for row in self.server_outbox if row[0] > confirmed_cursor][:1]
+        self.assertEqual(next_page[0][0], 3)
+
 if __name__ == "__main__":
     unittest.main()
