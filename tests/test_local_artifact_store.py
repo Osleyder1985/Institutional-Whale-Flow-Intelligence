@@ -53,6 +53,7 @@ def record_for(payload=b"synthetic fixture"):
         "purpose": "PERSONAL_NON_PRODUCTION_RESEARCH", "retention_policy_id": "retention-v1",
         "revision_id": "provider-revision-001", "supersedes_artifact_id": None,
         "storage_scope": "LOCAL_ONLY", "cloud_sync_allowed": False,
+        "depends_on_artifact_ids": [],
     }
 
 
