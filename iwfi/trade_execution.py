@@ -79,6 +79,8 @@ def validate_trade_execution(execution, source_evidence_ids=None, actor_ids=None
     if fee is not None and _decimal(fee) is None:
         errors.append("invalid canonical decimal: fee_amount")
     status = execution.get("participant_attribution_status")
+    if status not in {"DIRECT", "INFERRED", "UNKNOWN", "DISPUTED"}:
+        errors.append("invalid participant_attribution_status for an individual execution")
     actor_id = execution.get("participant_actor_id")
     claims = execution.get("attribution_claim_ids", [])
     side = execution.get("participant_side")
