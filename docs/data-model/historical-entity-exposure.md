@@ -30,7 +30,7 @@ For adjacent snapshots of the same entity and asset:
 - candidate direction is a descriptive net balance increase/decrease/flat state, not proof of purchases, sales, intent or market accumulation/distribution;
 - every candidate remains `NOT_CALIBRATED`; no thresholds, probabilities or trading signals are invented.
 
-All balances use integer atomic units. Relative change uses Decimal and is serialized as a decimal string. BTC and ETH are never mixed.
+All balances use integer atomic units. Relative change is serialized as an exact reduced rational string (numerator/denominator), avoiding float and rounding. BTC and ETH are never mixed.
 
 ## Test boundary
 
