@@ -32,9 +32,11 @@ Una identidad VERIFIED puede conservar un claim DIRECT. Si la identidad es INFER
 
 ## Relaciones
 
-`resolve_relationship_as_of` consulta únicamente aristas directas. Exige la doble temporalidad y devuelve DISPUTED cuando las afirmaciones elegibles se contradicen o incluyen una afirmación DISPUTED. No calcula transitividad ni convierte MANAGES, CUSTODIES_FOR, CONTROLS u OPERATES en beneficial ownership.
+`resolve_relationship_as_of` consulta únicamente aristas directas. Exige la doble temporalidad y devuelve DISPUTED cuando las afirmaciones elegibles se contradicen, contienen contraevidencia no resuelta o incluyen una afirmación DISPUTED. Los dos extremos de la relación también deben ser identidades elegibles en el evento y al cutoff. No calcula transitividad ni convierte MANAGES, CUSTODIES_FOR, CONTROLS u OPERATES en beneficial ownership.
 
-La relación solo debe utilizarse como evidencia para una atribución cuando el caso analítico declare explícitamente que depende de esa relación y conserve la referencia de evidencia. El ActorType/Classification no sustituye a participant_role.
+Cuando una atribución depende de una relación concreta, el claim puede declarar `required_relationship_ids`. El resolver exige que cada ID exista de forma única, que la relación sea conocida y registrada al cutoff, que esté vigente en el evento y que incluya al actor atribuido como sujeto u objeto. Una relación desconocida, posterior, inválida o disputada hace que ese claim no pueda nombrar al actor. Una relación INFERRED/PROVIDER_LABELLED limita la atribución a INFERRED. No se selecciona una relación alternativa ni se infiere transitividad.
+
+La relación solo se utiliza como prerrequisito cuando el claim lo declara explícitamente. El ActorType/Classification no sustituye a participant_role.
 
 ## Integración con ejecuciones
 
