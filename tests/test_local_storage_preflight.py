@@ -24,6 +24,26 @@ class LocalStoragePreflightTests(unittest.TestCase):
             self.assertEqual(result["sync_risk"], "RISK_DETECTED")
             self.assertIn("onedrive", result["risk_details"][0])
 
+    def test_symlinked_ancestor_is_flagged_before_path_resolution(self):
+        with tempfile.TemporaryDirectory() as temp:
+            base = Path(temp)
+            target = base / "actual-storage"
+            target.mkdir()
+            child = target / "artifacts"
+            child.mkdir()
+            alias = base / "redirected-storage"
+            try:
+                alias.symlink_to(target, target_is_directory=True)
+            except (OSError, NotImplementedError) as exc:
+                self.skipTest(f"directory symlinks unavailable in this environment: {exc}")
+
+            result = inspect_storage_root(alias / "artifacts")
+            self.assertEqual(result["sync_verification"], "NOT_VERIFIED")
+            self.assertEqual(result["sync_risk"], "RISK_DETECTED")
+            self.assertTrue(result["reparse_point_ancestors"])
+            self.assertTrue(any("redirected-storage" in item for item in result["reparse_point_ancestors"]))
+            self.assertFalse(result["capture_authorized"])
+
     def test_missing_path_blocks(self):
         with tempfile.TemporaryDirectory() as temp:
             missing = Path(temp) / "not-created"
