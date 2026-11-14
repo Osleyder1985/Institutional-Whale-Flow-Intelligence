@@ -7,6 +7,7 @@ from jsonschema import Draft202012Validator, FormatChecker
 
 from iwfi.temporal_execution_attribution import (
     resolve_actor_identity_as_of,
+    resolve_actor_alias_as_of,
     resolve_execution_participants_as_of,
     resolve_relationship_as_of,
     validate_actor_registry_v11,
@@ -108,6 +109,26 @@ class TemporalExecutionAttributionTests(unittest.TestCase):
             )
             self.assertEqual(result["status"], status)
             self.assertIsNone(result["actor"])
+
+    def test_alias_known_and_recorded_after_cutoff_is_not_resolved_retroactively(self):
+        registry = copy.deepcopy(self.actors)
+        manager = next(x for x in registry["actors"] if x["actor_id"] == "synthetic-eth-manager")
+        manager["aliases"][0]["known_at_utc"] = "2026-02-11T12:31:00Z"
+        manager["aliases"][0]["recorded_at_utc"] = "2026-02-11T12:32:00Z"
+        result = resolve_actor_alias_as_of(
+            registry, "Synthetic ETH Manager", "2026-02-11T12:30:00Z",
+            "2021-01-01T00:00:00Z", "LEGAL_NAME", "global"
+        )
+        self.assertEqual(result["status"], "UNKNOWN")
+        self.assertEqual(result["actor_ids"], [])
+
+    def test_alias_resolution_uses_event_validity_not_knowledge_cutoff(self):
+        result = resolve_actor_alias_as_of(
+            self.actors, "Synthetic ETH Manager", "2026-02-11T12:30:00Z",
+            "2021-01-01T00:00:00Z", "LEGAL_NAME", "global"
+        )
+        self.assertEqual(result["status"], "UNIQUE")
+        self.assertEqual(result["actor_ids"], ["synthetic-eth-manager"])
 
     def test_relationship_discovered_after_cutoff_is_unknown(self):
         result = resolve_relationship_as_of(
