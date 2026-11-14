@@ -10,7 +10,7 @@ CUTOFF = "2026-11-03T00:00:00Z"
 EVENT = "2026-11-02T12:00:00Z"
 
 
-def claim(claim_id, address, entity, *, network="bitcoin-mainnet",
+def claim(claim_id, address, entity, *, network="eip155:1",
           predicate="CONTROLLED_BY", epistemic="VERIFIED",
           review_status="REVIEWED", valid_from="2026-01-01T00:00:00Z",
           valid_to="2026-12-31T23:59:59Z", recorded="2026-11-01T00:00:00Z",
@@ -42,14 +42,14 @@ def movement(movement_id, source, target, amount="2.5"):
     return {
         "contract_version": "1.0.0",
         "movement_id": movement_id,
-        "asset": {"asset_id": "bitcoin:btc", "symbol": "BTC",
-                  "network_id": "bitcoin-mainnet"},
+        "asset": {"asset_id": "ethereum:eth", "symbol": "ETH",
+                  "network_id": "eip155:1"},
         "event_time_utc": EVENT,
         "recorded_at_utc": "2026-11-02T12:00:05Z",
-        "transfer": {"movement_type": "TRANSFER", "amount": amount, "unit": "BTC",
+        "transfer": {"movement_type": "TRANSFER", "amount": amount, "unit": "ETH",
                      "from_address": source, "to_address": target,
                      "transaction_id": "a" * 64, "confirmation_status": "CONFIRMED",
-                     "event_locator": {"kind": "UTXO_VOUT", "value": "0"}},
+                     "event_locator": {"kind": "EVM_TX_VALUE", "value": "transaction-value"}},
         "source_observation_ids": ["test-observation-" + movement_id],
         "attribution_resolutions": [],
         "quality_status": "VALID",
@@ -166,6 +166,20 @@ class EntityFlowAnalyticsTests(unittest.TestCase):
         result = run_aggregation([movement("move-1", "bc1qsource", "bc1qunknown")], claims)
         self.assertEqual(result["entities"], [])
         self.assertEqual(result["statistics"]["unknown_endpoints"], 2)
+
+    def test_bitcoin_utxo_vout_is_excluded_until_transaction_accounting_exists(self):
+        item = movement("move-btc-1", "bc1qsource", "bc1qtarget")
+        item["asset"] = {"asset_id": "bitcoin:btc", "symbol": "BTC",
+                         "network_id": "bitcoin-mainnet"}
+        item["transfer"]["unit"] = "BTC"
+        item["transfer"]["event_locator"] = {"kind": "UTXO_VOUT", "value": "0"}
+        claims = [
+            claim("claim-a", "bc1qsource", "entity-a", network="bitcoin-mainnet"),
+            claim("claim-b", "bc1qtarget", "entity-b", network="bitcoin-mainnet"),
+        ]
+        result = run_aggregation([item], claims)
+        self.assertEqual(result["entities"], [])
+        self.assertEqual(result["statistics"]["excluded"]["unsupported_utxo_accounting"], 1)
 
     def test_duplicate_movement_ids_fail_closed(self):
         item = movement("move-1", "bc1qsource", "bc1qunknown")
