@@ -6,7 +6,7 @@ polling, or mutation of supplied records is performed.
 import hashlib
 import json
 from copy import deepcopy
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta
 
 
 SUPPORTED_NETWORKS = {"bitcoin-mainnet", "eip155:1"}
