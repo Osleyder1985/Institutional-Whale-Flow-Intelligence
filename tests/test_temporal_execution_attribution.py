@@ -247,6 +247,34 @@ class TemporalExecutionAttributionTests(unittest.TestCase):
         )
         self.assertEqual(result["status"], "DISPUTED")
 
+    def test_verified_actor_without_evidence_fails_closed(self):
+        registry = copy.deepcopy(self.actors)
+        registry["actors"][0]["evidence_refs"] = []
+        result = resolve_actor_identity_as_of(
+            registry, registry["actors"][0]["actor_id"],
+            "2026-02-11T12:30:00Z", self.trade["event_time_utc"]
+        )
+        self.assertEqual(result["status"], "INVALID_REGISTRY")
+
+    def test_verified_relationship_without_evidence_fails_closed(self):
+        registry = copy.deepcopy(self.actors)
+        registry["relationships"][0]["evidence_refs"] = []
+        result = resolve_relationship_as_of(
+            registry, "synthetic-eth-manager", "synthetic-eth-fund",
+            "MANAGES", "2026-02-11T12:30:00Z", self.trade["event_time_utc"]
+        )
+        self.assertEqual(result["status"], "INVALID_REGISTRY")
+
+    def test_alias_without_evidence_fails_closed(self):
+        registry = copy.deepcopy(self.actors)
+        manager = next(x for x in registry["actors"] if x["actor_id"] == "synthetic-eth-manager")
+        manager["aliases"][0]["evidence_refs"] = []
+        result = resolve_actor_alias_as_of(
+            registry, "Synthetic ETH Manager", "2026-02-11T12:30:00Z",
+            "2021-01-01T00:00:00Z", "LEGAL_NAME", "global"
+        )
+        self.assertEqual(result["status"], "INVALID_REGISTRY")
+
     def test_duplicate_actor_ids_fail_closed(self):
         registry = copy.deepcopy(self.actors)
         registry["actors"].append(copy.deepcopy(registry["actors"][0]))
