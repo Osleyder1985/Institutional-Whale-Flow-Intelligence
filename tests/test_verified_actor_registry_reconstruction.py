@@ -122,7 +122,7 @@ class VerifiedActorRegistryReconstructionTests(unittest.TestCase):
         )
         self.assertEqual(result["status"], "INTEGRITY_FAILED")
 
-    def test_transfer_observation_cannot_be_used_as_beneficial_owner_proof(self):
+    def test_transfer_remains_an_observation_without_inventing_participant_role(self):
         claim, registry, snapshot, payload, manifest = fixture()
         document = json.loads(payload.decode())
         document["records"][0]["observation_type"] = "TOKEN_TRANSFER"
@@ -145,10 +145,7 @@ class VerifiedActorRegistryReconstructionTests(unittest.TestCase):
         registry["actors"][0]["evidence_refs"] = [{
             "ref_type": "SOURCE_OBSERVATION", "ref_id": "obs-eth-filing"
         }]
-        registry["actors"][0]["evidence_refs"][0]["predicate"] = "BENEFICIAL_OWNER"
-        # The resolver's predicate is an API argument, not a reference attribute;
-        # this integration deliberately does not infer predicates from arbitrary refs.
-        # Verify the transfer remains typed evidence, not an ownership conclusion.
+        # This integration resolves evidence only; it must not invent a trade role.
         result = reconstruct_actor_registry_as_of(
             manifest=manifest, attribution_claim=claim, actor_registry=registry,
             snapshots_by_id={replacement["source_snapshot_id"]: replacement},
@@ -157,6 +154,9 @@ class VerifiedActorRegistryReconstructionTests(unittest.TestCase):
         )
         self.assertEqual(result["status"], "ACTOR_REGISTRY_RECONSTRUCTED")
         self.assertEqual(result["resolution"]["status"], "RESOLVED")
+        actor_evidence = result["resolution"]["records"][0]["resolution"]["resolved"][0]["record"]
+        self.assertEqual(actor_evidence["observation_type"], "TOKEN_TRANSFER")
+        self.assertNotIn("participant_role", result["resolution"])
 
 
 if __name__ == "__main__":
