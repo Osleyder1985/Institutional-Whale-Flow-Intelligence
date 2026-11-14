@@ -7,7 +7,7 @@ import re
 import shutil
 
 from iwfi.local_artifact_inventory import (
-    ArtifactInventoryError, build_local_artifact_inventory, dependent_artifact_ids_for,
+    ArtifactInventoryError, build_local_artifact_inventory, dependent_artifact_ids_for,\n    related_backup_artifact_ids_for,
 )
 from iwfi.retention_policy import authorize_artifact_write, retention_policy_errors
 from iwfi.source_use_guard import source_use_policy_errors
@@ -84,7 +84,7 @@ def delete_artifacts(root, artifact_id, dependent_artifact_ids_reviewed,
     except ArtifactInventoryError as exc:
         raise ArtifactDeletionError("local artifact inventory incomplete: " + str(exc)) from exc
     expected_dependents = dependent_artifact_ids_for(inventory, artifact_id)
-    expected_backups = inventory["backup_artifact_ids"]
+    expected_backups = inventory["backup_artifact_ids"]\n    related_backups = related_backup_artifact_ids_for(inventory, artifact_id)\n    deletion_ids = [artifact_id] + expected_dependents + related_backups
     if set(dependent_artifact_ids_reviewed) != set(expected_dependents):
         raise ArtifactDeletionError(
             "dependency review does not match complete local inventory; expected: "
@@ -164,7 +164,7 @@ def delete_artifacts(root, artifact_id, dependent_artifact_ids_reviewed,
         except OSError:
             failures.append(item_id)
 
-    status = "VERIFIED" if not failures and len(deleted_ids) == len(all_ids) else (
+    status = "VERIFIED" if not failures and len(deleted_ids) == len(deletion_ids) else (
         "PARTIAL" if deleted_ids else "NOT_VERIFIED"
     )
     audit = {
