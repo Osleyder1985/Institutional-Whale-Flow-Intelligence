@@ -62,3 +62,25 @@ def inspect_storage_root(path):
         "capture_authorized": False,
         "note": "This read-only preflight cannot prove that the OS, backup software, or another process will not sync this path.",
     }
+
+
+def main(argv=None):
+    """CLI entry point for a read-only local storage preflight."""
+    import argparse
+    import json
+
+    parser = argparse.ArgumentParser(
+        description="Measure local disk capacity and report heuristic cloud-sync risks; never authorizes capture."
+    )
+    parser.add_argument("--path", required=True, help="Existing local directory to inspect")
+    args = parser.parse_args(argv)
+    try:
+        report = inspect_storage_root(args.path)
+    except (OSError, ValueError) as exc:
+        parser.exit(2, f"preflight blocked: {exc}\\n")
+    print(json.dumps(report, indent=2, sort_keys=True))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
