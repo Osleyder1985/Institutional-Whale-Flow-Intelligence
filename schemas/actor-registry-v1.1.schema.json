@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://iwfi.invalid/schemas/actor-registry.schema.json",
-  "title": "IWFI Actor Registry",
-  "description": "Bitemporal, evidence-backed registry. Actors are not wallets or addresses.",
+  "$id": "https://iwfi.invalid/schemas/actor-registry-v1.1.schema.json",
+  "title": "IWFI Actor Registry v1.1",
+  "description": "Bitemporal, evidence-backed registry with separate known and recorded timestamps for actor aliases, classifications and relationships. Actors are not wallets or addresses.",
   "type": "object",
   "additionalProperties": false,
   "required": [
