@@ -70,3 +70,27 @@ def classify_idempotent_replay(existing_fingerprint, incoming_fingerprint):
     if existing_fingerprint == incoming_fingerprint:
         return "DUPLICATE"
     return "IDEMPOTENCY_KEY_REUSE"
+
+
+def validate_receipt_binding(operation, receipt):
+    """Ensure a receipt and its cursor belong to the exact originating operation stream."""
+    if not isinstance(operation, dict) or not isinstance(receipt, dict):
+        raise ValueError("operation and receipt must be objects")
+    for field in ("operation_id", "device_id", "stream_id"):
+        if operation.get(field) != receipt.get(field):
+            raise ValueError("receipt does not match operation " + field)
+    if receipt.get("operation_fingerprint") != operation_fingerprint(operation):
+        raise ValueError("receipt fingerprint does not match the immutable operation")
+    outcome = receipt.get("outcome")
+    if outcome in ("ACCEPTED", "DUPLICATE"):
+        if not isinstance(receipt.get("cursor"), str) or not receipt["cursor"].strip():
+            raise ValueError("accepted receipt must carry a server cursor")
+        if not isinstance(receipt.get("server_sequence"), int) or receipt["server_sequence"] < 1:
+            raise ValueError("accepted receipt must carry a positive server sequence")
+    elif outcome == "DEPENDENCY_PENDING":
+        if receipt.get("cursor") is not None or receipt.get("server_sequence") is not None:
+            raise ValueError("dependency-pending receipt cannot advance a cursor")
+    else:
+        if receipt.get("cursor") is not None:
+            raise ValueError("non-accepted receipt cannot advance a cursor")
+    return True
