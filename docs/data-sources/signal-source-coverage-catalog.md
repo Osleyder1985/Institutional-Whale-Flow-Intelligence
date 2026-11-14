@@ -113,7 +113,7 @@ A missing asset/endpoint is recorded as unavailable or unverified, never zero an
 | GAP-003 | Individual endpoint-to-feature mappings and BTC/ETH coverage are not yet evidenced for every candidate provider | #3 | Complete endpoint-level due diligence and permission review |
 | GAP-004 | Social/news/derivatives positioning overlap can double-count similar populations | #32, #34, #37 | Define semantic boundaries and overlap controls in feature specs |
 | GAP-005 | A family being specified does not establish implemented or validated features | #29, #36 | Track each signal through implementation, data-quality tests and preregistered OOS experiments |
-| GAP-006 | The legacy requirements register still excludes social/news sentiment from the initial pilot, while later product/signal Issues #23, #34 and #37 include news and social intelligence as candidate inputs | #23, #34, #37 and existing `docs/requirements/requirements-register.md` | Reconcile the requirements register and exclusions with the current approved product scope; preserve explicit execution priority so inclusion does not imply immediate collection |
+| GAP-006 | Legacy requirements appeared to exclude news/social from the overall pilot, while later product/signal Issues include them as candidates | #23, #34, #37 and `docs/requirements/requirements-register.md` | **Reconciled in this PR:** overall product research scope includes news/social candidates; first vertical slice defers their production ingestion pending source and experiment evidence |
 
 This gap register is preliminary and may be changed only with evidence and traceable review. It does not authorize new connectors or collection.
 
@@ -132,4 +132,5 @@ No ranking, weights, thresholds or predictive claims are assigned in this draft.
 ## 9. Change log
 
 - 2026-11-13 — Initial cross-family coverage audit created from repository Issues #3, #6, #8, #12, #23, #25, #27, #29 and #31–#37. Added preliminary cross-market/stablecoin gap and endpoint-level verification requirements. No source approvals or predictive validation claimed.
-- 2026-11-13 — Added GAP-006 after reviewing the legacy requirements register: its initial-pilot exclusions for news/social sentiment need reconciliation with the later predictive product scope.
+- 2026-11-13 — Added GAP-006 after reviewing the legacy requirements register.
+- 2026-11-13 — Reconciled GAP-006 by clarifying that news/social are in the overall research scope but deferred from first-slice production ingestion. No collection authorization or causal claim added.
