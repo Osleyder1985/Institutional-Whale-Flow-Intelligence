@@ -48,9 +48,10 @@ def _resolve_control(address, network_id, snapshot_time, known_at, claim_index):
         valid_to = _parse_utc(claim.get("valid_to_utc"))
         review = claim.get("review")
         reviewed_at = _parse_utc(review.get("reviewed_at_utc")) if isinstance(review, dict) else None
+        reviewer_id = review.get("reviewer_id") if isinstance(review, dict) else None
         if (recorded is None or valid_from is None or valid_to is None
-                or reviewed_at is None or reviewed_at < recorded
-                or recorded > known_at or reviewed_at > known_at
+                or reviewed_at is None or not isinstance(reviewer_id, str) or not reviewer_id
+                or reviewed_at < recorded or recorded > known_at or reviewed_at > known_at
                 or valid_from > valid_to or not (valid_from <= snapshot_time <= valid_to)):
             continue
         if claim.get("epistemic_status") == "DISPUTED" or claim.get("review_status") == "DISPUTED":
@@ -59,8 +60,20 @@ def _resolve_control(address, network_id, snapshot_time, known_at, claim_index):
         if (claim.get("epistemic_status") != "VERIFIED"
                 or claim.get("review_status") != "REVIEWED"
                 or claim.get("predicate") != "CONTROLLED_BY"
+                or not isinstance(claim.get("counter_evidence"), list)
                 or claim.get("counter_evidence")
-                or not claim.get("supporting_evidence")):
+                or not isinstance(claim.get("supporting_evidence"), list)
+                or not claim.get("supporting_evidence")
+                or any(
+                    not isinstance(item, dict)
+                    or not isinstance(item.get("evidence_type"), str)
+                    or not item.get("evidence_type")
+                    or not isinstance(item.get("evidence_ref"), str)
+                    or not item.get("evidence_ref")
+                    or not isinstance(item.get("source"), str)
+                    or not item.get("source")
+                    for item in claim["supporting_evidence"]
+                )):
             continue
         target = claim.get("object")
         if not isinstance(target, dict) or target.get("object_type") != "ENTITY":
