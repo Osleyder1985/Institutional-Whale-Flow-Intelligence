@@ -40,9 +40,10 @@ class SyncContractTests(unittest.TestCase):
     def test_operation_id_must_be_uuid(self):
         record = copy.deepcopy(FIXTURES["operations"][0])
         record["operation_id"] = "not-a-uuid"
-        schema = json.loads(SCHEMAS["operations"].read_text(encoding="utf-8"))
-        validator = Draft202012Validator(schema, format_checker=FormatChecker())
-        self.assertFalse(validator.is_valid(record))
+        from iwfi.sync_contract import canonical_payload_hash, validate_operation_semantics
+        record["payload_hash"] = canonical_payload_hash(record["payload"])
+        with self.assertRaises(ValueError):
+            validate_operation_semantics(record)
 
     def test_operation_rejects_non_utc_device_timestamp(self):
         record = copy.deepcopy(FIXTURES["operations"][0])
