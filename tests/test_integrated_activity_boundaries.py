@@ -87,6 +87,22 @@ class IntegratedActivityBoundaryTests(unittest.TestCase):
         self.assertEqual(result["actor_id"], execution["participant_actor_id"])
         self.assertEqual(result["participant_side"], execution["participant_side"])
 
+
+    def test_exchange_flow_and_address_label_observations_are_not_promoted_to_trades_or_transfers(self):
+        non_execution_ids = {
+            x["observation_id"]
+            for x in self.observations
+            if x["observation_type"] in {"EXCHANGE_FLOW_METRIC", "ADDRESS_LABEL"}
+        }
+        movement_refs = {
+            ref for movement in self.movements for ref in movement["source_observation_ids"]
+        }
+        trade_refs = {
+            ref for execution in self.executions for ref in execution["source_observation_ids"]
+        }
+        self.assertTrue(non_execution_ids.isdisjoint(movement_refs))
+        self.assertTrue(non_execution_ids.isdisjoint(trade_refs))
+
     def test_execution_identity_and_movement_identity_are_not_interchangeable(self):
         execution_ids = {x["execution_id"] for x in self.executions}
         movement_ids = {x["movement_id"] for x in self.movements}
