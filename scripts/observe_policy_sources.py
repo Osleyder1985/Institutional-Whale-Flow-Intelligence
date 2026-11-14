@@ -60,10 +60,10 @@ def load_registry(path=DEFAULT_REGISTRY):
         source_id = item.get("document_id")
         url = item.get("url")
         parsed = urlparse(url) if isinstance(url, str) else None
-        if (not isinstance(source_id, str) or not source_id or source_id in result
+        if (not isinstance(source_id, str) or not re.fullmatch(r"[a-z0-9_.-]+", source_id) or source_id in {".", ".."} or source_id in result
                 or parsed is None or parsed.scheme != "https" or parsed.hostname not in ALLOWED_SOURCE_HOSTS
                 or parsed.username or parsed.password or parsed.fragment
-                or not isinstance(item.get("filename"), str)
+                or not isinstance(item.get("filename"), str) or not re.fullmatch(r"[a-zA-Z0-9_.-]+", item.get("filename", ""))
                 or not isinstance(item.get("provider"), str)):
             raise ObservationError("SOURCE_RECORD_INVALID")
         baseline = item.get("baseline_sha256")
