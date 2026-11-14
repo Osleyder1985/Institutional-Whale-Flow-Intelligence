@@ -115,6 +115,29 @@ class LocalArtifactDeletionTests(unittest.TestCase):
                                  "2026-11-14T00:00:00Z")
             self.assertTrue((Path(temp) / "archive-001").exists())
 
+    def test_payload_digest_mismatch_blocks_deletion(self):
+        with tempfile.TemporaryDirectory() as temp:
+            create_artifact(temp, "archive-001", "SOURCE_ARCHIVE")
+            (Path(temp) / "archive-001" / "payload.bin").write_bytes(b"tampered")
+            with self.assertRaisesRegex(ArtifactDeletionError, "payload digest mismatch"):
+                delete_artifacts(temp, "archive-001", [], [], "deletion-001",
+                                 "test-unlink", source_policy(), retention_policy(),
+                                 "2026-11-14T00:00:00Z")
+            self.assertTrue((Path(temp) / "archive-001").exists())
+
+    def test_deletion_audit_binds_to_inventory_digest(self):
+        with tempfile.TemporaryDirectory() as temp:
+            create_artifact(temp, "archive-001", "SOURCE_ARCHIVE")
+            result = delete_artifacts(
+                temp, "archive-001", [], [], "deletion-001", "test-unlink",
+                source_policy(), retention_policy(), "2026-11-14T00:00:00Z"
+            )
+            audit = json.loads(Path(result["audit_record"]).read_text(encoding="utf-8"))
+            self.assertRegex(audit["inventory_sha256"], r"^[a-f0-9]{64}$")
+            self.assertEqual(audit["inventory_scope"], "SUPPLIED_LOCAL_ROOT_ONLY")
+            self.assertEqual(audit["external_copies"], "NOT_VERIFIED")
+            self.assertEqual(audit["os_backup_and_sync_state"], "NOT_VERIFIED")
+
     def test_missing_dependency_blocks_before_any_deletion(self):
         with tempfile.TemporaryDirectory() as temp:
             create_artifact(temp, "archive-001", "SOURCE_ARCHIVE")
