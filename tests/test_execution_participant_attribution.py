@@ -15,9 +15,9 @@ class ExecutionParticipantAttributionTests(unittest.TestCase):
         cls.actors = json.loads((ROOT / "fixtures" / "actor-registry.json").read_text(encoding="utf-8"))
         cls.schema = json.loads((ROOT.parent / "schemas" / "execution-participant-attribution.schema.json").read_text(encoding="utf-8"))
         cls.actor_ids = [x["actor_id"] for x in cls.actors["actors"]]
-        cls.observation_ids = ["official-execution-disclosure-eth-001"]
+        cls.observation_ids = ["exec-evidence-eth"]
 
-    def test_schema_and_synthetic_direct_and_unknown_claims_validate(self):
+    def test_schema_and_synthetic_direct_claim_validates(self):
         Draft202012Validator.check_schema(self.schema)
         validator = Draft202012Validator(self.schema, format_checker=FormatChecker())
         self.assertEqual(list(validator.iter_errors(self.registry)), [])
