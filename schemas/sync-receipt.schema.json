@@ -7,6 +7,8 @@
   "required": [
     "contract_version",
     "operation_id",
+    "device_id",
+    "stream_id",
     "operation_fingerprint",
     "outcome",
     "server_sequence",
@@ -23,6 +25,16 @@
     "operation_id": {
       "type": "string",
       "format": "uuid"
+    },
+    "device_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\\\S"
+    },
+    "stream_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\\\S"
     },
     "operation_fingerprint": {
       "type": "string",
