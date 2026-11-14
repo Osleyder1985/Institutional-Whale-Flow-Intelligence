@@ -137,6 +137,36 @@ class EntityFlowAnalyticsTests(unittest.TestCase):
         result = run_aggregation([movement("move-1", "bc1qsource", "bc1qunknown")], claims)
         self.assertEqual(result["entities"], [])
 
+    def test_eth_addresses_are_normalized_case_insensitively(self):
+        claims = [
+            claim("claim-a", "0xabc0000000000000000000000000000000000001",
+                  "entity-eth", network="eip155:1"),
+            claim("claim-b", "0xabc0000000000000000000000000000000000002",
+                  "entity-eth", network="eip155:1"),
+        ]
+        item = movement("move-eth-1",
+                        "0xAbC0000000000000000000000000000000000001",
+                        "0xABC0000000000000000000000000000000000002", amount="3.0")
+        item["asset"] = {"asset_id": "ethereum:eth", "symbol": "ETH",
+                         "network_id": "eip155:1"}
+        item["transfer"]["unit"] = "ETH"
+        item["transfer"]["event_locator"] = {
+            "kind": "EVM_TX_VALUE", "value": "transaction-value"
+        }
+        result = run_aggregation([item], claims)
+        entity = result["entities"][0]
+        self.assertEqual(entity["symbol"], "ETH")
+        self.assertEqual(entity["internal_transfer_volume"], 3)
+        self.assertEqual(entity["external_net"], 0)
+
+    def test_open_ended_claim_validity_remains_unresolved(self):
+        claims = [
+            claim("claim-a", "bc1qsource", "entity-a", valid_to=None)
+        ]
+        result = run_aggregation([movement("move-1", "bc1qsource", "bc1qunknown")], claims)
+        self.assertEqual(result["entities"], [])
+        self.assertEqual(result["statistics"]["unknown_endpoints"], 2)
+
     def test_duplicate_movement_ids_fail_closed(self):
         item = movement("move-1", "bc1qsource", "bc1qunknown")
         with self.assertRaisesRegex(ValueError, "duplicate movement_id"):
