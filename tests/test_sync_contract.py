@@ -376,6 +376,22 @@ class ReferenceSyncProtocolSimulationTests(unittest.TestCase):
             validate_cursor_semantics(cursor, cursor["device_id"], cursor["stream_id"])
 
 
+    def test_cursor_rejects_self_referential_next_page_token(self):
+        from iwfi.sync_contract import validate_cursor_semantics
+        cursor = copy.deepcopy(FIXTURES["cursors"][1])
+        cursor["next_cursor"] = cursor["cursor"]
+        with self.assertRaises(ValueError):
+            validate_cursor_semantics(cursor, cursor["device_id"], cursor["stream_id"])
+
+    def test_receipt_schema_rejects_rejected_outcome_with_server_cursor(self):
+        receipt = copy.deepcopy(FIXTURES["receipts"][2])
+        receipt.update({"outcome": "REJECTED", "reason_code": "POLICY_REJECTED",
+                        "server_sequence": 104, "cursor": "cursor-104",
+                        "committed_at_utc": "2026-11-14T10:00:00Z",
+                        "idempotent_replay": False})
+        self.assertFalse(self.validators["receipts"].is_valid(receipt))
+
+
 
 if __name__ == "__main__":
     unittest.main()
