@@ -146,6 +146,25 @@ class TemporalExecutionAttributionTests(unittest.TestCase):
         )
         self.assertEqual(result["status"], "DISPUTED")
 
+    def test_counter_evidence_blocks_verified_identity(self):
+        registry = copy.deepcopy(self.actors)
+        registry["actors"][0]["counter_evidence_refs"] = ["unresolved-identity-counter"]
+        result = resolve_actor_identity_as_of(
+            registry, registry["actors"][0]["actor_id"],
+            "2026-02-11T12:30:00Z", self.trade["event_time_utc"]
+        )
+        self.assertEqual(result["status"], "DISPUTED")
+        self.assertIsNone(result["actor"])
+
+    def test_relationship_counter_evidence_blocks_verified_relationship(self):
+        registry = copy.deepcopy(self.actors)
+        registry["relationships"][0]["counter_evidence_refs"] = ["unresolved-management-counter"]
+        result = resolve_relationship_as_of(
+            registry, "synthetic-eth-manager", "synthetic-eth-fund",
+            "MANAGES", "2026-02-11T12:30:00Z", self.trade["event_time_utc"]
+        )
+        self.assertEqual(result["status"], "DISPUTED")
+
     def test_duplicate_actor_ids_fail_closed(self):
         registry = copy.deepcopy(self.actors)
         registry["actors"].append(copy.deepcopy(registry["actors"][0]))
