@@ -141,7 +141,7 @@ class LocalArtifactDeletionTests(unittest.TestCase):
     def test_missing_dependency_blocks_before_any_deletion(self):
         with tempfile.TemporaryDirectory() as temp:
             create_artifact(temp, "archive-001", "SOURCE_ARCHIVE")
-            with self.assertRaisesRegex(ArtifactDeletionError, "missing or unsafe"):
+            with self.assertRaisesRegex(ArtifactDeletionError, "dependency review does not match"):
                 delete_artifacts(temp, "archive-001", ["missing-derivative"], [],
                                  "deletion-001", "test-unlink", source_policy(),
                                  retention_policy(), "2026-11-14T00:00:00Z")
