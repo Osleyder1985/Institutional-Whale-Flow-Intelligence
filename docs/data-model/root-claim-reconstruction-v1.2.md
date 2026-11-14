@@ -2,7 +2,7 @@
 
 ## Scope
 
-v1.2 extends v1.1 without changing the v1.1 schema or verifier. It freezes the root Attribution Claim's exact snapshot descriptor and requires the exact UTF-8 JSON payload bytes to be retained and supplied during offline verification.
+v1.2 extends v1.1 without changing the v1.1 schema or verifier. It freezes a SHA-256 digest of the complete root Attribution Claim snapshot descriptor (including rights/retention metadata) and requires the exact UTF-8 JSON payload bytes to be retained and supplied during offline verification. The root snapshot ID must be distinct from registry evidence snapshot IDs.
 
 The root claim is checked at two levels:
 1. Snapshot descriptor and raw payload integrity via the snapshot SHA-256 verifier.
@@ -12,7 +12,7 @@ The v1.1 Actor Registry verifier is then run against the same registry and evide
 
 ## Fail-closed behavior
 
-Missing bytes, metadata-only retention, descriptor substitution, payload mutation, claim ID/version mismatch, or retrieval after the knowledge cutoff prevent reconstruction. The root claim snapshot must be `application/json` and have a `RETAINED` payload decision.
+Missing bytes, metadata-only retention, any descriptor-field substitution, payload mutation, claim ID/version mismatch, root claim recorded after the knowledge cutoff, snapshot retrieval after the cutoff, or valid-time outside the root claim interval prevent reconstruction. The root claim snapshot must be `application/json` and have a `RETAINED` payload decision.
 
 ## Limits
 
