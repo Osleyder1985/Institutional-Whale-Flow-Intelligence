@@ -140,7 +140,9 @@ def delete_artifacts(root, artifact_id, dependent_artifact_ids_reviewed,
         "reviewed_at_utc": reviewed_at_utc, "deletion_method": deletion_method,
         "dependent_artifact_ids_reviewed": dependent_artifact_ids_reviewed,
         "backup_artifact_ids_reviewed": backup_artifact_ids_reviewed,
-        "storage_scope": "LOCAL_ONLY", "secure_erasure_claimed": False,\n        "inventory_sha256": inventory["inventory_sha256"],\n        "inventory_scope": inventory["scope"],
+        "storage_scope": "LOCAL_ONLY", "secure_erasure_claimed": False,
+        "inventory_sha256": inventory["inventory_sha256"],
+        "inventory_scope": inventory["scope"],
     }
     try:
         with started_path.open("x", encoding="utf-8", newline="") as stream:
@@ -178,6 +180,10 @@ def delete_artifacts(root, artifact_id, dependent_artifact_ids_reviewed,
         "backup_artifact_ids_reviewed": backup_artifact_ids_reviewed,
         "storage_scope": "LOCAL_ONLY",
         "secure_erasure_claimed": False,
+        "inventory_sha256": inventory["inventory_sha256"],
+        "inventory_scope": inventory["scope"],
+        "external_copies": inventory["external_copies"],
+        "os_backup_and_sync_state": inventory["os_backup_and_sync_state"],
         "notes": (
             "reviewed_at_utc=" + reviewed_at_utc +
             "; deleted_artifact_ids=" + ",".join(deleted_ids) +
