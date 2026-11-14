@@ -2,7 +2,7 @@
 from datetime import datetime
 import re
 
-_UTC = re.compile(r"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$")
+_UTC = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
 _PERIODS = {"DAILY", "WEEKLY", "MONTHLY", "PER_REQUEST"}
 
 
