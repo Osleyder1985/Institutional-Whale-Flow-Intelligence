@@ -44,7 +44,7 @@ This validator checks supplied metadata; it does not establish legal rights, cho
 
 ## Proposed owner-reviewed retention model — Binance Vision Spot aggTrades (2026-11-14)
 
-**Status: PROPOSAL ONLY — NOT APPROVED.** This section is a concrete event-based proposal to resolve Issue #71. It does not authorize download, storage, adapter activation, polling, backfill, backup creation, or deletion. The runtime guard must continue to block writes until the owner approves the policy and the local environment gates are verified.
+**Status: OWNER-ACCEPTED — OPERATIONAL ACTIVATION BLOCKED.** The data owner accepted these eight event-based retention rules on 2026-11-14 (recorded in Issue #71). This acceptance resolves the policy-design decision; it does not authorize download, storage, adapter activation, polling, backfill, backup creation, or deletion. The runtime guard must continue to block writes until the remaining local-environment and source-evidence gates are verified.
 
 ### Source-use boundary informing the proposal
 
@@ -90,5 +90,5 @@ Official references:
 
 ### Approval gate
 
-The proposal remains `NOT_APPROVED` until the data owner explicitly accepts or revises every event rule and the following are evidenced: exact source policy snapshot/hash, applicability review, local storage path, sync-risk review, actual free disk capacity, and a controlled synthetic deletion test. No Binance sample may be downloaded or persisted before those gates pass.
+The data owner accepted all eight event rules on 2026-11-14. The operational retention policy remains `NOT_ACTIVE` until the following are evidenced: exact source policy snapshot/hash and applicability review; local storage path; sync-risk review; actual free disk capacity; a controlled synthetic deletion test; and a complete dependency/backup inventory. The runtime guard remains fail-closed. No Binance sample may be downloaded or persisted before those gates pass.
 
