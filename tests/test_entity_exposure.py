@@ -212,6 +212,24 @@ class EntityExposureTests(unittest.TestCase):
         self.assertEqual(result["histories"], [])
         self.assertEqual(result["excluded"]["unsupported_contract_version"], 1)
 
+    def test_malformed_supporting_evidence_is_not_attributed(self):
+        item = snapshot("bad-evidence", "2026-11-01T00:00:00Z", [("bc1qaddress1", 1000)])
+        malformed = claim("c1", "bc1qaddress1")
+        malformed["supporting_evidence"] = "provider says so"
+        result = aggregate([item], [malformed])
+        row = result["histories"][0]["snapshots"][0]
+        self.assertEqual(row["known_controlled_address_exposure_atomic"], 0)
+        self.assertIsNone(row["total_controlled_address_exposure_atomic"])
+
+    def test_review_without_reviewer_identity_is_not_attributed(self):
+        item = snapshot("missing-reviewer", "2026-11-01T00:00:00Z", [("bc1qaddress1", 1000)])
+        malformed = claim("c1", "bc1qaddress1")
+        malformed["review"]["reviewer_id"] = None
+        result = aggregate([item], [malformed])
+        row = result["histories"][0]["snapshots"][0]
+        self.assertEqual(row["known_controlled_address_exposure_atomic"], 0)
+        self.assertIsNone(row["total_controlled_address_exposure_atomic"])
+
     def test_claim_review_cannot_precede_claim_recording(self):
         item = snapshot("review-order", "2026-11-01T00:00:00Z", [("bc1qaddress1", 1000)])
         malformed_chronology = claim(
