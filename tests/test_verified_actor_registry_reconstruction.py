@@ -44,6 +44,7 @@ def fixture():
         "known_at_utc": "2026-11-12T11:00:00Z",
         "valid_from_utc": EVENT, "valid_to_utc": None,
         "epistemic_status": "INFERRED",
+        "source_observation_ids": ["obs-eth-filing"],
         "evidence_refs": [{"ref_type": "SOURCE_OBSERVATION", "ref_id": "obs-eth-filing"}],
     }
     manifest = build_attribution_reconstruction_manifest(
@@ -83,7 +84,7 @@ class VerifiedActorRegistryReconstructionTests(unittest.TestCase):
             payloads_by_id={snapshot["source_snapshot_id"]: payload},
             knowledge_cutoff_utc=CUTOFF, valid_time_utc=EVENT,
         )
-        self.assertEqual(result["status"], "ACTOR_REGISTRY_RECONSTRUCTED")
+        self.assertEqual(result["status"], "ACTOR_REGISTRY_RECONSTRUCTED", msg=result)
         self.assertEqual(result["claim_epistemic_status"], "INFERRED")
         self.assertEqual(result["resolution"]["status"], "RESOLVED")
         self.assertEqual(len(result["verified_snapshots"]), 1)
