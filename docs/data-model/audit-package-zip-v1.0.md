@@ -2,7 +2,7 @@
 
 ## Alcance
 
-`iwfi/audit_package_zip.py` convierte un manifiesto de inventario ya verificado y su mapa exacto de bytes en un ZIP reproducible. Incluye `audit-package-manifest.json` y todos los artefactos inventariados.
+`iwfi/audit_package_zip.py` convierte un manifiesto de inventario ya verificado y su mapa exacto de bytes en un ZIP reproducible. Incluye `audit-package-manifest.json` y todos los artefactos inventariados. Exige exactamente un artefacto con rol `RECONSTRUCTION_MANIFEST`; su SHA-256 debe coincidir con `reconstruction_manifest_hash`. Así el paquete contiene los bytes del manifiesto de reconstrucción v1.2, no solo una referencia hash externa.
 
 ## Determinismo
 
