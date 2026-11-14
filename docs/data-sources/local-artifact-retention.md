@@ -1,6 +1,6 @@
 # Local artifact retention policy
 
-Status: contract and validator implemented; **no retention policy is approved by this document or by test fixtures**.
+Design status: **OWNER-ACCEPTED** (2026-11-14; Issue #71). Operational status: **NOT_ACTIVE**. The accepted event-based rules are recorded below; test fixtures do not constitute approval. Capture and artifact writes remain blocked until every operational gate is evidenced.
 
 ## Scope
 
@@ -17,7 +17,7 @@ This contract covers the Binance Vision local research artifact lifecycle:
 
 ## Approval semantics
 
-A policy remains `NOT_APPROVED` until the data owner has supplied and reviewed an explicit rule for every artifact class. Each rule must state its basis, either a positive fixed duration in seconds or a named end event, a deletion method, and a requirement to retain deletion evidence. No default duration, grace period, capacity, or automatic deletion behavior is defined here.
+The data owner accepted the event-based rule for each of the eight artifact classes on 2026-11-14 (see Issue #71). This is approval of the retention design only. Operational activation remains `NOT_ACTIVE` until the source-policy snapshot/applicability and local-environment gates below are evidenced. Each rule names an end event, requires dependency-aware deletion and deletion evidence, and defines no default duration, grace period, capacity, or automatic deletion behavior.
 
 The example fixture in tests is synthetic and is not an approval or a recommendation of a retention period.
 
@@ -42,7 +42,7 @@ Call `authorize_artifact_write(source_use_policy, retention_policy, artifact_typ
 This validator checks supplied metadata; it does not establish legal rights, choose a retention duration, inspect operating-system sync settings, measure disk capacity, or prove secure erasure. No source adapter, download, polling, backfill, or payload persistence is enabled by this change.
 
 
-## Proposed owner-reviewed retention model — Binance Vision Spot aggTrades (2026-11-14)
+## Owner-accepted event-based retention model — Binance Vision Spot aggTrades (2026-11-14)
 
 **Status: OWNER-ACCEPTED — OPERATIONAL ACTIVATION BLOCKED.** The data owner accepted these eight event-based retention rules on 2026-11-14 (recorded in Issue #71). This acceptance resolves the policy-design decision; it does not authorize download, storage, adapter activation, polling, backfill, backup creation, or deletion. The runtime guard must continue to block writes until the remaining local-environment and source-evidence gates are verified.
 
@@ -65,7 +65,7 @@ Official references:
 - https://github.com/binance/binance-public-data/issues/502
 - https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 
-### Proposed event-based rules (no invented fixed durations)
+### Accepted event-based rules (no invented fixed durations)
 
 | Artifact class | Proposed retention end event | Required deletion / control |
 |---|---|---|
@@ -78,7 +78,7 @@ Official references:
 | `LOG` | The related artefact lifecycle and deletion audit are complete | Metadata-only; exclude raw payloads, credentials, and unnecessary personal data |
 | `BACKUP` | The corresponding primary artefact and all dependants are deleted, or owner explicitly requests deletion | No cloud/hosted/paid backup; any local copy must be individually enumerated and its physical location verified before creation |
 
-### Operational safeguards in the proposal
+### Operational safeguards
 
 - Retention is event-based, not a fixed number of days. No automatic deletion or silent expiry is proposed.
 - A change in terms triggers immediate suspension of new acquisition/use pending review; it does not automatically assert that previously downloaded data has become unusable. Clause 1.4 must be considered for the specific version and acquisition date.
