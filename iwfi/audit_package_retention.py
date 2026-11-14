@@ -159,16 +159,28 @@ def evaluate_retention_authorizations(*, manifest, authorization_context):
             for policy in source_policies:
                 fields = ("policy_id", "policy_version", "source_id", "rights_ref",
                           "status", "valid_from_utc", "expires_at_utc",
-                          "allowed_actions", "prohibited_actions")
+                          "allowed_actions", "prohibited_actions", "issuer",
+                          "document_ref", "document_sha256", "retrieved_at_utc",
+                          "reviewed_at_utc", "review_status", "reviewer_id", "review_scope")
                 if any(field not in policy or policy[field] is None for field in fields):
                     return _fail("SOURCE_POLICY_INCOMPLETE", artifact_path=path, source_id=source)
                 pstart, pexpiry = _time(policy["valid_from_utc"]), _time(policy["expires_at_utc"])
+                retrieved, reviewed = _time(policy["retrieved_at_utc"]), _time(policy["reviewed_at_utc"])
                 if (not isinstance(policy["policy_id"], str) or not policy["policy_id"].strip()
                         or not isinstance(policy["policy_version"], str) or not policy["policy_version"].strip()
                         or not isinstance(policy["rights_ref"], str) or not policy["rights_ref"].strip()
                         or policy["source_id"] != source or pstart is None or pexpiry is None
-                        or pexpiry <= pstart):
+                        or pexpiry <= pstart
+                        or not isinstance(policy["issuer"], str) or not policy["issuer"].strip()
+                        or not isinstance(policy["document_ref"], str) or not policy["document_ref"].strip()
+                        or not isinstance(policy["document_sha256"], str) or not _HASH.fullmatch(policy["document_sha256"])
+                        or retrieved is None or reviewed is None or retrieved > evaluated_at or reviewed > evaluated_at
+                        or not isinstance(policy["reviewer_id"], str) or not policy["reviewer_id"].strip()
+                        or not isinstance(policy["review_scope"], list) or not policy["review_scope"]
+                        or any(not isinstance(item, str) or not item.strip() for item in policy["review_scope"])):
                     return _fail("SOURCE_POLICY_INCOMPLETE", artifact_path=path, source_id=source)
+                if policy["review_status"] != "VERIFIED":
+                    return _fail("SOURCE_POLICY_EVIDENCE_NOT_VERIFIED", artifact_path=path, source_id=source)
                 if policy["status"] != "ACTIVE" or evaluated_at < pstart or evaluated_at >= pexpiry:
                     return _fail("SOURCE_POLICY_INACTIVE_OR_EXPIRED", artifact_path=path, source_id=source)
                 if (not isinstance(policy["allowed_actions"], list)
