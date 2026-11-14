@@ -18,7 +18,7 @@ _DIRECT_EVIDENCE = {
 _METHODS = _DIRECT_EVIDENCE | {"EVIDENCE_CORROBORATION", "PROVIDER_LABEL", "NONE", "CONFLICT_REVIEW", "OTHER"}
 _EVIDENCE_TYPES = _DIRECT_EVIDENCE | {"PROVIDER_ATTRIBUTION", "ON_CHAIN_OBSERVATION", "OTHER"}
 _REQUIRED_CLAIM_FIELDS = {
-    "contract_version", "claim_id", "trade_id", "actor_id", "candidate_actor_ids",
+    "contract_version", "claim_id", "execution_id", "actor_id", "candidate_actor_ids",
     "participant_role", "participant_side", "epistemic_status", "attribution_method",
     "recorded_at_utc", "known_at_utc", "valid_from_utc", "valid_to_utc",
     "source_observation_ids", "supporting_evidence", "counter_evidence",
@@ -68,16 +68,16 @@ def validate_execution_participant_roles(registry, trades, actor_ids, observatio
         if not isinstance(trade, dict):
             errors.append(f"trades[{index}] must be an object")
             continue
-        trade_id = trade.get("trade_id")
-        if not _nonempty(trade_id):
-            errors.append(f"trades[{index}] has invalid trade_id")
+        execution_id = trade.get("execution_id")
+        if not _nonempty(execution_id):
+            errors.append(f"trades[{index}] has invalid execution_id")
             continue
-        if trade_id in trades_by_id:
-            errors.append(f"duplicate trade_id: {trade_id}")
+        if execution_id in trades_by_id:
+            errors.append(f"duplicate execution_id: {execution_id}")
             continue
-        trades_by_id[trade_id] = trade
+        trades_by_id[execution_id] = trade
         if _time(trade.get("event_time_utc")) is None:
-            errors.append(f"trade {trade_id}: invalid event_time_utc")
+            errors.append(f"trade {execution_id}: invalid event_time_utc")
 
     seen_claims = set()
     for index, claim in enumerate(claims):
@@ -96,10 +96,10 @@ def validate_execution_participant_roles(registry, trades, actor_ids, observatio
             errors.append(f"duplicate claim_id: {claim_id}")
         seen_claims.add(claim_id)
 
-        trade_id = claim.get("trade_id")
-        trade = trades_by_id.get(trade_id)
+        execution_id = claim.get("execution_id")
+        trade = trades_by_id.get(execution_id)
         if trade is None:
-            errors.append(f"trade not found: {trade_id}")
+            errors.append(f"trade not found: {execution_id}")
             continue
 
         role, side, status = claim.get("participant_role"), claim.get("participant_side"), claim.get("epistemic_status")
@@ -210,8 +210,8 @@ def resolve_execution_participants(registry, trade, as_of_utc, actor_ids, observ
     """Resolve claims visible to the system by cutoff; malformed eligible claims cause abstention."""
     as_of = _time(as_of_utc)
     event_time = _time(trade.get("event_time_utc")) if isinstance(trade, dict) else None
-    trade_id = trade.get("trade_id") if isinstance(trade, dict) else None
-    if as_of is None or event_time is None or not _nonempty(trade_id):
+    execution_id = trade.get("execution_id") if isinstance(trade, dict) else None
+    if as_of is None or event_time is None or not _nonempty(execution_id):
         return {"status": "INVALID_INPUT", "participants": [], "errors": ["invalid trade or as_of timestamp"]}
     if not isinstance(registry, dict) or registry.get("contract_version") != "1.1.0" or not isinstance(registry.get("claims"), list):
         return {"status": "INVALID_INPUT", "participants": [], "errors": ["invalid claim registry"]}
@@ -220,7 +220,7 @@ def resolve_execution_participants(registry, trade, as_of_utc, actor_ids, observ
     for claim in registry["claims"]:
         if not isinstance(claim, dict):
             return {"status": "INVALID_INPUT", "participants": [], "errors": ["malformed claim object"]}
-        if claim.get("trade_id") != trade_id:
+        if claim.get("execution_id") != execution_id:
             continue
         known = _time(claim.get("known_at_utc"))
         recorded = _time(claim.get("recorded_at_utc"))
