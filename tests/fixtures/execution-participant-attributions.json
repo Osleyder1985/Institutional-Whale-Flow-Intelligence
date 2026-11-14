@@ -1,0 +1,31 @@
+{
+  "contract_version": "1.0.0",
+  "claims": [
+    {
+      "contract_version": "1.0.0",
+      "attribution_id": "claim-execution-eth-001",
+      "execution_id": "eth-execution-001",
+      "actor_id": "actor-fund-northstar-btc",
+      "candidate_actor_ids": [],
+      "attribution_status": "DIRECT",
+      "participant_side": "BUY",
+      "attribution_method": "OFFICIAL_NAMED_DISCLOSURE",
+      "recorded_at_utc": "2026-02-11T12:00:00Z",
+      "known_at_utc": "2026-02-11T11:30:00Z",
+      "valid_from_utc": "2026-02-11T11:00:00Z",
+      "valid_to_utc": "2026-02-11T11:00:00Z",
+      "source_observation_ids": [
+        "exec-evidence-eth"
+      ],
+      "supporting_evidence": [
+        {
+          "evidence_type": "OFFICIAL_NAMED_EXECUTION_DISCLOSURE",
+          "source": "synthetic-official-disclosure",
+          "record_ref": "synthetic:eth:participant-001",
+          "observation_id": "exec-evidence-eth"
+        }
+      ],
+      "counter_evidence": []
+    }
+  ]
+}
