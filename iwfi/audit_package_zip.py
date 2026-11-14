@@ -35,7 +35,7 @@ def _has_bound_reconstruction_manifest(manifest):
             and bound[0].get("sha256") == manifest.get("reconstruction_manifest_hash"))
 
 
-def build_audit_package_zip(*, manifest, artifacts_by_path):
+def build_audit_package_zip(*, manifest, artifacts_by_path, authorization_context):
     """Return deterministic ZIP bytes for a previously built inventory manifest."""
     if not isinstance(manifest, dict) or not isinstance(artifacts_by_path, dict):
         raise ValueError("manifest and artifact mapping are required")
@@ -52,7 +52,7 @@ def build_audit_package_zip(*, manifest, artifacts_by_path):
     output = BytesIO()
     with zipfile.ZipFile(output, "w", compression=_ARCHIVE_COMPRESSION,
                          allowZip64=True) as archive:
-        entries = [(MANIFEST_PATH, _canonical(manifest))]
+        entries = [(MANIFEST_PATH, _canonical(manifest)),\n                   (RETENTION_PATH, _canonical(retention_decision))]
         entries.extend(sorted(artifacts_by_path.items()))
         for path, content in entries:
             if path != MANIFEST_PATH:
