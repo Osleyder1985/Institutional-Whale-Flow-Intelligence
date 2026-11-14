@@ -16,11 +16,6 @@ SCHEMAS = {
 }
 
 
-def canonical_payload_hash(payload):
-    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
-    return hashlib.sha256(encoded).hexdigest()
-
-
 class SyncContractTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -70,10 +65,14 @@ class SyncContractTests(unittest.TestCase):
 
     def test_payload_hash_matches_canonical_payload_bytes(self):
         record = copy.deepcopy(FIXTURES["operations"][0])
+        from iwfi.sync_contract import canonical_payload_hash, validate_operation_semantics
         record["payload_hash"] = canonical_payload_hash(record["payload"])
         self.assertTrue(self.validators["operations"].is_valid(record))
+        self.assertTrue(validate_operation_semantics(record))
         record["payload"]["normalized_only"] = False
         self.assertNotEqual(record["payload_hash"], canonical_payload_hash(record["payload"]))
+        with self.assertRaises(ValueError):
+            validate_operation_semantics(record)
 
     def test_raw_allowed_retention_requires_terms_record(self):
         record = copy.deepcopy(FIXTURES["operations"][0])
@@ -127,6 +126,35 @@ class SyncContractTests(unittest.TestCase):
         record = copy.deepcopy(FIXTURES["operations"][0])
         record["server_sequence"] = 99
         self.assertFalse(self.validators["operations"].is_valid(record))
+
+
+    def test_operation_fingerprint_is_stable_for_object_key_order(self):
+        from iwfi.sync_contract import operation_fingerprint
+        record = copy.deepcopy(FIXTURES["operations"][0])
+        reordered = dict(reversed(list(record.items())))
+        self.assertEqual(operation_fingerprint(record), operation_fingerprint(reordered))
+
+    def test_operation_fingerprint_changes_when_payload_changes(self):
+        from iwfi.sync_contract import operation_fingerprint
+        record = copy.deepcopy(FIXTURES["operations"][0])
+        before = operation_fingerprint(record)
+        record["payload"]["network_id"] = "eip155:1"
+        self.assertNotEqual(before, operation_fingerprint(record))
+
+    def test_idempotency_replay_requires_identical_full_operation_fingerprint(self):
+        from iwfi.sync_contract import classify_idempotent_replay
+        self.assertEqual(classify_idempotent_replay("a" * 64, "a" * 64), "DUPLICATE")
+        self.assertEqual(classify_idempotent_replay("a" * 64, "b" * 64), "IDEMPOTENCY_KEY_REUSE")
+        with self.assertRaises(ValueError):
+            classify_idempotent_replay("not-a-hash", "b" * 64)
+
+    def test_semantic_validator_rejects_duplicate_dependencies(self):
+        from iwfi.sync_contract import validate_operation_semantics, canonical_payload_hash
+        record = copy.deepcopy(FIXTURES["operations"][1])
+        record["payload_hash"] = canonical_payload_hash(record["payload"])
+        record["causal_dependencies"] = [record["operation_id"], record["operation_id"]]
+        with self.assertRaises(ValueError):
+            validate_operation_semantics(record)
 
 
 if __name__ == "__main__":
