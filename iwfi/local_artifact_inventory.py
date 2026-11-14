@@ -33,6 +33,11 @@ def build_local_artifact_inventory(root):
             continue
         if path.is_symlink() or not path.is_dir() or not _SAFE_ID.fullmatch(path.name):
             raise ArtifactInventoryError(f"unrecognized or unsafe root entry: {path.name}")
+        children = list(path.iterdir())
+        if {child.name for child in children} != {"record.json", "payload.bin"}:
+            raise ArtifactInventoryError(
+                f"artifact directory contains untracked entries: {path.name}"
+            )
         record_path = path / "record.json"
         payload_path = path / "payload.bin"
         if record_path.is_symlink() or not record_path.is_file():
@@ -124,16 +129,20 @@ def dependent_artifact_ids_for(inventory, target_artifact_id):
     dependencies = {
         entry["artifact_id"]: set(entry["depends_on_artifact_ids"])
         for entry in inventory["entries"]
-        if entry["artifact_type"] != "BACKUP"
+    }
+    artifact_types = {
+        entry["artifact_id"]: entry["artifact_type"]
+        for entry in inventory["entries"]
     }
     closure = {target_artifact_id}
-    dependents = set()
     changed = True
     while changed:
         changed = False
         for artifact_id, refs in dependencies.items():
             if artifact_id not in closure and refs.intersection(closure):
                 closure.add(artifact_id)
-                dependents.add(artifact_id)
                 changed = True
-    return sorted(dependents)
+    return sorted(
+        artifact_id for artifact_id in closure
+        if artifact_id != target_artifact_id and artifact_types[artifact_id] != "BACKUP"
+    )
